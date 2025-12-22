@@ -41,7 +41,7 @@ public class Accounts {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 12)
     private String password;
 
     @Column(nullable = false)

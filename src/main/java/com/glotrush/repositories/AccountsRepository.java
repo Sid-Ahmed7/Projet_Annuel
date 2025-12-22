@@ -9,6 +9,9 @@ import com.glotrush.entities.Accounts;
 
 public interface AccountsRepository extends JpaRepository<Accounts, UUID> {
     Optional<Accounts> findByEmail(String email);
+    Optional<Accounts> findByUsername(String username);
+    boolean existsByEmail(String email);
+    boolean existsByUsername(String username);
 
     
 }
