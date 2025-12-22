@@ -12,9 +12,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "two_factor_auth")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TwoFactorAuth {
     
     @Id

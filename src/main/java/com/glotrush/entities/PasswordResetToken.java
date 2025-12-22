@@ -12,9 +12,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "password_reset_tokens")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PasswordResetToken {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
