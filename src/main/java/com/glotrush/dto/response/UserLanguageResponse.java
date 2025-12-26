@@ -19,7 +19,6 @@ public class UserLanguageResponse {
     private UUID languageId;
     private String languageCode;
     private String languageName;
-    private String flagIcon;
     private LanguageType languageType;
     private Integer proficiencyLevel;
     private Boolean isPrimary;

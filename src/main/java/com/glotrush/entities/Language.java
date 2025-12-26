@@ -36,6 +36,9 @@ public class Language {
     @Column(name = "order_index")
     private Integer orderIndex = 0;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

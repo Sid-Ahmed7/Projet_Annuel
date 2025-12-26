@@ -15,7 +15,6 @@ public class LanguageResponse {
     private UUID id;
     private String code;
     private String name;
-    private String flagIcon;
     private Boolean isActive;
     private Integer orderIndex;
 }

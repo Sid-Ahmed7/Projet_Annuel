@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserProfileresponse {
+public class UserProfileResponse {
     
     private UUID id;
     private UUID accountId;
