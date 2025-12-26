@@ -1,4 +1,4 @@
-package com.glotrush.services;
+package com.glotrush.services.auth;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -37,6 +37,7 @@ import com.glotrush.repositories.PasswordResetTokenRepository;
 import com.glotrush.repositories.RefreshTokenRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
 import com.glotrush.security.jwt.JwtService;
+import com.glotrush.services.EmailService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -47,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AuthService {
+public class AuthService implements IAuthService {
 
     private final AccountsRepository accountsRepository;
     private final TwoFactorAuthRepository twoFactorAuthRepository;
