@@ -26,7 +26,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/user-languages")
+@RequestMapping("/api/v1/user-languages")
 @RequiredArgsConstructor
 public class UserLanguageController {
 

@@ -19,7 +19,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/profile")
+@RequestMapping("/api/v1/profile")
 @RequiredArgsConstructor
 public class ProfileController {
     private final IUserProfileService profileService;

@@ -15,7 +15,7 @@ import com.glotrush.services.languages.ILanguageService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/languages")
+@RequestMapping("/api/v1/languages")
 @RequiredArgsConstructor
 public class LanguageController {
 
