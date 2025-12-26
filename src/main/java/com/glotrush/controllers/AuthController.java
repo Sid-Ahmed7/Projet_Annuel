@@ -29,8 +29,8 @@ import com.glotrush.dto.response.UserInfoResponse;
 import com.glotrush.entities.Accounts;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
-import com.glotrush.services.AuthService;
-import com.glotrush.services.TwoFactorAuthService;
+import com.glotrush.services.auth.IAuthService;
+import com.glotrush.services.auth.ITwoFactorAuthService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,8 +43,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
-    private final TwoFactorAuthService twoFactorAuthService;
+    private final IAuthService authService;
+    private final ITwoFactorAuthService twoFactorAuthService;
     private final AccountsRepository accountsRepository;
     private final TwoFactorAuthRepository twoFactorAuthRepository;
     

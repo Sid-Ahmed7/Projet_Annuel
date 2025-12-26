@@ -1,4 +1,4 @@
-package com.glotrush.services;
+package com.glotrush.services.auth;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class TwoFactorAuthService {
+public class TwoFactorAuthService implements ITwoFactorAuthService {
 
     private final TwoFactorAuthRepository twoFactorAuthRepository;
     private final AccountsRepository accountsRepository;

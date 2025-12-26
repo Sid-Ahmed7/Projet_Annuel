@@ -52,6 +52,7 @@ import com.glotrush.repositories.PasswordResetTokenRepository;
 import com.glotrush.repositories.RefreshTokenRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
 import com.glotrush.security.jwt.JwtService;
+import com.glotrush.services.auth.AuthService;
 
 import jakarta.servlet.http.HttpServletResponse;
 
