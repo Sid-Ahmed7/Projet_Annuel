@@ -39,7 +39,12 @@ public class PasswordResetToken {
     private LocalDateTime expiresAt;
     
     @Column(nullable = false)
+    @Builder.Default
     private Boolean isUsed = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isRevoked = false;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

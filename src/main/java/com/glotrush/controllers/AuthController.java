@@ -9,10 +9,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.core.Authentication;
 
+import com.glotrush.dto.request.Disable2FARequest;
 import com.glotrush.dto.request.Enable2FARequest;
 import com.glotrush.dto.request.ForgotPasswordRequest;
 import com.glotrush.dto.request.LoginRequest;
@@ -108,9 +108,9 @@ public class AuthController {
     }
 
     @PostMapping("/2fa/disable")
-    public ResponseEntity<ApiResponse> disable2FA(@RequestParam String code,Authentication authentication) {
+    public ResponseEntity<ApiResponse> disable2FA(@Valid @RequestBody Disable2FARequest request, Authentication authentication) {
         UUID accountId = extractUserIdFromAuth(authentication);
-        twoFactorAuthService.disable2FA(accountId, code);
+        twoFactorAuthService.disable2FA(accountId, request.getCode());
         return ResponseEntity.ok(new ApiResponse("2FA disabled successfully"));
     }
 
@@ -120,7 +120,7 @@ public class AuthController {
         Accounts account = accountsRepository.findById(accountId)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
         
-        boolean has2FA = twoFactorAuthRepository.existsByUserIdAndIsActiveTrue(accountId);
+        boolean has2FA = twoFactorAuthRepository.existsByAccount_IdAndActiveTrue(accountId);
         
         return ResponseEntity.ok(UserInfoResponse.builder()
                 .id(account.getId())

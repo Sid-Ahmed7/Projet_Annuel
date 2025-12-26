@@ -18,7 +18,7 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
 
       @Query("SELECT t FROM PasswordResetToken t " +
            "WHERE t.token = :token " +
-           "AND t.expiryDate > :now " +
+           "AND t.expiresAt > :now " +
            "AND t.isRevoked = false")
     Optional<PasswordResetToken> findValidToken(@Param("token") String token, @Param("now") LocalDateTime now);
 

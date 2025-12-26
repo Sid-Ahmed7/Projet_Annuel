@@ -55,6 +55,10 @@ public class TotpService {
 
     public String generateQrCodeImageUri(String secret, String email, String issuer) {
         try {
+            if (secret == null || email == null || issuer == null) {
+                throw new IllegalArgumentException("Secret, email, and issuer must not be null");
+            }
+
             QrData data = new QrData.Builder()
                     .label(email)
                     .secret(secret)
@@ -94,14 +98,16 @@ public class TotpService {
    
     public String encryptSecret(String secret) {
         try {
-            if (encryptionKey.length() != 32) {
-                throw new IllegalStateException("Encryption key must be exactly 32 characters (256 bits)");
+            byte[] keyBytes = Base64.getDecoder().decode(encryptionKey);
+
+            if (keyBytes.length != 32) {
+                throw new IllegalStateException("Encryption key must be exactly 32 bytes (256 bits) after Base64 decoding");
             }
 
             byte[] iv = new byte[GCM_IV_LENGTH];
             secureRandom.nextBytes(iv);
-        
-            SecretKeySpec keySpec = new SecretKeySpec(encryptionKey.getBytes(), "AES");
+
+            SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
             cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmParameterSpec);
@@ -118,25 +124,27 @@ public class TotpService {
 
 public String decryptSecret(String encryptedSecret) {
     try {
-        if (encryptionKey.length() != 32) {
-            throw new IllegalStateException("Encryption key must be exactly 32 characters (256 bits)");
+        byte[] keyBytes = Base64.getDecoder().decode(encryptionKey);
+
+        if (keyBytes.length != 32) {
+            throw new IllegalStateException("Encryption key must be exactly 32 bytes (256 bits) after Base64 decoding");
         }
-        
+
         byte[] decodedData = Base64.getDecoder().decode(encryptedSecret);
-        
+
         ByteBuffer byteBuffer = ByteBuffer.wrap(decodedData);
         byte[] iv = new byte[GCM_IV_LENGTH];
         byteBuffer.get(iv);
         byte[] encryptedData = new byte[byteBuffer.remaining()];
         byteBuffer.get(encryptedData);
-        SecretKeySpec keySpec = new SecretKeySpec(encryptionKey.getBytes(), "AES");
+        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
         cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmParameterSpec);
-        
+
         byte[] decrypted = cipher.doFinal(encryptedData);
         return new String(decrypted);
-        
+
     } catch (Exception e) {
         log.error("Error decrypting secret", e);
         throw new DecryptException("Failed to decrypt secret", e);

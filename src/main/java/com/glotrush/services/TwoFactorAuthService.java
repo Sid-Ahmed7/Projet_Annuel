@@ -37,7 +37,7 @@ public class TwoFactorAuthService {
     public Enable2FAResponse enable2FA(Enable2FARequest request, UUID userId) {
         Accounts account = accountsRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("Account not found"));
 
-        if (twoFactorAuthRepository.existsByUserIdAndIsActiveTrue(userId)) {
+        if (twoFactorAuthRepository.existsByAccount_IdAndActiveTrue(userId)) {
             throw new TwoFactorAlreadyEnabledException("2FA is already enabled");
         }
 
@@ -48,7 +48,8 @@ public class TwoFactorAuthService {
 
         TwoFactorAuth saved = twoFactorAuthRepository.save(twoFactorAuth);
 
-        String qrCodeUri = totpService.generateQrCodeImageUri(secret, account.getEmail(), account.getUsername());
+        String issuer = account.getUsername() != null ? account.getUsername() : "Glotrush";
+        String qrCodeUri = totpService.generateQrCodeImageUri(secret, account.getEmail(), issuer);
 
         log.info("2FA setup initiated for account with this email: {}", account.getEmail());
 
@@ -88,7 +89,7 @@ public class TwoFactorAuthService {
         Accounts account = accountsRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("Account not found"));
 
-        TwoFactorAuth twoFactorAuth = twoFactorAuthRepository.findFirstByAccountIdAndActiveTrue(userId)
+        TwoFactorAuth twoFactorAuth = twoFactorAuthRepository.findFirstByAccount_IdAndActiveTrue(userId)
                 .orElseThrow(() -> new RuntimeException("2FA is not enabled"));
 
         String decryptedSecret = totpService.decryptSecret(twoFactorAuth.getSecret());

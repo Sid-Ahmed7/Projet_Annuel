@@ -104,7 +104,7 @@ public class AuthService {
             resetFailedLoginAttempts(account);
             checkPasswordExpiry(account);
 
-            boolean requires2FA = twoFactorAuthRepository.existsByUserIdAndIsActiveTrue(account.getId());
+            boolean requires2FA = twoFactorAuthRepository.existsByAccount_IdAndActiveTrue(account.getId());
 
             if (requires2FA) {
                 return LoginResponse.builder()
@@ -128,7 +128,7 @@ public class AuthService {
         Accounts account = accountsRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("Accounts not found"));
 
-        TwoFactorAuth twoFactorAuth = twoFactorAuthRepository.findFirstByAccountIdAndActiveTrue(userId)
+        TwoFactorAuth twoFactorAuth = twoFactorAuthRepository.findFirstByAccount_IdAndActiveTrue(userId)
                 .orElseThrow(() -> new TwoFactorNotEnabledException("2FA not enabled"));
 
         twoFactorAuth.setLastUsedAt(LocalDateTime.now());
@@ -246,17 +246,17 @@ public class AuthService {
     private void setAuthCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         Cookie accessTokenCookie = new Cookie("access_token", accessToken);
         accessTokenCookie.setHttpOnly(true);
-        accessTokenCookie.setSecure(true);
+        accessTokenCookie.setSecure(false);
         accessTokenCookie.setPath("/");
         accessTokenCookie.setMaxAge(15 * 60);
-        accessTokenCookie.setAttribute("SameSite", "Strict");
+        accessTokenCookie.setAttribute("SameSite", "Lax");
 
         Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
         refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true);
+        refreshTokenCookie.setSecure(false);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
-        refreshTokenCookie.setAttribute("SameSite", "Strict");
+        refreshTokenCookie.setAttribute("SameSite", "Lax");
 
         response.addCookie(accessTokenCookie);
         response.addCookie(refreshTokenCookie);
@@ -265,13 +265,13 @@ public class AuthService {
     private void clearAuthCookies(HttpServletResponse response) {
         Cookie accessTokenCookie = new Cookie("access_token", null);
         accessTokenCookie.setHttpOnly(true);
-        accessTokenCookie.setSecure(true);
+        accessTokenCookie.setSecure(false);
         accessTokenCookie.setPath("/");
         accessTokenCookie.setMaxAge(0);
 
         Cookie refreshTokenCookie = new Cookie("refresh_token", null);
         refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true);
+        refreshTokenCookie.setSecure(false);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(0);
 

@@ -8,7 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.glotrush.entities.TwoFactorAuth;
 
 public interface TwoFactorAuthRepository extends JpaRepository<TwoFactorAuth, UUID>{
-    boolean existsByUserIdAndIsActiveTrue(UUID accountId);
-    Optional<TwoFactorAuth> findFirstByAccountIdAndActiveTrue(UUID accountId);
+    boolean existsByAccount_IdAndActiveTrue(UUID accountId);
+
+    Optional<TwoFactorAuth> findFirstByAccount_IdAndActiveTrue(UUID accountId);
 
 }

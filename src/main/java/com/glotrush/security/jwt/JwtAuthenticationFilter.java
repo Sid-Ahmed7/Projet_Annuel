@@ -37,6 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
         if(isPublicEndpoint(path)) {
             filterChain.doFilter(request, response);
+            return;
         }
 
         try {
@@ -63,13 +64,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String extractJwtFromCookies(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
+        log.info("=== DEBUG COOKIES ===");
         if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                log.info("Cookie found: {} = {}", cookie.getName(), cookie.getValue());
+            }
             return Arrays.stream(cookies)
                     .filter(cookie -> "access_token".equals(cookie.getName()))
                     .map(Cookie::getValue)
                     .findFirst()
                     .orElse(null);
         }
+        log.info("No cookies found in request");
         return null;
     }
   private boolean isPublicEndpoint(String path) {
