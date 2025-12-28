@@ -11,8 +11,10 @@ import java.util.Optional;
 
 @Repository
 public interface LanguageRepository extends JpaRepository<Language, UUID> {
-    
+
     Optional<Language> findByCode(String code);
-    List<Language> findByIsActiveTrueOrderIndexAsc();
+
+    List<Language> findByIsActiveTrueOrderByOrderIndexAsc();
+    
     boolean existsByCode(String code);
 }

@@ -24,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserProfileService implements IUserProfileService {
 
+    private static final String USER_NOT_FOUND = "User not found";
+
     private final UserProfileRepository userProfileRepository;
     private final AccountsRepository accountsRepository;
     private final UserLanguageRepository userLanguageRepository;
@@ -33,7 +35,7 @@ public class UserProfileService implements IUserProfileService {
     @Transactional
     public UserProfileResponse getProfile(UUID accountId) {
         Accounts account = accountsRepository.findById(accountId)
-            .orElseThrow(() -> new UserNotFoundException("Account not found"));
+            .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId)
             .orElseGet(() -> userProfileBuilder.createDefaultProfile(account));
@@ -50,7 +52,7 @@ public class UserProfileService implements IUserProfileService {
     @Transactional
     public UserProfileResponse updateProfile(UUID accountId, UpdateProfileRequest request) {
         Accounts account = accountsRepository.findById(accountId)
-            .orElseThrow(() -> new UserNotFoundException("Account not found"));
+            .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId)
             .orElseGet(() -> userProfileBuilder.createDefaultProfile(account));
@@ -89,7 +91,7 @@ public class UserProfileService implements IUserProfileService {
     @Override
     public UserProfileResponse getPublicProfile(UUID accountId) {
         Accounts account = accountsRepository.findById(accountId)
-            .orElseThrow(() -> new UserNotFoundException("User not found"));
+            .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId)
             .orElseThrow(() -> new UserNotFoundException("Profile not found"));

@@ -24,7 +24,7 @@ public class LanguageService implements ILanguageService {
     @Override
     @Transactional
     public List<LanguageResponse> getAllActiveLanguages() {
-        return languageRepository.findByIsActiveTrueOrderIndexAsc().stream().map(languageBuilder::mapToLanguageResponse).toList();
+        return languageRepository.findByIsActiveTrueOrderByOrderIndexAsc().stream().map(languageBuilder::mapToLanguageResponse).toList();
     }
 
     @Override
