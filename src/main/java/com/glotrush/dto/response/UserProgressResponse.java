@@ -18,7 +18,6 @@ public class UserProgressResponse {
     private UUID accountId;
     private UUID topicId;
     private String topicName;
-    private String topicIcon;
     private String languageCode;
     private String languageName;
 
