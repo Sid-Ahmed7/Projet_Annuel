@@ -19,7 +19,6 @@ public class TopicResponse {
     private String languageName;
     private String name;
     private String description;
-    private String icon;
     private Integer difficulty;
     private Integer totalLessons;
     private Integer orderIndex;
