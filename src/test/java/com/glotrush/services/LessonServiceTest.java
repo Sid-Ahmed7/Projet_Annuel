@@ -146,7 +146,7 @@ class LessonServiceTest {
         List<LessonResponse> result = lessonService.getLessonsByTopic(topicId, accountId);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getTitle()).isEqualTo("Intr");
+        assertThat(result.get(0).getTitle()).isEqualTo("Introduction to Spring");
 
         verify(lessonRepository).findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId);
     }
