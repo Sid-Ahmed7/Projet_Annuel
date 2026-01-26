@@ -1,5 +1,6 @@
 package com.glotrush.services.progress;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -154,5 +155,12 @@ public class ProgressService implements IProgressService {
 
     private Long calculateNextLevelXP(Integer level) {
         return 100L + (level - 1) * 50L;
+    }
+
+    @Override
+    public UserProgress updateLastStudiedAt(UUID accountId, UUID topicId) {
+        UserProgress progress = getOrCreateProgress(accountId, topicId);
+        progress.setLastStudiedAt(LocalDateTime.now());
+        return userProgressRepository.save(progress);
     }
 }

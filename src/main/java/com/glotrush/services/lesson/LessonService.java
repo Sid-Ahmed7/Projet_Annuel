@@ -109,7 +109,7 @@ public class LessonService implements ILessonService {
 
         topicProgress = progressService.addXP(accountId, lesson.getTopic().getId(), xpEarned);
         topicProgress = progressService.incrementLessonCompletion(accountId, lesson.getTopic().getId());
-
+        topicProgress = progressService.updateLastStudiedAt(accountId, lesson.getTopic().getId());
         Integer newLevel = topicProgress.getLevel();
         boolean leveledUp = !oldLevel.equals(newLevel);
 

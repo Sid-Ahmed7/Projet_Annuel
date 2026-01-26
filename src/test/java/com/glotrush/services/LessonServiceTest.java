@@ -299,6 +299,7 @@ class LessonServiceTest {
         when(progressService.getOrCreateProgress(accountId, topicId)).thenReturn(topicProgress);
         when(progressService.addXP(accountId, topicId, 50)).thenReturn(topicProgress);
         when(progressService.incrementLessonCompletion(accountId, topicId)).thenReturn(topicProgress);
+        when(progressService.updateLastStudiedAt(accountId, topicId)).thenReturn(topicProgress);
         when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(progressResponse);
         when(lessonBuilder.buildCompleteLessonResponse(eq(false), eq(50), any(), any(), eq(1)))
                 .thenReturn(expectedResponse);
@@ -310,6 +311,7 @@ class LessonServiceTest {
 
         verify(userLessonProgressRepository).save(any(UserLessonProgress.class));
         verify(progressService).addXP(accountId, topicId, 50);
+        verify(progressService).updateLastStudiedAt(accountId, topicId);
         verify(progressService).incrementLessonCompletion(accountId, topicId);
     }
 
@@ -345,6 +347,7 @@ class LessonServiceTest {
         when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
                 .thenReturn(Optional.of(userLessonProgress));
         when(progressService.getOrCreateProgress(accountId, topicId)).thenReturn(topicProgressBefore);
+        when(progressService.updateLastStudiedAt(accountId, topicId)).thenReturn(topicProgressAfter);  
         when(progressService.addXP(accountId, topicId, 50)).thenReturn(topicProgressAfter);
         when(progressService.incrementLessonCompletion(accountId, topicId)).thenReturn(topicProgressAfter);
         when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(progressResponse);
@@ -353,6 +356,7 @@ class LessonServiceTest {
 
         CompleteLessonResponse result = lessonService.completeLesson(accountId, lessonId, request);
 
+        verify(progressService).updateLastStudiedAt(accountId, topicId);
         assertThat(result.getLeveledUp()).isTrue();
         assertThat(result.getNewLevel()).isEqualTo(2);
     }

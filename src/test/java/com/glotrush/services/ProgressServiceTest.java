@@ -333,5 +333,18 @@ class ProgressServiceTest {
 
         verify(userProgressRepository).save(any(UserProgress.class));
     }
-}
 
+
+    @Test
+    @DisplayName("Should update last studied")
+    void shouldUpdateLastStudiedAt() {
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId))
+                .thenReturn(Optional.of(testProgress));
+        when(userProgressRepository.save(any(UserProgress.class))).thenAnswer(i -> i.getArgument(0));
+
+        UserProgress result = progressService.updateLastStudiedAt(accountId, topicId);
+
+        assertThat(result.getLastStudiedAt()).isNotNull();
+        verify(userProgressRepository).save(any(UserProgress.class));
+    }
+}

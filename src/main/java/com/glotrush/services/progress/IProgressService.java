@@ -16,4 +16,6 @@ public interface IProgressService {
     UserProgress addXP(UUID accountId, UUID topicId, Integer xpToAdd);
     UserProgress incrementLessonCompletion(UUID accountId, UUID topicId);
     UserProgress updateAnswerStats(UUID accountId, UUID topicId, Integer correct, Integer total);
+    UserProgress updateLastStudiedAt(UUID accountId, UUID topicId);
+
 }
