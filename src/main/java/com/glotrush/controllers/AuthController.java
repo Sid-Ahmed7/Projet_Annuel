@@ -1,8 +1,11 @@
 package com.glotrush.controllers;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.UUID;
 
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,12 +45,15 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
-
+    private final MessageSource messageSource;
     private final IAuthService authService;
     private final ITwoFactorAuthService twoFactorAuthService;
     private final AccountsRepository accountsRepository;
     private final TwoFactorAuthRepository twoFactorAuthRepository;
-    
+
+    protected final Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request){
@@ -77,20 +83,20 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request);
-        return ResponseEntity.ok(new ApiResponse("Password reset email sent"));
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("success.auth.password_reset_sent", null, getCurrentLocale())));
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
-        return ResponseEntity.ok(new ApiResponse("Password reset successfully"));
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("success.auth.password_reset_success", null, getCurrentLocale())));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse> logout(HttpServletRequest request,HttpServletResponse response) {
         String refreshToken = extractRefreshTokenFromCookie(request);
         authService.logout(refreshToken, response);
-        return ResponseEntity.ok(new ApiResponse("Logged out successfully"));
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("success.auth.logout", null, getCurrentLocale())));
     }
 
     @PostMapping("/2fa/enable")
@@ -104,21 +110,21 @@ public class AuthController {
     public ResponseEntity<ApiResponse> verify2FASetup(@Valid @RequestBody Verify2FASetupRequest request,Authentication authentication) {
         UUID accountId = extractUserIdFromAuth(authentication);
         twoFactorAuthService.verify2FASetup(request, accountId);
-        return ResponseEntity.ok(new ApiResponse("2FA enabled successfully"));
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("success.2fa.enabled", null, getCurrentLocale())));
     }
 
     @PostMapping("/2fa/disable")
     public ResponseEntity<ApiResponse> disable2FA(@Valid @RequestBody Disable2FARequest request, Authentication authentication) {
         UUID accountId = extractUserIdFromAuth(authentication);
         twoFactorAuthService.disable2FA(accountId, request.getCode());
-        return ResponseEntity.ok(new ApiResponse("2FA disabled successfully"));
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("success.2fa.disabled", null, getCurrentLocale())));
     }
 
     @GetMapping("/me")
     public ResponseEntity<UserInfoResponse> getCurrentUser(Authentication authentication) {
         UUID accountId = extractUserIdFromAuth(authentication);
         Accounts account = accountsRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.auth.account_not_found", null, getCurrentLocale())));
         
         boolean has2FA = twoFactorAuthRepository.existsByAccount_IdAndActiveTrue(accountId);
         
@@ -140,9 +146,9 @@ public class AuthController {
                     .filter(cookie -> "refresh_token".equals(cookie.getName()))
                     .map(Cookie::getValue)
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Refresh token not found"));
+                    .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.auth.refresh_token_not_found", null, getCurrentLocale())));
         }
-        throw new RuntimeException("No cookies found");
+        throw new RuntimeException(messageSource.getMessage("error.auth.no_cookies_found", null, getCurrentLocale()));
     }
 
     private UUID extractUserIdFromAuth(Authentication authentication) {

@@ -32,6 +32,8 @@ public class AccountBuilder {
                 .status(AccountStatus.ACTIVE)
                 .lastPasswordChange(LocalDateTime.now())
                 .failedLoginAttempts(0)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
     }
 
