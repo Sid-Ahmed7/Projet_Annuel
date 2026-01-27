@@ -200,7 +200,7 @@ public class AuthService implements IAuthService {
 
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
-        PasswordResetToken resetToken = passwordResetTokenRepository.findValidToken(request.getToken(), LocalDateTime.now()).orElseThrow(() -> new InvalidTokenException("Invalid or expired reset token"));
+        PasswordResetToken resetToken = passwordResetTokenRepository.findValidToken(request.getToken(), LocalDateTime.now()).orElseThrow(() -> new InvalidTokenException(messageSource.getMessage("error.auth.invalid_reset_token", null, getCurrentLocale())));
 
         Accounts account = resetToken.getAccount();
 
