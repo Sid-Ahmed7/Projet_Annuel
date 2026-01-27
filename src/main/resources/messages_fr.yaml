@@ -5,7 +5,7 @@ error.auth.invalid_credentials=Identifiants invalides
 error.auth.email_already_registered=Email déjà enregistré
 error.auth.username_already_taken=Nom d'utilisateur déjà pris
 error.auth.account_not_found=Compte non trouvé
-error.auth.account_locked_until=Le compte est verrouillé jusqu'à : {0}
+error.auth.account_locked_until=Le compte est verrouillé jusqu'à :
 error.auth.account_locked_attempts=Compte verrouillé en raison de trop nombreuses tentatives de connexion échouées
 error.auth.password_expired=Mot de passe expiré, veuillez changer votre mot de passe
 error.auth.invalid_token=Jeton de rafraîchissement invalide ou expiré
@@ -109,6 +109,10 @@ info.auth.user_registered=Utilisateur enregistré avec succès : {0}
 info.auth.user_logged_out=Utilisateur déconnecté avec succès
 info.auth.password_reset_success=Mot de passe réinitialisé avec succès pour le compte : {0}
 
+# ============================================
+# INFO LANGUAGE - Language Service
+# ============================================
+info.language.deleted_successfully=Langue supprimée avec succès
 # ============================================
 # MESSAGES SYSTÈME
 # ============================================

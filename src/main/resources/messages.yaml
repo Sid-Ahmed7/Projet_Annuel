@@ -5,7 +5,7 @@ error.auth.invalid_credentials=Invalid credentials
 error.auth.email_already_registered=Email already registered
 error.auth.username_already_taken=Username already taken
 error.auth.account_not_found=Account not found
-error.auth.account_locked_until=Account is locked until: {0}
+error.auth.account_locked_until=Account is locked until:
 error.auth.account_locked_attempts=Account locked due to too many failed login attempts
 error.auth.password_expired=Password expired, please change your password
 error.auth.invalid_token=Invalid or expired refresh token
@@ -108,6 +108,11 @@ info.email.expiry_reminder_sent=Password expiry reminder sent to: {0}
 info.auth.user_registered=User registered successfully: {0}
 info.auth.user_logged_out=User logged out successfully
 info.auth.password_reset_success=Password reset successfully for account: {0}
+
+# ============================================
+# INFO LANGUAGE - Language Service
+# ============================================
+info.language.deleted_successfully=Language removed successfully
 
 # ============================================
 # SYSTEM MESSAGES
