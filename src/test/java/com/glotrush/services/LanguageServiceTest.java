@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.glotrush.config.TestMessageSourceConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,17 +26,22 @@ import com.glotrush.entities.Language;
 import com.glotrush.exceptions.LanguageException;
 import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.services.languages.LanguageService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SpringExtension.class})
+@ContextConfiguration(classes = TestMessageSourceConfig.class)
 @DisplayName("LanguageService Unit Tests")
 class LanguageServiceTest {
     
     @Mock
     private LanguageRepository languageRepository;
 
-    @InjectMocks
     private LanguageService languageService;
-
+    @Autowired
+    private MessageSource messageSource;
     @Mock
     private LanguageBuilder languageBuilder;
     private Language japanese;
@@ -43,6 +49,7 @@ class LanguageServiceTest {
 
     @BeforeEach
     void setUp() {
+        languageService = new LanguageService(messageSource, languageRepository, languageBuilder);
         japanese = Language.builder()
                 .id(UUID.randomUUID())
                 .code("ja")

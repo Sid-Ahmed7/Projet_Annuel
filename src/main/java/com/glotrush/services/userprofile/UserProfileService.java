@@ -27,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserProfileService implements IUserProfileService {
 
-    private static final String USER_NOT_FOUND = "User not found";
     private final MessageSource messageSource;
     private final UserProfileRepository userProfileRepository;
     private final AccountsRepository accountsRepository;
@@ -41,7 +40,7 @@ public class UserProfileService implements IUserProfileService {
     @Transactional
     public UserProfileResponse getProfile(UUID accountId) {
         Accounts account = accountsRepository.findById(accountId)
-            .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
+            .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, getCurrentLocale())));
 
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId)
             .orElseGet(() -> userProfileBuilder.createDefaultProfile(account));
@@ -58,7 +57,7 @@ public class UserProfileService implements IUserProfileService {
     @Transactional
     public UserProfileResponse updateProfile(UUID accountId, UpdateProfileRequest request) {
         Accounts account = accountsRepository.findById(accountId)
-            .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
+            .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, getCurrentLocale())));
 
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId)
             .orElseGet(() -> userProfileBuilder.createDefaultProfile(account));
@@ -97,7 +96,7 @@ public class UserProfileService implements IUserProfileService {
     @Override
     public UserProfileResponse getPublicProfile(UUID accountId) {
         Accounts account = accountsRepository.findById(accountId)
-            .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
+            .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, getCurrentLocale())));
 
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId)
             .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.profile.not_found", null, getCurrentLocale())));

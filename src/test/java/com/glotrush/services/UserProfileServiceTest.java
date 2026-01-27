@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.glotrush.config.TestMessageSourceConfig;
+import com.glotrush.services.languages.UserLanguageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,8 +32,13 @@ import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.UserLanguageRepository;
 import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.services.userprofile.UserProfileService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SpringExtension.class})
+@ContextConfiguration(classes = TestMessageSourceConfig.class)
 @DisplayName("ProfileService Unit Tests")
 class UserProfileServiceTest {
 
@@ -47,7 +54,9 @@ class UserProfileServiceTest {
     @Mock
     private UserProfileBuilder userProfileBuilder;
 
-    @InjectMocks
+    @Autowired
+    private MessageSource messageSource;
+
     private UserProfileService profileService;
 
     private UUID accountId;
@@ -56,6 +65,14 @@ class UserProfileServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Initialiser le service manuellement avec toutes les dépendances
+        profileService = new UserProfileService(
+                messageSource,
+                userProfileRepository,
+                accountsRepository,
+                userLanguageRepository,
+                userProfileBuilder
+        );
         accountId = UUID.randomUUID();
 
         testAccount = Accounts.builder()

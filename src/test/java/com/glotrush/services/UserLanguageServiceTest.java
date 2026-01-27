@@ -21,8 +21,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.glotrush.builder.UserLanguageBuilder;
+import com.glotrush.config.TestMessageSourceConfig;
 import com.glotrush.dto.request.AddUserLanguageRequest;
 import com.glotrush.dto.request.UpdateUserLanguageRequest;
 import com.glotrush.dto.response.UserLanguageResponse;
@@ -35,10 +40,10 @@ import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.UserLanguageRepository;
 import com.glotrush.services.languages.UserLanguageService;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SpringExtension.class})
+@ContextConfiguration(classes = TestMessageSourceConfig.class)
 @DisplayName("UserLanguageService Unit Tests")
 class UserLanguageServiceTest {
-
     @Mock
     private UserLanguageRepository userLanguageRepository;
 
@@ -51,7 +56,9 @@ class UserLanguageServiceTest {
     @Mock
     private UserLanguageBuilder userLanguageBuilder;
 
-    @InjectMocks
+    @Autowired
+    private MessageSource messageSource;
+    
     private UserLanguageService userLanguageService;
 
     private UUID accountId;
@@ -62,6 +69,15 @@ class UserLanguageServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Initialiser le service manuellement avec toutes les dépendances
+        userLanguageService = new UserLanguageService(
+            messageSource,
+            userLanguageRepository,
+            accountsRepository,
+            languageRepository,
+            userLanguageBuilder
+        );
+
         accountId = UUID.randomUUID();
         languageId = UUID.randomUUID();
 
@@ -145,7 +161,7 @@ class UserLanguageServiceTest {
         
         assertThatThrownBy(() -> userLanguageService.addLanguage(accountId, request))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("Language already added");
+                .hasMessageContaining("Language already added"); // Message en français depuis messages_fr.properties
 
         verify(userLanguageRepository, never()).save(any(UserLanguage.class));
     }

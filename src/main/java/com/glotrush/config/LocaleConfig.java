@@ -30,7 +30,7 @@ public class LocaleConfig implements WebMvcConfigurer {
     @Bean
     public LocaleResolver localeResolver() {
         CookieLocaleResolver resolver = new CookieLocaleResolver("myAppLocaleCookie"); // Nom du cookie passé au constructeur
-        resolver.setDefaultLocale(Locale.FRENCH);
+        resolver.setDefaultLocale(Locale.ENGLISH);
         resolver.setCookieMaxAge(Duration.ofDays(30)); // 30 jours
         resolver.setCookiePath("/");
         return resolver;
