@@ -4,12 +4,16 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Locale;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.exceptions.DecryptException;
@@ -33,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class TotpService {
-
+    private final MessageSource messageSource;
     private final TimeProvider timeProvider = new SystemTimeProvider();
     private final CodeGenerator codeGenerator = new DefaultCodeGenerator();
     private final DefaultCodeVerifier verifier;
@@ -43,10 +47,15 @@ public class TotpService {
     private static final int GCM_TAG_LENGTH = 128;
 
     @Value("${totp.encryption}")
-    private String encryptionKey; 
+    private String encryptionKey;
 
-    public TotpService() {
+    protected final Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
+
+    public TotpService(MessageSource messageSource) {
         this.verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
+        this.messageSource = messageSource;
     }
 
     public String generateSecret() {
@@ -56,7 +65,7 @@ public class TotpService {
     public String generateQrCodeImageUri(String secret, String email, String issuer) {
         try {
             if (secret == null || email == null || issuer == null) {
-                throw new IllegalArgumentException("Secret, email, and issuer must not be null");
+                throw new IllegalArgumentException(messageSource.getMessage("error.security.invalid_params", null, getCurrentLocale()));
             }
 
             QrData data = new QrData.Builder()
@@ -81,7 +90,7 @@ public class TotpService {
             
         } catch (Exception e) {
             log.error("Error generating QR code", e);
-            throw new QrCodeGenerationException("Failed to generate QR code", e);
+            throw new QrCodeGenerationException(messageSource.getMessage("error.security.qr_code_failed", null, getCurrentLocale()), e);
         }
     }
 
@@ -101,7 +110,7 @@ public class TotpService {
             byte[] keyBytes = Base64.getDecoder().decode(encryptionKey);
 
             if (keyBytes.length != 32) {
-                throw new IllegalStateException("Encryption key must be exactly 32 bytes (256 bits) after Base64 decoding");
+                throw new IllegalStateException(messageSource.getMessage("error.security.invalid_key_size", null, getCurrentLocale()));
             }
 
             byte[] iv = new byte[GCM_IV_LENGTH];
@@ -118,7 +127,7 @@ public class TotpService {
             return Base64.getEncoder().encodeToString(byteBuffer.array());
         } catch (Exception e) {
             log.error("Error encrypting secret", e);
-            throw new EncryptException("Failed to encrypt secret", e);
+            throw new EncryptException(messageSource.getMessage("error.security.encrypt_failed", null, getCurrentLocale()), e);
         }
     }
 
@@ -127,7 +136,7 @@ public String decryptSecret(String encryptedSecret) {
         byte[] keyBytes = Base64.getDecoder().decode(encryptionKey);
 
         if (keyBytes.length != 32) {
-            throw new IllegalStateException("Encryption key must be exactly 32 bytes (256 bits) after Base64 decoding");
+            throw new IllegalStateException(messageSource.getMessage("error.security.decrypt_failed", null, getCurrentLocale()));
         }
 
         byte[] decodedData = Base64.getDecoder().decode(encryptedSecret);
@@ -147,7 +156,7 @@ public String decryptSecret(String encryptedSecret) {
 
     } catch (Exception e) {
         log.error("Error decrypting secret", e);
-        throw new DecryptException("Failed to decrypt secret", e);
+        throw new DecryptException(messageSource.getMessage("error.security.decrypt_failed", null, getCurrentLocale()), e);
     }
 }
 }

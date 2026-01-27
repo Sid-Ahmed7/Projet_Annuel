@@ -3,9 +3,13 @@ package com.glotrush.services;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -13,6 +17,11 @@ import org.springframework.stereotype.Service;
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final MessageSource messageSource;
+
+    protected final Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -22,14 +31,14 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(toEmail);
-            message.setSubject("Password Reset Request");
+            message.setSubject(messageSource.getMessage("email.subject.password_reset", null, getCurrentLocale()));
             message.setText(buildPasswordResetEmailBody(resetLink));
 
             mailSender.send(message);
             log.info("Password reset email sent to: {}", toEmail);
         } catch (Exception e) {
             log.error("Error sending password reset email to: {}", toEmail, e);
-            throw new RuntimeException("Failed to send password reset email", e);
+            throw new RuntimeException(messageSource.getMessage("error.email.failed_to_send", null, getCurrentLocale()), e);
         }
     }
 
@@ -38,7 +47,7 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(toEmail);
-            message.setSubject("Welcome!");
+            message.setSubject(messageSource.getMessage("email.subject.welcome", null, getCurrentLocale()));
             message.setText(buildWelcomeEmailBody(username));
 
             mailSender.send(message);
@@ -53,7 +62,7 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(toEmail);
-            message.setSubject("Password Expiry Reminder");
+            message.setSubject(messageSource.getMessage("email.subject.password_expiry", null, getCurrentLocale()));
             message.setText(buildPasswordExpiryEmailBody(daysRemaining));
 
             mailSender.send(message);
