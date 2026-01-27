@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.glotrush.config.TestMessageSourceConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,9 +24,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.glotrush.builder.AccountBuilder;
@@ -56,8 +61,13 @@ import com.glotrush.services.auth.AuthService;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+@ExtendWith({MockitoExtension.class, SpringExtension.class})
+@ContextConfiguration(classes = TestMessageSourceConfig.class)
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
+
+    @Autowired
+    private MessageSource messageSource;
 
     @Mock
     private AccountsRepository accountsRepository;
@@ -92,7 +102,6 @@ class AuthServiceTest {
     @Mock
     private HttpServletResponse httpServletResponse;
 
-    @InjectMocks
     private AuthService authService;
 
     private RegisterRequest registerRequest;
@@ -102,6 +111,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
+        authService = new AuthService(messageSource, accountsRepository, twoFactorAuthRepository, refreshTokenRepository, passwordResetTokenRepository, passwordEncoder, jwtService, authenticationManager, emailService, accountBuilder, refreshTokenBuilder);
         testAccountId = UUID.randomUUID();
 
         ReflectionTestUtils.setField(authService, "refreshTokenExpiration", 604800000L);
@@ -307,7 +317,7 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.forgotPassword(request))
                 .isInstanceOf(UserNotFoundException.class)
-                .hasMessageContaining("Accounts not found");
+                .hasMessageContaining("Account not found");
     }
 
     @Test

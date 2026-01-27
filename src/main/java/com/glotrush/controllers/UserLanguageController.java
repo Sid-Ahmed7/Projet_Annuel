@@ -1,8 +1,11 @@
 package com.glotrush.controllers;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -31,6 +34,11 @@ import lombok.RequiredArgsConstructor;
 public class UserLanguageController {
 
     private final IUserLanguageService userLanguageService;
+    private final MessageSource messageSource;
+
+    protected final Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
 
     @GetMapping
     public ResponseEntity<List<UserLanguageResponse>> getMyLanguages(Authentication authentication) {
@@ -64,6 +72,6 @@ public class UserLanguageController {
     public ResponseEntity<ApiResponse> removeLanguage(Authentication authentication,@PathVariable UUID languageId) {
         UUID accountId = UUID.fromString(authentication.getName());
         userLanguageService.removeLanguage(accountId, languageId);
-        return ResponseEntity.ok(new ApiResponse("Language removed successfully"));
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.language.deleted_successfully", null, getCurrentLocale())));
     }
 }

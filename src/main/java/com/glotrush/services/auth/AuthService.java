@@ -1,9 +1,12 @@
 package com.glotrush.services.auth;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -49,7 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService implements IAuthService {
-
+    private final MessageSource messageSource;
     private final AccountsRepository accountsRepository;
     private final TwoFactorAuthRepository twoFactorAuthRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -72,14 +75,18 @@ public class AuthService implements IAuthService {
     private static final int ACCOUNT_LOCK_DURATION_MINUTES = 30;
     private static final int PASSWORD_EXPIRY_DAYS = 60;
 
+    protected final Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
+
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
         if (accountsRepository.existsByEmail(request.getEmail())) {
-            throw new EmailAlreadyExistsException("Email already registered");
+            throw new EmailAlreadyExistsException(messageSource.getMessage("error.auth.email_already_registered", null, getCurrentLocale()));
         }
 
         if (request.getUsername() != null && accountsRepository.existsByUsername(request.getUsername())) {
-            throw new UsernameAlreadyExistsException("Username already taken");
+            throw new UsernameAlreadyExistsException(messageSource.getMessage("error.auth.username_already_taken", null, getCurrentLocale()));
         }
 
         validatePasswordStrength(request.getPassword());
@@ -95,7 +102,7 @@ public class AuthService implements IAuthService {
     @Transactional
     public LoginResponse login(LoginRequest request, HttpServletResponse response) {
         Accounts account = accountsRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+                .orElseThrow(() -> new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, getCurrentLocale())));
 
         checkAccountLock(account);
 
@@ -111,7 +118,7 @@ public class AuthService implements IAuthService {
                 return LoginResponse.builder()
                         .requires2FA(true)
                         .tempUserId(account.getId().toString())
-                        .message("2FA code required")
+                        .message(messageSource.getMessage("success.2fa.code_required", null, getCurrentLocale()))
                         .build();
             }
 
@@ -119,7 +126,7 @@ public class AuthService implements IAuthService {
 
         } catch (BadCredentialsException e) {
             handleFailedLogin(account);
-            throw new BadCredentialsException("Invalid credentials");
+            throw new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, getCurrentLocale()));
         }
     }
 
@@ -127,10 +134,10 @@ public class AuthService implements IAuthService {
     public LoginResponse verify2FA(Verify2FARequest request, HttpServletResponse response) {
         UUID userId = UUID.fromString(request.getTempUserId());
         Accounts account = accountsRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("Accounts not found"));
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, getCurrentLocale())));
 
         TwoFactorAuth twoFactorAuth = twoFactorAuthRepository.findFirstByAccount_IdAndActiveTrue(userId)
-                .orElseThrow(() -> new TwoFactorNotEnabledException("2FA not enabled"));
+                .orElseThrow(() -> new TwoFactorNotEnabledException(messageSource.getMessage("error.2fa.not_enabled", null, getCurrentLocale())));
 
         twoFactorAuth.setLastUsedAt(LocalDateTime.now());
         twoFactorAuthRepository.save(twoFactorAuth);
@@ -141,7 +148,7 @@ public class AuthService implements IAuthService {
     @Transactional
     public RefreshTokenResponse refreshToken(String refreshToken, HttpServletResponse response) {
         RefreshToken token = refreshTokenRepository.findValidToken(refreshToken, LocalDateTime.now())
-                .orElseThrow(() -> new InvalidTokenException("Invalid or expired refresh token"));
+                .orElseThrow(() -> new InvalidTokenException(messageSource.getMessage("error.auth.invalid_token", null, getCurrentLocale())));
 
         Accounts user = token.getAccount();
         
@@ -163,14 +170,14 @@ public class AuthService implements IAuthService {
         return RefreshTokenResponse.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(newRefreshToken)
-                .message("Tokens refreshed successfully")
+                .message(messageSource.getMessage("success.auth.tokens_refreshed", null, getCurrentLocale()))
                 .build();
     }
 
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
         Accounts account = accountsRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UserNotFoundException("Accounts not found"));
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, getCurrentLocale())));
 
         passwordResetTokenRepository.invalidateAllUserTokens(account.getId());
 
@@ -193,7 +200,7 @@ public class AuthService implements IAuthService {
 
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
-        PasswordResetToken resetToken = passwordResetTokenRepository.findValidToken(request.getToken(), LocalDateTime.now()).orElseThrow(() -> new InvalidTokenException("Invalid or expired reset token"));
+        PasswordResetToken resetToken = passwordResetTokenRepository.findValidToken(request.getToken(), LocalDateTime.now()).orElseThrow(() -> new InvalidTokenException(messageSource.getMessage("error.auth.invalid_reset_token", null, getCurrentLocale())));
 
         Accounts account = resetToken.getAccount();
 
@@ -282,7 +289,7 @@ public class AuthService implements IAuthService {
 
     private void checkAccountLock(Accounts account) {
         if (account.getAccountLockedUntil() != null && account.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
-            throw new AccountLockedException("Account is locked until: " + account.getAccountLockedUntil());
+            throw new AccountLockedException(messageSource.getMessage("error.auth.account_locked_until", null, getCurrentLocale()) + account.getAccountLockedUntil());
         }
     }
 
@@ -294,7 +301,7 @@ public class AuthService implements IAuthService {
             account.setAccountLockedUntil(lockUntil);
             account.setFailedLoginAttempts(attempts);
             accountsRepository.save(account);
-            throw new AccountLockedException("Account locked due to too many failed login attempts");
+            throw new AccountLockedException(messageSource.getMessage("error.auth.account_locked_attempts", null, getCurrentLocale()));
         } else {
             account.setFailedLoginAttempts(attempts);
             accountsRepository.save(account);
@@ -312,13 +319,13 @@ public class AuthService implements IAuthService {
     private void checkPasswordExpiry(Accounts account) {
         LocalDateTime expiryDate = account.getLastPasswordChange().plusDays(PASSWORD_EXPIRY_DAYS);
         if (LocalDateTime.now().isAfter(expiryDate)) {
-            throw new PasswordExpiredException("Password expired, please change your password");
+            throw new PasswordExpiredException(messageSource.getMessage("error.auth.password_expired", null, getCurrentLocale()));
         }
     }
 
     private void validatePasswordStrength(String password) {
         if (password.length() < 12) {
-            throw new WeakPasswordException("Password must be at least 12 characters long");
+            throw new WeakPasswordException(messageSource.getMessage("error.password.too_short", null, getCurrentLocale()));
         }
 
         boolean hasUpper = password.matches(".*[A-Z].*");
@@ -328,7 +335,7 @@ public class AuthService implements IAuthService {
 
         if (!hasUpper || !hasLower || !hasDigit || !hasSpecial) {
             throw new WeakPasswordException(
-                    "Password must contain uppercase, lowercase, numbers, and special characters"
+                    messageSource.getMessage("error.password.weak", null, getCurrentLocale())
             );
         }
     }

@@ -1,8 +1,11 @@
 package com.glotrush.services.userprofile;
 
+import java.util.Locale;
 import java.util.UUID;
 import java.util.List;
 
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.UserProfileBuilder;
@@ -24,18 +27,20 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserProfileService implements IUserProfileService {
 
-    private static final String USER_NOT_FOUND = "User not found";
-
+    private final MessageSource messageSource;
     private final UserProfileRepository userProfileRepository;
     private final AccountsRepository accountsRepository;
     private final UserLanguageRepository userLanguageRepository;
     private final UserProfileBuilder userProfileBuilder;
-    
+
+    protected final Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
     @Override
     @Transactional
     public UserProfileResponse getProfile(UUID accountId) {
         Accounts account = accountsRepository.findById(accountId)
-            .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
+            .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, getCurrentLocale())));
 
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId)
             .orElseGet(() -> userProfileBuilder.createDefaultProfile(account));
@@ -52,7 +57,7 @@ public class UserProfileService implements IUserProfileService {
     @Transactional
     public UserProfileResponse updateProfile(UUID accountId, UpdateProfileRequest request) {
         Accounts account = accountsRepository.findById(accountId)
-            .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
+            .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, getCurrentLocale())));
 
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId)
             .orElseGet(() -> userProfileBuilder.createDefaultProfile(account));
@@ -91,13 +96,13 @@ public class UserProfileService implements IUserProfileService {
     @Override
     public UserProfileResponse getPublicProfile(UUID accountId) {
         Accounts account = accountsRepository.findById(accountId)
-            .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
+            .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, getCurrentLocale())));
 
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId)
-            .orElseThrow(() -> new UserNotFoundException("Profile not found"));
+            .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.profile.not_found", null, getCurrentLocale())));
   
         if(!profile.getIsPublic()) {
-            throw new ProfilePrivateException("Profile is private");
+            throw new ProfilePrivateException(messageSource.getMessage("error.profile.private", null, getCurrentLocale()));
         }
         List<UserLanguageResponse> languages = userLanguageRepository.findByAccount_Id(accountId)
             .stream()
