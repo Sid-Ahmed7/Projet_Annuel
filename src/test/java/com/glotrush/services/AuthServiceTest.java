@@ -242,8 +242,6 @@ class AuthServiceTest {
         verify(refreshTokenRepository).save(any(RefreshToken.class));
     }
 
-    // 2FA tests removed - not testing 2FA functionality
-
     @Test
     @DisplayName("Should throw exception for invalid credentials")
     void testLoginInvalidCredentials() {
@@ -293,8 +291,6 @@ class AuthServiceTest {
                 .isInstanceOf(PasswordExpiredException.class)
                 .hasMessageContaining("Password expired");
     }
-
-    // 2FA verification tests removed - not testing 2FA functionality
 
     @Test
     @DisplayName("Should send forgot password email")
