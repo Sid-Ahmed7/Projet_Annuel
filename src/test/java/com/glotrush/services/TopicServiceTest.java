@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.glotrush.config.TestMessageSourceConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,11 +31,17 @@ import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.services.topic.TopicService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SpringExtension.class})
+@ContextConfiguration(classes = TestMessageSourceConfig.class)
 @DisplayName("TopicService Unit Tests")
 class TopicServiceTest {
-
+    @Autowired
+    private MessageSource messageSource;
     @Mock
     private TopicRepository topicRepository;
 
@@ -44,7 +51,6 @@ class TopicServiceTest {
     @Mock
     private TopicBuilder topicBuilder;
 
-    @InjectMocks
     private TopicService topicService;
 
     private UUID accountId;
@@ -56,6 +62,7 @@ class TopicServiceTest {
 
     @BeforeEach
     void setUp() {
+        topicService = new TopicService(messageSource, topicRepository, userProgressRepository, topicBuilder);
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
         languageId = UUID.randomUUID();

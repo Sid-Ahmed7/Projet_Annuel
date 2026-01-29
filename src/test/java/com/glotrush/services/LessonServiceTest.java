@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.glotrush.config.TestMessageSourceConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,11 +43,17 @@ import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.services.lesson.LessonService;
 import com.glotrush.services.progress.ProgressService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SpringExtension.class})
+@ContextConfiguration(classes = TestMessageSourceConfig.class)
 @DisplayName("LessonService Unit Tests")
 class LessonServiceTest {
-    
+    @Autowired
+    private MessageSource messageSource;
     @Mock
     private LessonRepository lessonRepository;
 
@@ -65,7 +72,6 @@ class LessonServiceTest {
     @Mock
     private LessonBuilder lessonBuilder;
 
-    @InjectMocks
     private LessonService lessonService;
 
     private UUID accountId;
@@ -80,6 +86,7 @@ class LessonServiceTest {
 
     @BeforeEach
     void setUp() {
+        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, lessonContentRepository, accountsRepository, progressService, lessonBuilder);
         accountId = UUID.randomUUID();
         lessonId = UUID.randomUUID();
         topicId = UUID.randomUUID();

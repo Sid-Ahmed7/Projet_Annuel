@@ -2,9 +2,12 @@ package com.glotrush.services.lesson;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.LessonBuilder;
@@ -34,12 +37,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional
 public class LessonService implements ILessonService {
+    private final MessageSource messageSource;
     private final LessonRepository lessonRepository;
     private final UserLessonProgressRepository userLessonProgressRepository;
     private final LessonContentRepository lessonContentRepository;
     private final AccountsRepository accountsRepository;
     private final ProgressService progressService;
     private final LessonBuilder lessonBuilder;
+
+    protected final Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
 
 
     @Override
@@ -50,7 +58,7 @@ public class LessonService implements ILessonService {
     @Override
     public LessonResponse getLessonById(UUID lessonId, UUID accountId) {
        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new LessonNotFoundException("Lesson not found"));
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale())));
         return mapToLessonResponse(lesson, accountId);
     }
 
@@ -58,7 +66,7 @@ public class LessonService implements ILessonService {
     public UserLessonProgressSummary startLesson(UUID accountId, UUID lessonId) {
        
         Accounts account = accountsRepository.findById(accountId)
-                .orElseThrow(() -> new UserNotFoundException("Account not found"));
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, getCurrentLocale())));
 
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new LessonNotFoundException("Lesson not found"));    
@@ -78,10 +86,10 @@ public class LessonService implements ILessonService {
     @Override
     public CompleteLessonResponse completeLesson(UUID accountId, UUID lessonId, CompleteLessonRequest lessonRequest) {
        Lesson lesson  = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new LessonNotFoundException("Lesson not found"));
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale())));
 
         UserLessonProgress progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
-                .orElseThrow(() -> new LessonNotFoundException("Lesson progress not found"));
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.progress.notfound", null, getCurrentLocale())));
 
         boolean isLessonCompleted = progress.getStatus() == LessonStatus.COMPLETED;
     
