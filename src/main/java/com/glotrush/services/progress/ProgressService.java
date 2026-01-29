@@ -2,8 +2,11 @@ package com.glotrush.services.progress;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.ProgressBuilder;
@@ -25,10 +28,15 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class ProgressService implements IProgressService {
 
+    private final MessageSource messageSource;
     private final UserProgressRepository userProgressRepository;
     private final TopicRepository topicRepository;
     private final AccountsRepository accountsRepository;
     private final ProgressBuilder progressBuilder;
+
+    protected final Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
 
     private static final int BASE_XP_PER_LEVEL = 1000;
 
@@ -71,7 +79,7 @@ public class ProgressService implements IProgressService {
     @Override
     public UserProgressResponse getProgressByTopic(UUID accountId, UUID topicId) {
         UserProgress progress = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)
-                .orElseThrow(() -> new ResourceNotFoundException("Progress not found for this topic"));
+                .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("error.progress.notfound", null, getCurrentLocale())));
         return progressBuilder.mapToUserProgressResponse(progress);
     }
 
@@ -88,9 +96,9 @@ public class ProgressService implements IProgressService {
         return userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)
                 .orElseGet(() -> {
                     Accounts account = accountsRepository.findById(accountId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+                            .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, getCurrentLocale())));
                     Topic topic = topicRepository.findById(topicId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Topic not found"));
+                            .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("error.topic.notfound", null, getCurrentLocale())));
 
                     UserProgress newProgress = UserProgress.builder()
                             .account(account)
