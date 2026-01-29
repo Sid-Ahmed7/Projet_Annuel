@@ -89,7 +89,7 @@ public class LessonService implements ILessonService {
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale())));
 
         UserLessonProgress progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
-                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.progress.notfound", null, getCurrentLocale())));
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.progress.notfound", null, getCurrentLocale())));
 
         boolean isLessonCompleted = progress.getStatus() == LessonStatus.COMPLETED;
     

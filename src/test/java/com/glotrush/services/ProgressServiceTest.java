@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.glotrush.config.TestMessageSourceConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,13 +34,18 @@ import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.services.progress.ProgressService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SpringExtension.class})
+@ContextConfiguration(classes = TestMessageSourceConfig.class)
 @DisplayName("ProgressService Unit Tests")
 class ProgressServiceTest {
-
-    @InjectMocks
+    @Autowired
+    private MessageSource messageSource;
     private ProgressService progressService;
 
     @Mock
@@ -64,6 +70,7 @@ class ProgressServiceTest {
 
      @BeforeEach
     void setUp() {
+        progressService = new ProgressService(messageSource, userProgressRepository, topicRepository, accountsRepository, progressBuilder );
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
         languageId = UUID.randomUUID();
