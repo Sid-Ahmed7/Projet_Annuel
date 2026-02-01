@@ -28,7 +28,7 @@ import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.LessonContentRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
-import com.glotrush.services.progress.ProgressService;
+import com.glotrush.services.progress.IProgressService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class LessonService implements ILessonService {
     private final UserLessonProgressRepository userLessonProgressRepository;
     private final LessonContentRepository lessonContentRepository;
     private final AccountsRepository accountsRepository;
-    private final ProgressService progressService;
+    private final IProgressService progressService;
     private final LessonBuilder lessonBuilder;
 
     protected final Locale getCurrentLocale() {

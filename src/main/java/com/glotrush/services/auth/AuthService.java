@@ -41,6 +41,7 @@ import com.glotrush.repositories.RefreshTokenRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
 import com.glotrush.security.jwt.JwtService;
 import com.glotrush.services.EmailService;
+import com.glotrush.services.subscription.ISubscriptionService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -63,6 +64,7 @@ public class AuthService implements IAuthService {
     private final EmailService emailService;
     private final AccountBuilder accountBuilder;
     private final RefreshTokenBuilder refreshTokenBuilder;
+    private final ISubscriptionService subscriptionService;
 
 
     @Value("${jwt.refresh-token.expiration}")
@@ -96,6 +98,7 @@ public class AuthService implements IAuthService {
         Accounts savedAccount = accountsRepository.save(account);
         log.info("User registered successfully: {}", savedAccount.getEmail());
 
+        subscriptionService.createSubscriptionForUser(savedAccount);
         return accountBuilder.buildRegisterResponse(savedAccount);
     }
 

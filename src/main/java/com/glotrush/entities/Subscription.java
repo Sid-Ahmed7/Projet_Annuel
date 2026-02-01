@@ -51,7 +51,7 @@ public class Subscription {
     @Column(name = "start_date" , nullable = false)
     private LocalDateTime startDate;
 
-    @Column(name = "end_date" , nullable = false)
+    @Column(name = "end_date" , nullable = true)
     private LocalDateTime endDate;
 
     @Column(name = "created_date" , nullable = false)
