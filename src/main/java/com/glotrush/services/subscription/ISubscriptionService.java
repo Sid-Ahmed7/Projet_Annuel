@@ -11,6 +11,10 @@ public interface ISubscriptionService {
     void createSubscriptionForUser(Accounts account);
     SubscriptionResponse getSubscription(UUID accountId);
     SubscriptionResponse changeSubscriptionType(UUID accountId, ChangeSubscriptionRequest subscriptionType);
+    void checkAndChangeExpiredSubscriptions();
+    void sendEmailWhenExpiringSoon();
 
-     
+    void expireSingleSubscription(UUID subscriptionId);
+    void sendReminderEmailForExpiringSubscription(UUID subscriptionId);
+
 }

@@ -1,6 +1,9 @@
 package com.glotrush.services.subscription;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -17,6 +20,7 @@ import com.glotrush.enumerations.SubscriptionType;
 import com.glotrush.exceptions.SubscriptionAlreadyExistException;
 import com.glotrush.exceptions.SubscriptionNotFoundException;
 import com.glotrush.repositories.SubscriptionRepository;
+import com.glotrush.services.EmailService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +32,7 @@ public class SubscriptionService implements ISubscriptionService {
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionBuilder subscriptionBuilder;
     private final MessageSource messageSource;  
+    private final EmailService emailService;
 
     private static final int PREMIUM_DAYS_SUBSCRIPTION = 50;
 
@@ -66,6 +71,7 @@ public class SubscriptionService implements ISubscriptionService {
             subscription.setStartDate(LocalDateTime.now());
             subscription.setEndDate(LocalDateTime.now().plusDays(PREMIUM_DAYS_SUBSCRIPTION));
             subscription.setIsActive(true);
+            sendEmailWhenSubscriptionTypeChangedInPremium(subscription);
         } else {
             subscription.setStartDate(LocalDateTime.now());
             subscription.setEndDate(null);
@@ -74,5 +80,85 @@ public class SubscriptionService implements ISubscriptionService {
 
         return subscriptionBuilder.mapToSubscriptionResponse(subscription);
     }
+
+    @Override
+    @Transactional
+    public void checkAndChangeExpiredSubscriptions() {
+    
+    List<Subscription> expiredSubscriptions = subscriptionRepository.findAllBySubscriptionTypeAndIsActiveTrueAndEndDateBefore(SubscriptionType.PREMIUM, LocalDateTime.now());
+
+        if(expiredSubscriptions.isEmpty()) {
+            return;
+        }
+
+        for (Subscription subscription : expiredSubscriptions) {
+            expireSingleSubscription(subscription.getId());
+        }
+    }
+
+    @Override
+    public void expireSingleSubscription(UUID subscriptionId) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notFound", null, getCurrentLocale())));
+
+        if(subscription == null) {
+            return;
+        }
+
+        if(subscription.getSubscriptionType() != SubscriptionType.PREMIUM || !subscription.getIsActive()) {
+            return;
+        }
+          if (subscription.getEndDate() != null && subscription.getEndDate().isAfter(LocalDateTime.now())) {
+            return;
+        }
+
+
+        subscription.setSubscriptionType(SubscriptionType.FREE);
+        subscription.setStartDate(LocalDateTime.now());
+        subscription.setEndDate(null);
+        subscription.setIsActive(true);
+        subscriptionRepository.save(subscription);
+        sendEmailWhenSubscriptionChangedToFree(subscription);
+    }
+
+     @Override
+        public void sendReminderEmailForExpiringSubscription(UUID subscriptionId) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notFound", null, getCurrentLocale())));
+            if(subscription.getEndDate() == null) {
+                return;
+            }
+          sendExpirationEmail(subscription);
+        }
+    
+    @Override
+    @Transactional
+    public void sendEmailWhenExpiringSoon() {
+        List<Subscription> expiringSubscriptions = subscriptionRepository.findAllBySubscriptionTypeAndIsActiveTrueAndEndDateBetween(SubscriptionType.PREMIUM, LocalDateTime.now(), LocalDateTime.now().plusHours(24));
+        if(expiringSubscriptions.isEmpty()) {
+            return;
+        }
+
+        for(Subscription subscription : expiringSubscriptions) {
+            sendExpirationEmail(subscription);
+        }
+    }
+
+    private void sendExpirationEmail(Subscription subscription) {
+        Accounts account = subscription.getAccount();
+        long dayRemaining = ChronoUnit.DAYS.between(LocalDate.now(), subscription.getEndDate().toLocalDate());
+        emailService.sendSubscriptionExpiredSoonEmail(account.getEmail(), account.getUsername(), dayRemaining);
+    }
+    private void sendEmailWhenSubscriptionTypeChangedInPremium(Subscription subscription) {
+        Accounts account = subscription.getAccount();
+        emailService.sendPremiumUpgratedEmail(account.getEmail(), account.getUsername(), subscription.getEndDate());
+        
+    }
+        private void sendEmailWhenSubscriptionChangedToFree(Subscription subscription) {
+        Accounts account = subscription.getAccount();
+        emailService.sendSubscriptionExpiredEmail(account.getEmail(), account.getUsername());
+    }
+       
+
     
 }

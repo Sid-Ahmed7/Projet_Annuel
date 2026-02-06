@@ -1,4 +1,4 @@
-package com.glotrush.exceptions;
+package com.glotrush.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
