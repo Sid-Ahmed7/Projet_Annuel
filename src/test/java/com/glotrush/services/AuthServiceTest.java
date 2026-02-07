@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +57,7 @@ import com.glotrush.repositories.RefreshTokenRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
 import com.glotrush.security.jwt.JwtService;
 import com.glotrush.services.auth.AuthService;
+import com.glotrush.services.subscription.ISubscriptionService;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -97,6 +97,9 @@ class AuthServiceTest {
     private AccountBuilder accountBuilder;
 
     @Mock
+    private ISubscriptionService subscriptionService;
+
+    @Mock
     private RefreshTokenBuilder refreshTokenBuilder;
 
     @Mock
@@ -111,7 +114,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(messageSource, accountsRepository, twoFactorAuthRepository, refreshTokenRepository, passwordResetTokenRepository, passwordEncoder, jwtService, authenticationManager, emailService, accountBuilder, refreshTokenBuilder);
+        authService = new AuthService(messageSource, accountsRepository, twoFactorAuthRepository, refreshTokenRepository, passwordResetTokenRepository, passwordEncoder, jwtService, authenticationManager, emailService, accountBuilder, refreshTokenBuilder, subscriptionService);
         testAccountId = UUID.randomUUID();
 
         ReflectionTestUtils.setField(authService, "refreshTokenExpiration", 604800000L);
@@ -162,6 +165,7 @@ class AuthServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getEmail()).isEqualTo("test@example.com");
         verify(accountsRepository).save(any(Accounts.class));
+        verify(subscriptionService).createSubscriptionForUser(testAccount);
     }
 
     @Test

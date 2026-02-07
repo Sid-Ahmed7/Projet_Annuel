@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
+import com.glotrush.services.progress.IProgressService;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class LessonService implements ILessonService {
     private final LessonRepository lessonRepository;
     private final UserLessonProgressRepository userLessonProgressRepository;
     private final AccountsRepository accountsRepository;
-    private final ProgressService progressService;
+    private final IProgressService progressService;
     private final LessonBuilder lessonBuilder;
     private final TopicRepository topicRepository;
     private final LessonEntityToLessonResponse lessonEntityToLessonResponse;
