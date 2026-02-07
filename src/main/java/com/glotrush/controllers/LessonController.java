@@ -67,7 +67,6 @@ public class LessonController {
     }
 
     /* PARTIE ADMINISTRATEUR */
-
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LessonResponse> createLesson(@Valid @RequestBody LessonRequest lessonRequest){
