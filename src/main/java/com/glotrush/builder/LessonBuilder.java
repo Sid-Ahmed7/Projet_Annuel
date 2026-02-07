@@ -17,7 +17,7 @@ import com.glotrush.enumerations.LessonStatus;
 @Component
 public class LessonBuilder {
 
-    public LessonResponse mapToLessonResponse(Lesson lesson, Optional<UserLessonProgress> progressOpt, String content) {
+    public LessonResponse mapLessonToLessonResponse(Lesson lesson, Optional<UserLessonProgress> progressOpt, String content) {
         UserLessonProgressSummary progressSummary = progressOpt
                 .map(this::mapToUserLessonProgressSummary)
                 .orElse(null);
@@ -28,7 +28,6 @@ public class LessonBuilder {
                 .topicName(lesson.getTopic().getName())
                 .title(lesson.getTitle())
                 .description(lesson.getDescription())
-                .content(content)
                 .orderIndex(lesson.getOrderIndex())
                 .xpReward(lesson.getXpReward())
                 .isLocked(lesson.getIsLocked())

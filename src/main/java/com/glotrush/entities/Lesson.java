@@ -3,32 +3,21 @@ package com.glotrush.entities;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "lesson")
-@Data
-@Builder
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE) // Toutes les sous-classes dans une seule table
+@DiscriminatorColumn(name = "lesson_type", discriminatorType = DiscriminatorType.STRING) // Colonne pour distinguer les types
+@Getter
+@Setter
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Lesson {
-    
+public abstract class Lesson {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -42,9 +31,7 @@ public class Lesson {
 
     @Column(name = "description", length = 1000)
     private String description;
-    @OneToOne(mappedBy = "lesson", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private LessonContent lessonContent;
-    
+
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex = 0;
 
@@ -58,7 +45,7 @@ public class Lesson {
     private Integer minLevelRequired;
 
     @Column(name = "duration_minutes")
-    private Integer durationMinutes; 
+    private Integer durationMinutes;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
@@ -79,4 +66,5 @@ public class Lesson {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
 }
