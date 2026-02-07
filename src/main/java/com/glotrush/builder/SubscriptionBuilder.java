@@ -35,7 +35,7 @@ public class SubscriptionBuilder {
     public SubscriptionResponse mapToSubscriptionResponse(Subscription subscription) {
         return SubscriptionResponse.builder()
                 .id(subscription.getId())
-                .subscriptionType(subscription.getSubscriptionType().name())
+                .subscriptionType(subscription.getSubscriptionType())
                 .isActive(subscription.getIsActive())
                 .startDate(subscription.getStartDate().toString())
                 .endDate(subscription.getEndDate() != null ? subscription.getEndDate().toString() : null)
