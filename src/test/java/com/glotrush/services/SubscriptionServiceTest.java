@@ -245,7 +245,7 @@ class SubscriptionServiceTest {
 
         Accounts secondAccounts = Accounts.builder()
                 .id(UUID.randomUUID())
-                .email("idontspeak@example.com")
+                .email("idontspeakfrench@example.com")
                 .username("IDONTSPEAKFRENCH")
                 .firstName("Test")
                 .lastName("FRENCH")

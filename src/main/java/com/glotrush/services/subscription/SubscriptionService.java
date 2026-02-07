@@ -63,7 +63,7 @@ public class SubscriptionService implements ISubscriptionService {
     @Transactional
     public SubscriptionResponse changeSubscriptionType(UUID accountId, ChangeSubscriptionRequest subscriptionType) {
         Subscription subscription = subscriptionRepository.findByAccount_Id(accountId)
-                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notFound",null, getCurrentLocale())));
+                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound",null, getCurrentLocale())));
 
         subscription.setSubscriptionType(subscriptionType.getSubscriptionType());
         
@@ -99,7 +99,7 @@ public class SubscriptionService implements ISubscriptionService {
     @Override
     public void expireSingleSubscription(UUID subscriptionId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notFound", null, getCurrentLocale())));
+                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, getCurrentLocale())));
 
         if(subscription == null) {
             return;
@@ -124,7 +124,7 @@ public class SubscriptionService implements ISubscriptionService {
      @Override
         public void sendReminderEmailForExpiringSubscription(UUID subscriptionId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notFound", null, getCurrentLocale())));
+                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, getCurrentLocale())));
             if(subscription.getEndDate() == null) {
                 return;
             }
