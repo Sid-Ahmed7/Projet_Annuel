@@ -12,6 +12,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.glotrush.dto.response.ErrorResponse;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,7 +50,8 @@ public class GlobalExceptionHandler {
        ========================= */
     @ExceptionHandler({
             UserNotFoundException.class,
-            UsernameNotFoundException.class
+            UsernameNotFoundException.class,
+            SubscriptionNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         return buildError("User not found", HttpStatus.NOT_FOUND);
@@ -60,7 +63,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             EmailAlreadyExistsException.class,
             UsernameAlreadyExistsException.class,
-            TwoFactorAlreadyEnabledException.class
+            TwoFactorAlreadyEnabledException.class,
+            SubscriptionAlreadyExistException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.CONFLICT);
