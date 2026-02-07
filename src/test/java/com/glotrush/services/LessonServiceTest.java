@@ -14,31 +14,45 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
+import com.glotrush.entities.lesson.FlashcardLesson;
+import com.glotrush.mapping.LessonEntityToLessonResponse;
+import com.glotrush.mapping.LessonRequestToLessonEntity;
+import com.glotrush.repositories.TopicRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.glotrush.builder.LessonBuilder;
 import com.glotrush.dto.request.CompleteLessonRequest;
+import com.glotrush.dto.request.lesson.FlashcardLessonRequest;
+import com.glotrush.dto.request.lesson.MatchingPairLessonRequest;
+import com.glotrush.dto.request.lesson.QcmLessonRequest;
+import com.glotrush.dto.request.lesson.SortingExerciseLessonRequest;
+import com.glotrush.dto.response.lesson.FlashcardLessonResponse;
+import com.glotrush.dto.response.lesson.MatchingPairLessonResponse;
+import com.glotrush.dto.response.lesson.QcmLessonResponse;
+import com.glotrush.dto.response.lesson.SortingExerciseLessonResponse;
+import com.glotrush.factory.LessonTestFactory;
+import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.dto.response.UserLessonProgressSummary;
 import com.glotrush.dto.response.UserProgressResponse;
 import com.glotrush.entities.Accounts;
-import com.glotrush.entities.Lesson;
-import com.glotrush.entities.LessonContent;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserLessonProgress;
 import com.glotrush.entities.UserProgress;
 import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.exceptions.UserNotFoundException;
+import com.glotrush.entities.lesson.FlashcardLesson;
+import com.glotrush.entities.lesson.MatchingPairLesson;
+import com.glotrush.entities.lesson.QcmLesson;
+import com.glotrush.entities.lesson.SortingExerciseLesson;
 import com.glotrush.repositories.AccountsRepository;
-import com.glotrush.repositories.LessonContentRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.services.lesson.LessonService;
@@ -56,18 +70,22 @@ class LessonServiceTest {
     private MessageSource messageSource;
     @Mock
     private LessonRepository lessonRepository;
+    @Mock
+    private TopicRepository topicRepository;
 
     @Mock
     private UserLessonProgressRepository userLessonProgressRepository;
-
-    @Mock
-    private LessonContentRepository lessonContentRepository;
 
     @Mock
     private AccountsRepository accountsRepository;
 
     @Mock
     private ProgressService progressService;
+
+    @Mock
+    private LessonEntityToLessonResponse lessonEntityToLessonResponse;
+    @Mock
+    private LessonRequestToLessonEntity lessonRequestToLessonEntity;
 
     @Mock
     private LessonBuilder lessonBuilder;
@@ -78,15 +96,12 @@ class LessonServiceTest {
     private UUID lessonId;
     private UUID topicId;
     private Accounts account;
-    private Topic topic;
-    private Lesson lesson;
+    private FlashcardLesson lesson;
     private UserLessonProgress userLessonProgress;
-    private LessonContent lessonContent;
-
 
     @BeforeEach
     void setUp() {
-        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, lessonContentRepository, accountsRepository, progressService, lessonBuilder);
+        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity);
         accountId = UUID.randomUUID();
         lessonId = UUID.randomUUID();
         topicId = UUID.randomUUID();
@@ -96,13 +111,13 @@ class LessonServiceTest {
                 .email("test@exemple.com")
                 .build();
 
-        topic = Topic.builder()
+        Topic topic = Topic.builder()
                 .id(topicId)
                 .name("Spring Basics")
                 .totalLessons(10)
                 .build();
 
-        lesson = Lesson.builder()
+        lesson = FlashcardLesson.builder()
                 .id(lessonId)
                 .title("Introduction to Spring")
                 .description("Learn about Spring framework basics")
@@ -124,12 +139,6 @@ class LessonServiceTest {
                 .score(20.00)
                 .timeSpentSeconds(0)
                 .build();
-
-        lessonContent = LessonContent.builder()
-                .id(UUID.randomUUID())
-                .lesson(lesson)
-                .content("<h1>Welcome to Spring</h1><p>The best framework</p>")
-                .build();
     }
 
 
@@ -145,9 +154,7 @@ class LessonServiceTest {
                 .thenReturn(List.of(lesson));
         when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
                 .thenReturn(Optional.of(userLessonProgress));
-        when(lessonContentRepository.findByLesson_Id(lessonId))
-                .thenReturn(Optional.of(lessonContent));
-        when(lessonBuilder.mapToLessonResponse(eq(lesson), any(), any()))
+        when(lessonBuilder.mapLessonToLessonResponse(eq(lesson), any(), any()))
                 .thenReturn(expectedResponse);
 
         List<LessonResponse> result = lessonService.getLessonsByTopic(topicId, accountId);
@@ -175,15 +182,13 @@ class LessonServiceTest {
         LessonResponse expectedResponse = LessonResponse.builder()
                 .id(lessonId)
                 .title("Introduction to Spring")
-                .content("<h1>Welcome to Spring</h1><p>The best framework</p>")
+                .description("")
                 .build();
 
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
         when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
                 .thenReturn(Optional.of(userLessonProgress));
-        when(lessonContentRepository.findByLesson_Id(lessonId))
-                .thenReturn(Optional.of(lessonContent));
-        when(lessonBuilder.mapToLessonResponse(eq(lesson), any(), any()))
+        when(lessonBuilder.mapLessonToLessonResponse(eq(lesson), any(), any()))
                 .thenReturn(expectedResponse);
 
         LessonResponse result = lessonService.getLessonById(lessonId, accountId);
@@ -424,6 +429,130 @@ class LessonServiceTest {
         assertThatThrownBy(() -> lessonService.completeLesson(accountId, lessonId, request))
                 .isInstanceOf(LessonNotFoundException.class)
                 .hasMessage("Lesson progress not found");
+    }
+
+    @Test
+    @DisplayName("Should create lesson successfully and return FlashcardLessonResponse")
+    void shouldCreateLessonSuccessfully() {
+        FlashcardLessonRequest request = LessonTestFactory.createFlashcardLessonRequest(topicId, "New Lesson");
+        Topic topic = LessonTestFactory.createTopic(topicId, "Topic");
+        FlashcardLesson lessonEntity = LessonTestFactory.createFlashcardLesson(null, topic, "New Lesson");
+        FlashcardLessonResponse expectedResponse = LessonTestFactory.createFlashcardLessonResponse(UUID.randomUUID(), "New Lesson");
+
+        when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
+        when(lessonRequestToLessonEntity.lessonRequestToLessonEntity(eq(request), any())).thenReturn(lessonEntity);
+        when(lessonRepository.save(any())).thenReturn(lessonEntity);
+        when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
+
+        LessonResponse result = lessonService.createLesson(request);
+
+        assertThat(result).isInstanceOf(FlashcardLessonResponse.class);
+        assertThat(result.getTitle()).isEqualTo("New Lesson");
+        assertThat(((FlashcardLessonResponse)result).getFlashcards()).isNotNull();
+        verify(lessonRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("Should create MatchingPairLesson successfully and return MatchingPairLessonResponse")
+    void shouldCreateMatchingPairLessonSuccessfully() {
+        MatchingPairLessonRequest request = LessonTestFactory.createMatchingPairLessonRequest(topicId, "Matching Pair Lesson");
+        Topic topic = LessonTestFactory.createTopic(topicId, "Topic");
+        MatchingPairLesson lessonEntity = LessonTestFactory.createMatchingPairLesson(null, topic, "Matching Pair Lesson");
+        MatchingPairLessonResponse expectedResponse = LessonTestFactory.createMatchingPairLessonResponse(UUID.randomUUID(), "Matching Pair Lesson");
+
+        when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
+        when(lessonRequestToLessonEntity.lessonRequestToLessonEntity(eq(request), any())).thenReturn(lessonEntity);
+        when(lessonRepository.save(any())).thenReturn(lessonEntity);
+        when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
+
+        LessonResponse result = lessonService.createLesson(request);
+
+        assertThat(result).isInstanceOf(MatchingPairLessonResponse.class);
+        assertThat(result.getTitle()).isEqualTo("Matching Pair Lesson");
+        assertThat(((MatchingPairLessonResponse)result).getMatchingPairResponses()).isNotNull();
+        verify(lessonRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("Should create QcmLesson successfully and return QcmLessonResponse")
+    void shouldCreateQcmLessonSuccessfully() {
+        QcmLessonRequest request = LessonTestFactory.createQcmLessonRequest(topicId, "QCM Lesson");
+        Topic topic = LessonTestFactory.createTopic(topicId, "Topic");
+        QcmLesson lessonEntity = LessonTestFactory.createQcmLesson(null, topic, "QCM Lesson");
+        QcmLessonResponse expectedResponse = LessonTestFactory.createQcmLessonResponse(UUID.randomUUID(), "QCM Lesson");
+
+        when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
+        when(lessonRequestToLessonEntity.lessonRequestToLessonEntity(eq(request), any())).thenReturn(lessonEntity);
+        when(lessonRepository.save(any())).thenReturn(lessonEntity);
+        when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
+
+        LessonResponse result = lessonService.createLesson(request);
+
+        assertThat(result).isInstanceOf(QcmLessonResponse.class);
+        assertThat(result.getTitle()).isEqualTo("QCM Lesson");
+        assertThat(((QcmLessonResponse)result).getQcmQuestionResponses()).isNotNull();
+        verify(lessonRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("Should create SortingExerciseLesson successfully and return SortingExerciseLessonResponse")
+    void shouldCreateSortingExerciseLessonSuccessfully() {
+        SortingExerciseLessonRequest request = LessonTestFactory.createSortingExerciseLessonRequest(topicId, "Sorting Exercise Lesson");
+        Topic topic = LessonTestFactory.createTopic(topicId, "Topic");
+        SortingExerciseLesson lessonEntity = LessonTestFactory.createSortingExerciseLesson(null, topic, "Sorting Exercise Lesson");
+        SortingExerciseLessonResponse expectedResponse = LessonTestFactory.createSortingExerciseLessonResponse(UUID.randomUUID(), "Sorting Exercise Lesson");
+
+        when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
+        when(lessonRequestToLessonEntity.lessonRequestToLessonEntity(eq(request), any())).thenReturn(lessonEntity);
+        when(lessonRepository.save(any())).thenReturn(lessonEntity);
+        when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
+
+        LessonResponse result = lessonService.createLesson(request);
+
+        assertThat(result).isInstanceOf(SortingExerciseLessonResponse.class);
+        assertThat(result.getTitle()).isEqualTo("Sorting Exercise Lesson");
+        assertThat(((SortingExerciseLessonResponse)result).getSortingExerciseResponses()).isNotNull();
+        verify(lessonRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when topic not found on create lesson")
+    void shouldThrowTopicNotFoundOnCreateLesson() {
+        FlashcardLessonRequest request = LessonTestFactory.createFlashcardLessonRequest(topicId, "New Lesson");
+        when(topicRepository.findById(topicId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> lessonService.createLesson(request))
+                .isInstanceOf(TopicNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("Should update lesson successfully")
+    void shouldUpdateLessonSuccessfully() {
+        FlashcardLessonRequest request = LessonTestFactory.createFlashcardLessonRequest(topicId, "Updated Lesson");
+        Topic topic = LessonTestFactory.createTopic(topicId, "Topic");
+        FlashcardLesson existingLesson = LessonTestFactory.createFlashcardLesson(lessonId, topic, "Old Lesson");
+        LessonResponse expectedResponse = LessonResponse.builder().id(lessonId).title("Updated Lesson").build();
+
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(existingLesson));
+        when(lessonRequestToLessonEntity.lessonRequestToLessonEntity(eq(request), any())).thenReturn(existingLesson);
+        when(lessonRepository.save(any())).thenReturn(existingLesson);
+        when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
+
+        LessonResponse result = lessonService.updateLesson(lessonId, request);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getTitle()).isEqualTo("Updated Lesson");
+        verify(lessonRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when lesson not found on update")
+    void shouldThrowLessonNotFoundOnUpdate() {
+        FlashcardLessonRequest request = LessonTestFactory.createFlashcardLessonRequest(topicId, "Updated Lesson");
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> lessonService.updateLesson(lessonId, request))
+                .isInstanceOf(LessonNotFoundException.class);
     }
 }
 
