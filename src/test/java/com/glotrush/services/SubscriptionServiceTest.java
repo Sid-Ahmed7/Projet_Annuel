@@ -37,6 +37,7 @@ import com.glotrush.entities.Accounts;
 import com.glotrush.entities.Subscription;
 import com.glotrush.enumerations.SubscriptionType;
 import com.glotrush.enumerations.UserRole;
+import com.glotrush.exceptions.SubscriptionAlreadyExistException;
 import com.glotrush.exceptions.SubscriptionNotFoundException;
 import com.glotrush.repositories.SubscriptionRepository;
 import com.glotrush.services.subscription.SubscriptionService;
@@ -114,7 +115,7 @@ class SubscriptionServiceTest {
 
         when(subscriptionRepository.existsByAccount_Id(accountId)).thenReturn(true);
         
-        subscriptionService.createSubscriptionForUser(accounts);
+        assertThatThrownBy(() -> subscriptionService.createSubscriptionForUser(accounts)).isInstanceOf(SubscriptionAlreadyExistException.class);
         verify(subscriptionRepository).existsByAccount_Id(accountId);
         verify(subscriptionBuilder, never()).buildFreeSubscription(accounts);
         verify(subscriptionRepository, never()).save(any(Subscription.class));
@@ -375,7 +376,7 @@ class SubscriptionServiceTest {
 
         subscriptionService.sendEmailWhenExpiringSoon();
 
-        verify(emailService, never()).sendSubscriptionExpiredSoonEmail(accounts.getEmail(), accounts.getUsername(), anyLong());
+        verify(emailService, never()).sendSubscriptionExpiredSoonEmail(eq(accounts.getEmail()), eq(accounts.getUsername()), anyLong());
     }
 
 
@@ -408,7 +409,7 @@ class SubscriptionServiceTest {
 
         subscriptionService.sendReminderEmailForExpiringSubscription(subscriptionId);
 
-        verify(emailService, never()).sendSubscriptionExpiredSoonEmail(accounts.getEmail(), accounts.getUsername(), anyLong());
+        verify(emailService, never()).sendSubscriptionExpiredSoonEmail(eq(accounts.getEmail()), eq(accounts.getUsername()), anyLong());
     }
 
     
