@@ -37,15 +37,11 @@ public abstract class LessonRequestToLessonEntity {
     }
 
     // ALL MAPPING TYPE OF LESSON
-    @Mapping(target = "id", ignore = true)
     protected abstract FlashcardLesson mapFlashcardLessonRequestToFlashcardLessonEntity(FlashcardLessonRequest request);
 
-    @Mapping(target = "id", ignore = true)
     protected abstract MatchingPairLesson mapMatchingPairLessonRequestToMatchingPairLessonEntity(MatchingPairLessonRequest request);
 
-    @Mapping(target = "id", ignore = true)
     protected abstract QcmLesson mapQcmLessonRequestToQcmLessonEntity(QcmLessonRequest request);
 
-    @Mapping(target = "id", ignore = true)
     protected abstract SortingExerciseLesson mapSortingExerciseLessonRequestToSortingExerciseLessonEntity(SortingExerciseLessonRequest request);
 }

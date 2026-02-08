@@ -5,6 +5,10 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.glotrush.dto.request.TopicRequest;
+import com.glotrush.entities.Language;
+import com.glotrush.mapping.TopicMapper;
+import com.glotrush.repositories.LanguageRepository;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
@@ -28,7 +32,9 @@ public class TopicService implements ITopicService {
     private final MessageSource messageSource;
     private final TopicRepository topicRepository;
     private final UserProgressRepository userProgressRepository;
+    private final LanguageRepository languageRepository;
     private final TopicBuilder topicBuilder;
+    private final TopicMapper topicMapper;
 
     protected final Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
@@ -59,5 +65,31 @@ public class TopicService implements ITopicService {
         Optional<UserProgress> progressOpt = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId);
         return topicBuilder.mapToTopicResponse(topic, progressOpt);
     }
-    
+
+    @Override
+    public TopicResponse createTopic(TopicRequest topicRequest) {
+        Language language = languageRepository.findById(topicRequest.getLanguageId()).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, getCurrentLocale())));
+        Topic topicEntity = topicMapper.mapTopicRequestToMapTopicEntities(topicRequest);
+        topicEntity.setLanguage(language);
+        topicRepository.save(topicEntity);
+        return topicMapper.mapTopicEntitiesToTopicResponse(topicEntity);
+    }
+
+    @Override
+    public void removeTopic(UUID topicId) {
+        if(!topicRepository.existsById(topicId)) {
+            throw new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, getCurrentLocale()));
+        }
+        topicRepository.deleteById(topicId);
+    }
+
+    @Override
+    public TopicResponse updateTopic(UUID topicId, TopicRequest topicRequest) {
+        languageRepository.findById(topicRequest.getLanguageId()).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, getCurrentLocale())));
+        topicRepository.findById(topicId).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, getCurrentLocale())));
+        Topic updatedTopic = topicMapper.mapTopicRequestToMapTopicEntities(topicRequest);
+        updatedTopic.setId(topicId);
+        return topicMapper.mapTopicEntitiesToTopicResponse(topicRepository.save(updatedTopic));
+    }
+
 }

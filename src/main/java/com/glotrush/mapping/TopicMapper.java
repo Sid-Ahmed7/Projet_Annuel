@@ -1,4 +1,27 @@
 package com.glotrush.mapping;
 
-public class TopicRequestToTopicEntity {
+import com.glotrush.dto.request.TopicRequest;
+import com.glotrush.dto.response.TopicResponse;
+import com.glotrush.entities.Topic;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.springframework.context.i18n.LocaleContextHolder;
+
+import java.util.Locale;
+
+@Mapper(componentModel = "spring")
+public abstract class TopicMapper {
+    protected final Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
+
+    // ALL MAPPING TYPE OF TOPIC
+    @Mapping(target = "id", ignore = true)
+    public abstract Topic mapTopicRequestToMapTopicEntities(TopicRequest topicRequest);
+
+    @Mapping(source = "language.id", target = "languageId")
+    @Mapping(source = "language.code", target = "languageCode")
+    @Mapping(source = "language.name", target = "languageName")
+    public abstract TopicResponse mapTopicEntitiesToTopicResponse(Topic topic);
+
 }

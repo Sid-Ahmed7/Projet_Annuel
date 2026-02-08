@@ -1,14 +1,20 @@
 package com.glotrush.controllers;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
+import com.glotrush.dto.request.LessonRequest;
+import com.glotrush.dto.request.TopicRequest;
+import com.glotrush.dto.response.ApiResponse;
+import com.glotrush.dto.response.LessonResponse;
+import jakarta.validation.Valid;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.glotrush.dto.response.TopicResponse;
 import com.glotrush.services.topic.ITopicService;
@@ -22,6 +28,11 @@ import lombok.RequiredArgsConstructor;
 public class TopicController {
 
     private final ITopicService topicService;
+    private final MessageSource messageSource;
+
+    protected final Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
 
     @GetMapping
     public ResponseEntity<List<TopicResponse>> getAllTopics(Authentication authentication) {
@@ -42,5 +53,27 @@ public class TopicController {
         UUID accountId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         TopicResponse topic = topicService.getTopicById(topicId, accountId);
         return ResponseEntity.ok(topic);
+    }
+
+    /* PARTIE ADMINISTRATEUR */
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<TopicResponse> createTopic(@Valid @RequestBody TopicRequest topicRequest){
+        TopicResponse topicResponse = topicService.createTopic(topicRequest);
+        return ResponseEntity.ok(topicResponse);
+    }
+
+    @PutMapping("/{topicId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<TopicResponse> updateTopic(@PathVariable UUID topicId, @Valid @RequestBody TopicRequest topicRequest){
+        TopicResponse topicResponse = topicService.updateTopic(topicId, topicRequest);
+        return ResponseEntity.ok(topicResponse);
+    }
+
+    @DeleteMapping("/{topicId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse> deleteTopic(@PathVariable UUID topicId){
+        topicService.removeTopic(topicId);
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.topic.deleted_successfully", null, getCurrentLocale())));
     }
 }

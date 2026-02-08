@@ -36,15 +36,19 @@ public abstract class LessonEntityToLessonResponse {
     }
 
     // ALL MAPPING TYPE OF LESSON
-    @Mapping(target = "id", ignore = true)
+    @Mapping(source = "topic.id", target = "topicId")
+    @Mapping(source = "topic.name", target = "topicName")
     protected abstract FlashcardLessonResponse mapFlashcardLessonEntityToFlashcardLessonResponse(FlashcardLesson request);
 
-    @Mapping(target = "id", ignore = true)
+    @Mapping(source = "topic.id", target = "topicId")
+    @Mapping(source = "topic.name", target = "topicName")
     protected abstract MatchingPairLessonResponse mapMatchingPairLessonEntityToMatchingPairLessonResponse(MatchingPairLesson request);
 
-    @Mapping(target = "id", ignore = true)
+    @Mapping(source = "topic.id", target = "topicId")
+    @Mapping(source = "topic.name", target = "topicName")
     protected abstract QcmLessonResponse mapQcmLessonEntityToQcmLessonResponse(QcmLesson request);
 
-    @Mapping(target = "id", ignore = true)
+    @Mapping(source = "topic.id", target = "topicId")
+    @Mapping(source = "topic.name", target = "topicName")
     protected abstract SortingExerciseLessonResponse mapSortingExerciseLessonEntityToSortingExerciseLessonResponse(SortingExerciseLesson request);
 }
