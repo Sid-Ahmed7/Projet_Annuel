@@ -4,6 +4,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import com.glotrush.dto.request.LanguageRequest;
+import com.glotrush.entities.Lesson;
+import com.glotrush.entities.Topic;
+import com.glotrush.exceptions.LessonNotFoundException;
+import com.glotrush.exceptions.TopicNotFoundException;
+import com.glotrush.mapping.LanguageMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
@@ -23,6 +29,7 @@ public class LanguageService implements ILanguageService {
     private final MessageSource messageSource;
     private final LanguageRepository languageRepository;
     private final LanguageBuilder languageBuilder;
+    private final LanguageMapper languageMapper;
 
     protected final Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
@@ -48,5 +55,32 @@ public class LanguageService implements ILanguageService {
         Language language = languageRepository.findByCode(code)
                 .orElseThrow(() -> new LanguageException(messageSource.getMessage("error.language.not_found", null, getCurrentLocale())));
         return languageBuilder.mapToLanguageResponse(language); 
+    }
+
+    @Override
+    public void removeLanguage(UUID languageId) {
+        if (!languageRepository.existsById(languageId)) {
+            throw new LessonNotFoundException(messageSource.getMessage("error.language.not_found", null, getCurrentLocale()));
+        }
+        languageRepository.deleteById(languageId);
+    }
+
+    @Override
+    public LanguageResponse updateLanguage(UUID languageId, LanguageRequest languageRequest) {
+        languageRepository.findById(languageId)
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.language.not_found", null, getCurrentLocale())));
+        Language language = languageMapper.mapLanguageRequestToMapLanguageEntities(languageRequest);
+        language.setId(languageId);
+        languageRepository.save(language);
+        return languageMapper.mapLanguageEntitiesToLanguageResponse(language);
+
+    }
+
+    @Override
+    public LanguageResponse createLanguage(LanguageRequest languageRequest) {
+        Language language = languageMapper.mapLanguageRequestToMapLanguageEntities(languageRequest);
+        languageRepository.save(language);
+        return languageMapper.mapLanguageEntitiesToLanguageResponse(language);
+
     }
 }

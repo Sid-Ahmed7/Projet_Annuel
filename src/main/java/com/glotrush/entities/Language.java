@@ -22,7 +22,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Language {
-    
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

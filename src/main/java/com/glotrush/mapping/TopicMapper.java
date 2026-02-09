@@ -11,9 +11,6 @@ import java.util.Locale;
 
 @Mapper(componentModel = "spring")
 public abstract class TopicMapper {
-    protected final Locale getCurrentLocale() {
-        return LocaleContextHolder.getLocale();
-    }
 
     // ALL MAPPING TYPE OF TOPIC
     @Mapping(target = "id", ignore = true)
