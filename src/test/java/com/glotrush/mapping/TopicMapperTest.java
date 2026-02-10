@@ -87,7 +87,5 @@ class TopicMapperTest {
         
         // Vérification des clés étrangères / données liées
         assertThat(response.getLanguageId()).isEqualTo(languageId);
-        assertThat(response.getLanguageCode()).isEqualTo("FR");
-        assertThat(response.getLanguageName()).isEqualTo("Français");
     }
 }

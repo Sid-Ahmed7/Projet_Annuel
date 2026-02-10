@@ -42,13 +42,16 @@ public abstract class LessonEntityToLessonResponse {
 
     @Mapping(source = "topic.id", target = "topicId")
     @Mapping(source = "topic.name", target = "topicName")
+    @Mapping(source = "matchingPairEntities", target = "matchingPairResponses")
     protected abstract MatchingPairLessonResponse mapMatchingPairLessonEntityToMatchingPairLessonResponse(MatchingPairLesson request);
 
     @Mapping(source = "topic.id", target = "topicId")
     @Mapping(source = "topic.name", target = "topicName")
+    @Mapping(source = "questions", target = "qcmQuestionResponses")
     protected abstract QcmLessonResponse mapQcmLessonEntityToQcmLessonResponse(QcmLesson request);
 
     @Mapping(source = "topic.id", target = "topicId")
     @Mapping(source = "topic.name", target = "topicName")
+    @Mapping(source = "sortingExerciseEntities", target = "sortingExerciseResponses")
     protected abstract SortingExerciseLessonResponse mapSortingExerciseLessonEntityToSortingExerciseLessonResponse(SortingExerciseLesson request);
 }

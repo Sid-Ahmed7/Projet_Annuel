@@ -68,8 +68,6 @@ class TopicControllerTest {
         topicId = UUID.randomUUID();
         topicRequest = TopicRequest.builder()
                 .languageId(UUID.randomUUID())
-                .languageCode("EN")
-                .languageName("English")
                 .name("Basics")
                 .description("Description")
                 .difficulty(1)

@@ -1,14 +1,14 @@
 package com.glotrush.dto.response.exercice;
 
-import com.glotrush.dto.request.LessonRequest;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
-@EqualsAndHashCode(callSuper = true)
+import java.util.UUID;
+
 @Data
-public class FlashcardResponse extends LessonRequest {
+public class FlashcardResponse {
+    private UUID id;
     @NotNull
     @NotEmpty
     private String front;

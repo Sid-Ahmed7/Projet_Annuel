@@ -79,6 +79,16 @@ public class GlobalExceptionHandler {
         return buildError(ex.getMessage(), HttpStatus.LOCKED);
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        log.error("JSON parse error: ", ex);
+        String message = "Invalid request body";
+        if (ex.getMessage() != null && ex.getMessage().contains("Could not resolve subtype")) {
+            message = "Invalid or missing lessonType";
+        }
+        return buildError(message, HttpStatus.BAD_REQUEST);
+    }
+
     /* =========================
        403 - FORBIDDEN
        ========================= */

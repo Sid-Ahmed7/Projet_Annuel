@@ -18,14 +18,6 @@ public class TopicRequest {
     private UUID languageId;
 
     @NotBlank
-    @Size(min = 2, max = 5)
-    private String languageCode;
-
-    @NotBlank
-    @Size(min = 2, max = 50)
-    private String languageName;
-
-    @NotBlank
     @Size(min = 2, max = 100)
     private String name;
 

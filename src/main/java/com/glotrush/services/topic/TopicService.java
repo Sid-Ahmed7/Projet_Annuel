@@ -1,5 +1,6 @@
 package com.glotrush.services.topic;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -71,6 +72,8 @@ public class TopicService implements ITopicService {
         Language language = languageRepository.findById(topicRequest.getLanguageId()).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, getCurrentLocale())));
         Topic topicEntity = topicMapper.mapTopicRequestToMapTopicEntities(topicRequest);
         topicEntity.setLanguage(language);
+        topicEntity.setCreatedAt(LocalDateTime.now());
+        topicEntity.setUpdatedAt(LocalDateTime.now());
         topicRepository.save(topicEntity);
         return topicMapper.mapTopicEntitiesToTopicResponse(topicEntity);
     }
@@ -85,10 +88,13 @@ public class TopicService implements ITopicService {
 
     @Override
     public TopicResponse updateTopic(UUID topicId, TopicRequest topicRequest) {
-        languageRepository.findById(topicRequest.getLanguageId()).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, getCurrentLocale())));
+        Language language = languageRepository.findById(topicRequest.getLanguageId()).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, getCurrentLocale())));
         topicRepository.findById(topicId).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, getCurrentLocale())));
         Topic updatedTopic = topicMapper.mapTopicRequestToMapTopicEntities(topicRequest);
         updatedTopic.setId(topicId);
+        updatedTopic.setLanguage(language);
+        updatedTopic.setCreatedAt(LocalDateTime.now());
+        updatedTopic.setUpdatedAt(LocalDateTime.now());
         return topicMapper.mapTopicEntitiesToTopicResponse(topicRepository.save(updatedTopic));
     }
 

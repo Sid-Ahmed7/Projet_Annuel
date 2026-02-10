@@ -8,6 +8,7 @@ import com.glotrush.dto.response.lesson.FlashcardLessonResponse;
 import com.glotrush.dto.response.lesson.MatchingPairLessonResponse;
 import com.glotrush.dto.response.lesson.QcmLessonResponse;
 import com.glotrush.dto.response.lesson.SortingExerciseLessonResponse;
+import com.glotrush.enumerations.LessonType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,6 +38,7 @@ public class LessonResponse {
     private Integer minLevelRequired;
     private Integer durationMinutes;
     private Boolean isActive;
+    private LessonType lessonType;
 
     private UserLessonProgressSummary userProgress;
 }

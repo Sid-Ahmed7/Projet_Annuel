@@ -144,6 +144,61 @@ class LessonControllerTest {
     }
 
     @Test
+    @DisplayName("Should fail when lessonType is missing")
+    @WithMockUser(roles = "ADMIN")
+    void testCreateLessonMissingType() throws Exception {
+        String json = """
+                {
+                    "topicId": "%s",
+                    "title": "Missing Type Lesson",
+                    "description": "Description",
+                    "orderIndex": 1,
+                    "xpReward": 50,
+                    "isLocked": false,
+                    "minLevelRequired": 1,
+                    "durationMinutes": 15,
+                    "isActive": true
+                }
+                """.formatted(UUID.randomUUID());
+
+        mockMvc.perform(post("/api/v1/lessons")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Should create lesson successfully when lessonType is provided in JSON")
+    @WithMockUser(roles = "ADMIN")
+    void testCreateLessonWithExplicitType() throws Exception {
+        UUID topicId = UUID.randomUUID();
+        String json = """
+                {
+                    "lessonType": "FLASHCARD",
+                    "topicId": "%s",
+                    "title": "Explicit Type Lesson",
+                    "description": "Description",
+                    "orderIndex": 1,
+                    "xpReward": 50,
+                    "isLocked": false,
+                    "minLevelRequired": 1,
+                    "durationMinutes": 15,
+                    "isActive": true,
+                    "flashcards": []
+                }
+                """.formatted(topicId);
+
+        FlashcardLessonResponse response = LessonTestFactory.createFlashcardLessonResponse(UUID.randomUUID(), "Explicit Type Lesson");
+        when(lessonService.createLesson(any())).thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/lessons")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Explicit Type Lesson"));
+    }
+
+    @Test
     @DisplayName("Should delete lesson successfully")
     @WithMockUser(roles = "ADMIN")
     void testDeleteLesson() throws Exception {

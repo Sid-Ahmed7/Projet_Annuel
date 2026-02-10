@@ -15,8 +15,6 @@ public class TopicResponse {
     
     private UUID id;
     private UUID languageId;
-    private String languageCode;
-    private String languageName;
     private String name;
     private String description;
     private Integer difficulty;

@@ -1,16 +1,15 @@
 package com.glotrush.dto.response.exercice;
 
-import com.glotrush.dto.request.LessonRequest;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.util.List;
+import java.util.UUID;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class QcmQuestionResponse extends LessonRequest {
+public class QcmQuestionResponse {
+    private UUID id;
     @NotNull
     @NotEmpty
     private String question;

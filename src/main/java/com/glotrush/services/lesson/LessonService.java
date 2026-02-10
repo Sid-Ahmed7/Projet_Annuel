@@ -151,10 +151,18 @@ public class LessonService implements ILessonService {
 
     @Override
     public LessonResponse updateLesson(UUID lessonId, LessonRequest lessonRequest) {
-        lessonRepository.findById(lessonId)
+        Lesson lessonOld = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale())));
+        Topic topic = topicRepository.findById(lessonRequest.getTopicId())
+                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, getCurrentLocale())));
+
+
+
         Lesson lesson = lessonRequestToLessonEntity.lessonRequestToLessonEntity(lessonRequest, messageSource);
         lesson.setId(lessonId);
+        lesson.setUpdatedAt(LocalDateTime.now());
+        lesson.setCreatedAt(lessonOld.getCreatedAt());
+        lesson.setTopic(topic);
         lessonRepository.save(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
     }
@@ -166,6 +174,8 @@ public class LessonService implements ILessonService {
 
         Lesson lesson = lessonRequestToLessonEntity.lessonRequestToLessonEntity(lessonRequest, messageSource);
         lesson.setTopic(topic);
+        lesson.setCreatedAt(LocalDateTime.now());
+        lesson.setUpdatedAt(LocalDateTime.now());
 
         lessonRepository.save(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);

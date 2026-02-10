@@ -17,8 +17,6 @@ public abstract class TopicMapper {
     public abstract Topic mapTopicRequestToMapTopicEntities(TopicRequest topicRequest);
 
     @Mapping(source = "language.id", target = "languageId")
-    @Mapping(source = "language.code", target = "languageCode")
-    @Mapping(source = "language.name", target = "languageName")
     public abstract TopicResponse mapTopicEntitiesToTopicResponse(Topic topic);
 
 }

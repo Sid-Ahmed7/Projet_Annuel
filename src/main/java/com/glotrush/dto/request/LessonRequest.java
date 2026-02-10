@@ -16,7 +16,8 @@ import java.util.UUID;
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
-        property = "lessonType"
+        property = "lessonType",
+        visible = true
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = FlashcardLessonRequest.class, name = "FLASHCARD"),
@@ -44,5 +45,6 @@ public abstract class LessonRequest {
     private Integer durationMinutes;
     @NotNull
     private Boolean isActive;
+    @NotNull
     private LessonType lessonType;
 }
