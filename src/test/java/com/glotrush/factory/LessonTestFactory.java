@@ -13,6 +13,7 @@ import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.entities.lesson.MatchingPairLesson;
 import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
+import com.glotrush.enumerations.LessonType;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -39,6 +40,7 @@ public class LessonTestFactory {
         request.setDurationMinutes(15);
         request.setIsActive(true);
         request.setFlashcards(new ArrayList<>());
+        request.setLessonType(LessonType.FLASHCARD);
         return request;
     }
 
@@ -70,6 +72,7 @@ public class LessonTestFactory {
                 .durationMinutes(15)
                 .isActive(true)
                 .flashcards(new ArrayList<>())
+                .lessonType(LessonType.MATCHING_PAIR)
                 .build();
     }
 
@@ -101,6 +104,7 @@ public class LessonTestFactory {
                 .durationMinutes(15)
                 .isActive(true)
                 .matchingPairResponses(new ArrayList<>())
+                .lessonType(LessonType.MATCHING_PAIR)
                 .build();
     }
 
@@ -132,6 +136,7 @@ public class LessonTestFactory {
                 .durationMinutes(15)
                 .isActive(true)
                 .qcmQuestionResponses(new ArrayList<>())
+                .lessonType(LessonType.QCM)
                 .build();
     }
 
@@ -163,6 +168,7 @@ public class LessonTestFactory {
                 .durationMinutes(15)
                 .isActive(true)
                 .sortingExerciseResponses(new ArrayList<>())
+                .lessonType(LessonType.SORTING_EXERCISE)
                 .build();
     }
 
@@ -178,6 +184,7 @@ public class LessonTestFactory {
         request.setDurationMinutes(15);
         request.setIsActive(true);
         request.setQcmQuestionRequests(new ArrayList<>());
+        request.setLessonType(LessonType.QCM);
         return request;
     }
 
@@ -193,6 +200,7 @@ public class LessonTestFactory {
         request.setDurationMinutes(15);
         request.setIsActive(true);
         request.setMatchingPairRequests(new ArrayList<>());
+        request.setLessonType(LessonType.MATCHING_PAIR);
         return request;
     }
 
@@ -208,6 +216,7 @@ public class LessonTestFactory {
         request.setDurationMinutes(15);
         request.setIsActive(true);
         request.setSortingExerciseRequests(new ArrayList<>());
+        request.setLessonType(LessonType.SORTING_EXERCISE);
         return request;
     }
 }

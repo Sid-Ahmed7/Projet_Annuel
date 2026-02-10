@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -534,7 +535,7 @@ class LessonServiceTest {
         LessonResponse expectedResponse = LessonResponse.builder().id(lessonId).title("Updated Lesson").build();
 
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(existingLesson));
-        when(lessonRequestToLessonEntity.lessonRequestToLessonEntity(eq(request), any())).thenReturn(existingLesson);
+        doNothing().when(lessonRequestToLessonEntity).updateLessonFromRequest(eq(request), eq(existingLesson), any());
         when(lessonRepository.save(any())).thenReturn(existingLesson);
         when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
 

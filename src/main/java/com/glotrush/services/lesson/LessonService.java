@@ -151,18 +151,17 @@ public class LessonService implements ILessonService {
 
     @Override
     public LessonResponse updateLesson(UUID lessonId, LessonRequest lessonRequest) {
-        Lesson lessonOld = lessonRepository.findById(lessonId)
+        Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale())));
-        Topic topic = topicRepository.findById(lessonRequest.getTopicId())
-                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, getCurrentLocale())));
 
+        if (lessonRequest.getTopicId() != null && !lessonRequest.getTopicId().equals(lesson.getTopic().getId())) {
+            Topic topic = topicRepository.findById(lessonRequest.getTopicId())
+                    .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, getCurrentLocale())));
+            lesson.setTopic(topic);
+        }
 
+        lessonRequestToLessonEntity.updateLessonFromRequest(lessonRequest, lesson, messageSource);
 
-        Lesson lesson = lessonRequestToLessonEntity.lessonRequestToLessonEntity(lessonRequest, messageSource);
-        lesson.setId(lessonId);
-        lesson.setUpdatedAt(LocalDateTime.now());
-        lesson.setCreatedAt(lessonOld.getCreatedAt());
-        lesson.setTopic(topic);
         lessonRepository.save(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
     }
@@ -174,8 +173,6 @@ public class LessonService implements ILessonService {
 
         Lesson lesson = lessonRequestToLessonEntity.lessonRequestToLessonEntity(lessonRequest, messageSource);
         lesson.setTopic(topic);
-        lesson.setCreatedAt(LocalDateTime.now());
-        lesson.setUpdatedAt(LocalDateTime.now());
 
         lessonRepository.save(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);

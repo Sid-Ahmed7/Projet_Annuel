@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -284,9 +285,8 @@ class TopicServiceTest {
                 .build();
         TopicResponse expectedResponse = TopicResponse.builder().id(topicId).name("Updated Name").build();
 
-        when(languageRepository.findById(languageId)).thenReturn(Optional.of(language));
         when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
-        when(topicMapper.mapTopicRequestToMapTopicEntities(any())).thenReturn(topic);
+        doNothing().when(topicMapper).updateTopicFromRequest(eq(request), eq(topic));
         when(topicMapper.mapTopicEntitiesToTopicResponse(any())).thenReturn(expectedResponse);
         when(topicRepository.save(any())).thenReturn(topic);
 
@@ -301,7 +301,6 @@ class TopicServiceTest {
     @DisplayName("Should throw exception when updating non-existent topic")
     void shouldThrowExceptionWhenUpdatingNonExistentTopic() {
         TopicRequest request = TopicRequest.builder().languageId(languageId).build();
-        when(languageRepository.findById(languageId)).thenReturn(Optional.of(language));
         when(topicRepository.findById(topicId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> topicService.updateTopic(topicId, request))

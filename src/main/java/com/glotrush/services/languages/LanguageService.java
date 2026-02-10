@@ -67,14 +67,13 @@ public class LanguageService implements ILanguageService {
 
     @Override
     public LanguageResponse updateLanguage(UUID languageId, LanguageRequest languageRequest) {
-        Language languageOld = languageRepository.findById(languageId)
+        Language language = languageRepository.findById(languageId)
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.language.not_found", null, getCurrentLocale())));
-        Language language = languageMapper.mapLanguageRequestToMapLanguageEntities(languageRequest);
-        language.setId(languageId);
-        language.setCreatedAt(languageOld.getCreatedAt());
+        
+        languageMapper.updateLanguageFromRequest(languageRequest, language);
+        
         languageRepository.save(language);
         return languageMapper.mapLanguageEntitiesToLanguageResponse(language);
-
     }
 
     @Override

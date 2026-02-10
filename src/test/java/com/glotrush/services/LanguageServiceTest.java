@@ -2,6 +2,9 @@ package com.glotrush.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -179,7 +182,7 @@ class LanguageServiceTest {
         request.setName("Japanese Updated");
 
         when(languageRepository.findById(languageId)).thenReturn(Optional.of(japanese));
-        when(languageMapper.mapLanguageRequestToMapLanguageEntities(request)).thenReturn(japanese);
+        doNothing().when(languageMapper).updateLanguageFromRequest(eq(request), eq(japanese));
         when(languageMapper.mapLanguageEntitiesToLanguageResponse(japanese)).thenReturn(LanguageResponse.builder().code("ja-updated").build());
 
         LanguageResponse result = languageService.updateLanguage(languageId, request);
