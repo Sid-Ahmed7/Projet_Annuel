@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
+import com.glotrush.dto.request.LanguageRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -156,7 +157,7 @@ class LanguageServiceTest {
     @Test
     @DisplayName("Should create language")
     void shouldCreateLanguage() {
-        com.glotrush.dto.request.LanguageRequest request = new com.glotrush.dto.request.LanguageRequest();
+        LanguageRequest request = new LanguageRequest();
         request.setCode("es");
         request.setName("Spanish");
 

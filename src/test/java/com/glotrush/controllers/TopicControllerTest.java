@@ -12,6 +12,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.UUID;
 
+import com.glotrush.security.jwt.JwtAuthenticationEntryPoint;
+import com.glotrush.security.jwt.JwtAuthenticationFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,10 +56,10 @@ class TopicControllerTest {
     private UserDetailsService userDetailsService;
 
     @MockitoBean
-    private com.glotrush.security.jwt.JwtAuthenticationFilter jwtAuthenticationFilter;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
-    private com.glotrush.security.jwt.JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     private TopicRequest topicRequest;
     private TopicResponse topicResponse;
