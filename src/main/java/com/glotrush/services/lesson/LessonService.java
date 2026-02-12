@@ -6,6 +6,9 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.glotrush.dto.request.LessonRequest;
+import com.glotrush.mapping.LessonEntityToLessonResponse;
+import com.glotrush.services.progress.IProgressService;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,17 +21,16 @@ import com.glotrush.dto.response.UserLessonProgressSummary;
 import com.glotrush.dto.response.UserProgressResponse;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.Lesson;
-import com.glotrush.entities.LessonContent;
 import com.glotrush.entities.UserLessonProgress;
 import com.glotrush.entities.UserProgress;
 import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.exceptions.UserNotFoundException;
-import com.glotrush.repositories.AccountsRepository;
-import com.glotrush.repositories.LessonContentRepository;
-import com.glotrush.repositories.LessonRepository;
-import com.glotrush.repositories.UserLessonProgressRepository;
-import com.glotrush.services.progress.IProgressService;
+import com.glotrush.mapping.LessonRequestToLessonEntity;
+import com.glotrush.repositories.*;
+import com.glotrush.services.progress.ProgressService;
+import com.glotrush.entities.Topic;
+import com.glotrush.exceptions.TopicNotFoundException;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -40,10 +42,12 @@ public class LessonService implements ILessonService {
     private final MessageSource messageSource;
     private final LessonRepository lessonRepository;
     private final UserLessonProgressRepository userLessonProgressRepository;
-    private final LessonContentRepository lessonContentRepository;
     private final AccountsRepository accountsRepository;
     private final IProgressService progressService;
     private final LessonBuilder lessonBuilder;
+    private final TopicRepository topicRepository;
+    private final LessonEntityToLessonResponse lessonEntityToLessonResponse;
+    private final LessonRequestToLessonEntity lessonRequestToLessonEntity;
 
     protected final Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
@@ -69,7 +73,7 @@ public class LessonService implements ILessonService {
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, getCurrentLocale())));
 
         Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new LessonNotFoundException("Lesson not found"));    
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale())));
                 
         UserLessonProgress progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
                 .orElseGet(() -> lessonBuilder.createNewLessonProgress(account, lesson));
@@ -109,7 +113,7 @@ public class LessonService implements ILessonService {
         }
     }
 
-      private CompleteLessonResponse handleFirstCompletion(UUID accountId, Lesson lesson) {
+    private CompleteLessonResponse handleFirstCompletion(UUID accountId, Lesson lesson) {
         Integer xpEarned = lesson.getXpReward();
         
         UserProgress topicProgress = progressService.getOrCreateProgress(accountId, lesson.getTopic().getId());
@@ -133,12 +137,45 @@ public class LessonService implements ILessonService {
 
     private LessonResponse mapToLessonResponse(Lesson lesson, UUID accountId) {
         Optional<UserLessonProgress> progress = accountId != null ? userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lesson.getId()) : Optional.empty();
-
-        String content = lessonContentRepository.findByLesson_Id(lesson.getId())
-                .map(LessonContent::getContent)
-                .orElse(null);
-
-        return lessonBuilder.mapToLessonResponse(lesson, progress, content);
+        // TODO fix content plus tard
+        return lessonBuilder.mapLessonToLessonResponse(lesson, progress, "");
     }
-    
+
+    @Override
+    public void removeLesson(UUID lessonId) {
+        if (!lessonRepository.existsById(lessonId)) {
+            throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale()));
+        }
+        lessonRepository.deleteById(lessonId);
+    }
+
+    @Override
+    public LessonResponse updateLesson(UUID lessonId, LessonRequest lessonRequest) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale())));
+
+        if (lessonRequest.getTopicId() != null && !lessonRequest.getTopicId().equals(lesson.getTopic().getId())) {
+            Topic topic = topicRepository.findById(lessonRequest.getTopicId())
+                    .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, getCurrentLocale())));
+            lesson.setTopic(topic);
+        }
+
+        lessonRequestToLessonEntity.updateLessonFromRequest(lessonRequest, lesson, messageSource);
+
+        lessonRepository.save(lesson);
+        return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
+    }
+
+    @Override
+    public LessonResponse createLesson(LessonRequest lessonRequest){
+        Topic topic = topicRepository.findById(lessonRequest.getTopicId())
+                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, getCurrentLocale())));
+
+        Lesson lesson = lessonRequestToLessonEntity.lessonRequestToLessonEntity(lessonRequest, messageSource);
+        lesson.setTopic(topic);
+
+        lessonRepository.save(lesson);
+        return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
+    }
+
 }

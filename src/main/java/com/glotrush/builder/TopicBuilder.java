@@ -29,8 +29,6 @@ public class TopicBuilder {
         return TopicResponse.builder()
                 .id(topic.getId())
                 .languageId(topic.getLanguage().getId())
-                .languageCode(topic.getLanguage().getCode())
-                .languageName(topic.getLanguage().getName())
                 .name(topic.getName())
                 .description(topic.getDescription())
                 .difficulty(topic.getDifficulty())

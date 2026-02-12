@@ -57,7 +57,7 @@ class SubscriptionControllerIntegrationTest {
     private Accounts account;
     private Subscription subscription;
 
-    private static final String TEST_EMAIL="aze62955@gmail.com";
+    private static final String TEST_EMAIL="factoryflop@gmail.com";
     private static final String TEST_PASSWORD="Password123!@#";
     private static final String TEST_USERNAME="Muryōkūsho";
 

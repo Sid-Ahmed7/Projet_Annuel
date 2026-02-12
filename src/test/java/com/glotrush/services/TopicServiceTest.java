@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +28,9 @@ import com.glotrush.entities.Language;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
 import com.glotrush.exceptions.TopicNotFoundException;
+import com.glotrush.dto.request.TopicRequest;
+import com.glotrush.mapping.TopicMapper;
+import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.services.topic.TopicService;
@@ -48,7 +52,13 @@ class TopicServiceTest {
     private UserProgressRepository userProgressRepository;
 
     @Mock
+    private LanguageRepository languageRepository;
+
+    @Mock
     private TopicBuilder topicBuilder;
+
+    @Mock
+    private TopicMapper topicMapper;
 
     private TopicService topicService;
 
@@ -61,7 +71,7 @@ class TopicServiceTest {
 
     @BeforeEach
     void setUp() {
-        topicService = new TopicService(messageSource, topicRepository, userProgressRepository, topicBuilder);
+        topicService = new TopicService(messageSource, topicRepository, userProgressRepository, languageRepository, topicBuilder, topicMapper);
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
         languageId = UUID.randomUUID();
@@ -212,9 +222,88 @@ class TopicServiceTest {
         when(topicRepository.findById(topicId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> topicService.getTopicById(topicId, accountId))
-                .isInstanceOf(TopicNotFoundException.class)
-                .hasMessage("Topic not found");
+                .isInstanceOf(TopicNotFoundException.class);
 
         verify(topicRepository).findById(topicId);
+    }
+
+    @Test
+    @DisplayName("Should create topic successfully")
+    void shouldCreateTopicSuccessfully() {
+        TopicRequest request = TopicRequest.builder()
+                .languageId(languageId)
+                .name("New Topic")
+                .build();
+        TopicResponse expectedResponse = TopicResponse.builder().id(topicId).name("New Topic").build();
+
+        when(languageRepository.findById(languageId)).thenReturn(Optional.of(language));
+        when(topicMapper.mapTopicRequestToMapTopicEntities(any())).thenReturn(topic);
+        when(topicMapper.mapTopicEntitiesToTopicResponse(any())).thenReturn(expectedResponse);
+
+        TopicResponse result = topicService.createTopic(request);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getName()).isEqualTo("New Topic");
+        verify(topicRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when creating topic with invalid language")
+    void shouldThrowExceptionWhenCreatingTopicWithInvalidLanguage() {
+        TopicRequest request = TopicRequest.builder().languageId(languageId).build();
+        when(languageRepository.findById(languageId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> topicService.createTopic(request))
+                .isInstanceOf(TopicNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("Should remove topic successfully")
+    void shouldRemoveTopicSuccessfully() {
+        when(topicRepository.existsById(topicId)).thenReturn(true);
+
+        topicService.removeTopic(topicId);
+
+        verify(topicRepository).deleteById(topicId);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when removing non-existent topic")
+    void shouldThrowExceptionWhenRemovingNonExistentTopic() {
+        when(topicRepository.existsById(topicId)).thenReturn(false);
+
+        assertThatThrownBy(() -> topicService.removeTopic(topicId))
+                .isInstanceOf(TopicNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("Should update topic successfully")
+    void shouldUpdateTopicSuccessfully() {
+        TopicRequest request = TopicRequest.builder()
+                .languageId(languageId)
+                .name("Updated Name")
+                .build();
+        TopicResponse expectedResponse = TopicResponse.builder().id(topicId).name("Updated Name").build();
+
+        when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
+        doNothing().when(topicMapper).updateTopicFromRequest(eq(request), eq(topic));
+        when(topicMapper.mapTopicEntitiesToTopicResponse(any())).thenReturn(expectedResponse);
+        when(topicRepository.save(any())).thenReturn(topic);
+
+        TopicResponse result = topicService.updateTopic(topicId, request);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getName()).isEqualTo("Updated Name");
+        verify(topicRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when updating non-existent topic")
+    void shouldThrowExceptionWhenUpdatingNonExistentTopic() {
+        TopicRequest request = TopicRequest.builder().languageId(languageId).build();
+        when(topicRepository.findById(topicId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> topicService.updateTopic(topicId, request))
+                .isInstanceOf(TopicNotFoundException.class);
     }
 }

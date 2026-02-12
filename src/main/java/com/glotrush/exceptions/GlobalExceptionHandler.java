@@ -6,6 +6,7 @@ import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -78,11 +79,26 @@ public class GlobalExceptionHandler {
         return buildError(ex.getMessage(), HttpStatus.LOCKED);
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        log.error("JSON parse error: ", ex);
+        String message = "Invalid request body";
+        if (ex.getMessage() != null && ex.getMessage().contains("Could not resolve subtype")) {
+            message = "Invalid or missing lessonType";
+        }
+        return buildError(message, HttpStatus.BAD_REQUEST);
+    }
+
     /* =========================
        403 - FORBIDDEN
        ========================= */
     @ExceptionHandler(PasswordExpiredException.class)
     public ResponseEntity<ErrorResponse> handleForbidden(PasswordExpiredException ex) {
+        return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
         return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 

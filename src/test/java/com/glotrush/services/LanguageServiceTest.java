@@ -2,6 +2,9 @@ package com.glotrush.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
+import com.glotrush.dto.request.LanguageRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,12 +48,14 @@ class LanguageServiceTest {
     private MessageSource messageSource;
     @Mock
     private LanguageBuilder languageBuilder;
+    @Mock
+    private com.glotrush.mapping.LanguageMapper languageMapper;
     private Language japanese;
     private Language french;
 
     @BeforeEach
     void setUp() {
-        languageService = new LanguageService(messageSource, languageRepository, languageBuilder);
+        languageService = new LanguageService(messageSource, languageRepository, languageBuilder, languageMapper);
         japanese = Language.builder()
                 .id(UUID.randomUUID())
                 .code("ja")
@@ -146,5 +152,65 @@ class LanguageServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getCode()).isEqualTo("ja");
+    }
+
+    @Test
+    @DisplayName("Should create language")
+    void shouldCreateLanguage() {
+        LanguageRequest request = new LanguageRequest();
+        request.setCode("es");
+        request.setName("Spanish");
+
+        Language language = Language.builder().code("es").name("Spanish").build();
+        LanguageResponse response = LanguageResponse.builder().code("es").name("Spanish").build();
+
+        when(languageMapper.mapLanguageRequestToMapLanguageEntities(request)).thenReturn(language);
+        when(languageMapper.mapLanguageEntitiesToLanguageResponse(language)).thenReturn(response);
+
+        LanguageResponse result = languageService.createLanguage(request);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getCode()).isEqualTo("es");
+        verify(languageRepository).save(language);
+    }
+
+    @Test
+    @DisplayName("Should update language")
+    void shouldUpdateLanguage() {
+        UUID languageId = japanese.getId();
+        com.glotrush.dto.request.LanguageRequest request = new com.glotrush.dto.request.LanguageRequest();
+        request.setCode("ja-updated");
+        request.setName("Japanese Updated");
+
+        when(languageRepository.findById(languageId)).thenReturn(Optional.of(japanese));
+        doNothing().when(languageMapper).updateLanguageFromRequest(eq(request), eq(japanese));
+        when(languageMapper.mapLanguageEntitiesToLanguageResponse(japanese)).thenReturn(LanguageResponse.builder().code("ja-updated").build());
+
+        LanguageResponse result = languageService.updateLanguage(languageId, request);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getCode()).isEqualTo("ja-updated");
+        verify(languageRepository).save(japanese);
+    }
+
+    @Test
+    @DisplayName("Should remove language")
+    void shouldRemoveLanguage() {
+        UUID languageId = japanese.getId();
+        when(languageRepository.existsById(languageId)).thenReturn(true);
+
+        languageService.removeLanguage(languageId);
+
+        verify(languageRepository).deleteById(languageId);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when removing non-existent language")
+    void shouldThrowExceptionWhenRemovingNonExistentLanguage() {
+        UUID languageId = UUID.randomUUID();
+        when(languageRepository.existsById(languageId)).thenReturn(false);
+
+        assertThatThrownBy(() -> languageService.removeLanguage(languageId))
+                .isInstanceOf(com.glotrush.exceptions.LessonNotFoundException.class);
     }
 }
