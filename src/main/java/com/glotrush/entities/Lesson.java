@@ -41,7 +41,7 @@ public abstract class Lesson {
     private Integer xpReward = 10;
 
     @Column(name = "is_locked", nullable = false)
-    private Boolean isLocked = false;
+    private Boolean isLocked = false; // TODO SUPPRIMER IS LOCKED
 
     @Column(name = "min_level_required")
     private Integer minLevelRequired;

@@ -34,7 +34,6 @@ class TopicMapperTest {
                 .totalLessons(5)
                 .orderIndex(1)
                 .isActive(true)
-                .minLevelRequired(2)
                 .build();
 
         Topic entity = topicMapper.mapTopicRequestToMapTopicEntities(request);
@@ -46,7 +45,6 @@ class TopicMapperTest {
         assertThat(entity.getTotalLessons()).isEqualTo(request.getTotalLessons());
         assertThat(entity.getOrderIndex()).isEqualTo(request.getOrderIndex());
         assertThat(entity.getIsActive()).isEqualTo(request.getIsActive());
-        assertThat(entity.getMinLevelRequired()).isEqualTo(request.getMinLevelRequired());
         // languageId n'est pas mappé directement car Topic a une entité Language
     }
 
@@ -70,7 +68,6 @@ class TopicMapperTest {
                 .totalLessons(5)
                 .orderIndex(1)
                 .isActive(true)
-                .minLevelRequired(2)
                 .build();
 
         TopicResponse response = topicMapper.mapTopicEntitiesToTopicResponse(entity);
@@ -83,8 +80,7 @@ class TopicMapperTest {
         assertThat(response.getTotalLessons()).isEqualTo(entity.getTotalLessons());
         assertThat(response.getOrderIndex()).isEqualTo(entity.getOrderIndex());
         assertThat(response.getIsActive()).isEqualTo(entity.getIsActive());
-        assertThat(response.getMinLevelRequired()).isEqualTo(entity.getMinLevelRequired());
-        
+
         // Vérification des clés étrangères / données liées
         assertThat(response.getLanguageId()).isEqualTo(languageId);
     }

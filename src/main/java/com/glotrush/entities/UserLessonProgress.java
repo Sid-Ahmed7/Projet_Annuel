@@ -34,7 +34,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserLessonProgress {
-    
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -52,7 +51,7 @@ public class UserLessonProgress {
     private LessonStatus status = LessonStatus.NOT_STARTED;
 
     @Column(name = "attempts", nullable = false)
-    private Integer attempts = 0;
+    private Integer attempts = 0; // TODO AMELIORER L'IMPLEMTATION POUR QUE CA PRENNE EN COMPTE LE NOMBRE D'ECHEC, ECHEC A DETERMINER VIA UN INT QUE LE USER VA RENSEIGNER
 
     @Column(name = "score")
     private Double score; 
@@ -61,7 +60,7 @@ public class UserLessonProgress {
     private Integer timeSpentSeconds = 0;
 
     @Column(name = "completed_at")
-    private LocalDateTime completedAt;
+    private LocalDateTime completedAt; // TODO SUPPRIMER CETTE COLONNE
 
     @Column(name = "last_attempt_at")
     private LocalDateTime lastAttemptAt;

@@ -36,7 +36,7 @@ public class UserProfile {
     private Accounts account;
 
     @Column(name = "photo_url")
-    private String photoUrl;
+    private String photoUrl; // TODO A DETERMINER LA SOLUTION TECHNIQUE
 
     @Column(name ="bio")
     private String bio;
@@ -45,10 +45,10 @@ public class UserProfile {
     private String displayName;
     
     @Column(name = "country_code", length = 2)
-    private String countryCode;
+    private String countryCode; // TODO A DETERMINER : METTRE EN PLACE UNE ENUMERATION POUR CHAQUE CODE PAYS QU'ON GERE
 
     @Column(name = "timezone", length = 50)
-    private String timezone;
+    private String timezone; // TODO PEUX ETRE UNE ENUMERATION EGALEMENT A VOIR LORS DE L'IMPLEMENTATION
 
     @Column(name = "is_public", nullable = false)
     private Boolean isPublic = true;

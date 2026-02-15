@@ -31,7 +31,6 @@ public class LanguageController {
         return LocaleContextHolder.getLocale();
     }
 
-
     @GetMapping
     public ResponseEntity<List<LanguageResponse>> getAllLanguages() {
         List<LanguageResponse> languages = languageService.getAllActiveLanguages();

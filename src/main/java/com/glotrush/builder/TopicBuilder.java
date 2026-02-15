@@ -35,7 +35,6 @@ public class TopicBuilder {
                 .totalLessons(topic.getTotalLessons())
                 .orderIndex(topic.getOrderIndex())
                 .isActive(topic.getIsActive())
-                .minLevelRequired(topic.getMinLevelRequired())
                 .userProgress(progressSummary)
                 .build();
     }

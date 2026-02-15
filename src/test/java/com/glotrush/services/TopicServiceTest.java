@@ -90,7 +90,6 @@ class TopicServiceTest {
                 .totalLessons(10)
                 .orderIndex(1)
                 .isActive(true)
-                .minLevelRequired(1)
                 .build();
 
         userProgress = UserProgress.builder()

@@ -44,19 +44,16 @@ public class Topic {
     private String description;
 
     @Column(name = "difficulty", nullable = false)
-    private Integer difficulty;
+    private Integer difficulty; // TODO METTRE UNE ENUMERATION A1, A2
 
     @Column(name = "total_lessons", nullable = false)
-    private Integer totalLessons = 0;
+    private Integer totalLessons = 0;// TODO SUPPRIMER
 
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex = 0;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
-
-    @Column(name = "min_level_required")
-    private Integer minLevelRequired = 1;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

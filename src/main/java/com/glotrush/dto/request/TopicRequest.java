@@ -41,10 +41,6 @@ public class TopicRequest {
     private Boolean isActive;
 
     @NotNull
-    @Min(0)
-    private Integer minLevelRequired;
-
-    @NotNull
     private UserProgressSummary userProgress;
 
 }

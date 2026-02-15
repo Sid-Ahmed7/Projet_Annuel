@@ -76,7 +76,6 @@ class TopicControllerTest {
                 .totalLessons(10)
                 .orderIndex(1)
                 .isActive(true)
-                .minLevelRequired(1)
                 .userProgress(new UserProgressSummary())
                 .build();
 
