@@ -17,14 +17,14 @@ import java.util.Locale;
 public class TestMessageSourceConfig {
 
     @Bean
-    @Primary  // Donne la priorité à ce bean en cas de conflit avec LocaleConfig
+    @Primary
     public MessageSource messageSource() {
         ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
         messageSource.setBasename("classpath:messages");
         messageSource.setDefaultEncoding("UTF-8");
-        messageSource.setDefaultLocale(Locale.ENGLISH); // Locale par défaut pour les tests
-        messageSource.setFallbackToSystemLocale(false); // Ne pas utiliser la locale du système
-        messageSource.setUseCodeAsDefaultMessage(true); // Retourner la clé si le message n'est pas trouvé
+        messageSource.setDefaultLocale(Locale.ENGLISH); 
+        messageSource.setFallbackToSystemLocale(false); 
+        messageSource.setUseCodeAsDefaultMessage(true); 
         return messageSource;
     }
 }

@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -118,11 +120,12 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
+        LocaleContextHolder.setLocale(Locale.ENGLISH);
         authService = new AuthService(messageSource, accountsRepository, twoFactorAuthRepository, refreshTokenRepository, passwordResetTokenRepository, passwordEncoder, jwtService, authenticationManager, emailService, accountBuilder, refreshTokenBuilder, subscriptionService, loginAttemptService);
         testAccountId = UUID.randomUUID();
 
         ReflectionTestUtils.setField(authService, "refreshTokenExpiration", 604800000L);
-        ReflectionTestUtils.setField(authService, "frontendUrl", "http://localhost:3000");
+        ReflectionTestUtils.setField(authService, "frontendUrl", "http://localhost:5173");
 
         registerRequest = new RegisterRequest();
         registerRequest.setEmail("test@example.com");
@@ -260,7 +263,7 @@ class AuthServiceTest {
                 .isInstanceOf(BadCredentialsException.class)
                 .hasMessageContaining("Invalid credentials");
 
-        verify(accountsRepository).save(any(Accounts.class));
+        verify(loginAttemptService).handleFailedLogin(testAccount);
     }
 
     @Test
