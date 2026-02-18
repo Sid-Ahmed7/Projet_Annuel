@@ -65,6 +65,7 @@ public class AuthService implements IAuthService {
     private final AccountBuilder accountBuilder;
     private final RefreshTokenBuilder refreshTokenBuilder;
     private final ISubscriptionService subscriptionService;
+    private final LoginAttemptService loginAttemptService;
 
 
     @Value("${jwt.refresh-token.expiration}")
@@ -73,8 +74,6 @@ public class AuthService implements IAuthService {
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
-    private static final int MAX_LOGIN_ATTEMPTS = 5;
-    private static final int ACCOUNT_LOCK_DURATION_MINUTES = 30;
     private static final int PASSWORD_EXPIRY_DAYS = 60;
 
     protected final Locale getCurrentLocale() {
@@ -112,7 +111,7 @@ public class AuthService implements IAuthService {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-            resetFailedLoginAttempts(account);
+            loginAttemptService.resetFailedLoginAttempts(account);
             checkPasswordExpiry(account);
 
             boolean requires2FA = twoFactorAuthRepository.existsByAccount_IdAndActiveTrue(account.getId());
@@ -128,7 +127,10 @@ public class AuthService implements IAuthService {
             return generateAuthTokens(account, response);
 
         } catch (BadCredentialsException e) {
-            handleFailedLogin(account);
+            boolean locked = loginAttemptService.handleFailedLogin(account);
+            if (locked) {
+                throw new AccountLockedException(messageSource.getMessage("error.auth.account_locked_attempts", null, getCurrentLocale()));
+            }
             throw new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, getCurrentLocale()));
         }
     }
@@ -293,29 +295,6 @@ public class AuthService implements IAuthService {
     private void checkAccountLock(Accounts account) {
         if (account.getAccountLockedUntil() != null && account.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
             throw new AccountLockedException(messageSource.getMessage("error.auth.account_locked_until", null, getCurrentLocale()) + account.getAccountLockedUntil());
-        }
-    }
-
-    private void handleFailedLogin(Accounts account) {
-        int attempts = account.getFailedLoginAttempts() + 1;
-        
-        if (attempts >= MAX_LOGIN_ATTEMPTS) {
-            LocalDateTime lockUntil = LocalDateTime.now().plusMinutes(ACCOUNT_LOCK_DURATION_MINUTES);
-            account.setAccountLockedUntil(lockUntil);
-            account.setFailedLoginAttempts(attempts);
-            accountsRepository.save(account);
-            throw new AccountLockedException(messageSource.getMessage("error.auth.account_locked_attempts", null, getCurrentLocale()));
-        } else {
-            account.setFailedLoginAttempts(attempts);
-            accountsRepository.save(account);
-        }
-    }
-
-    private void resetFailedLoginAttempts(Accounts account) {
-        if (account.getFailedLoginAttempts() > 0) {
-            account.setFailedLoginAttempts(0);
-            account.setAccountLockedUntil(null);
-            accountsRepository.save(account);
         }
     }
 

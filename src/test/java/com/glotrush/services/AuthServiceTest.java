@@ -57,6 +57,7 @@ import com.glotrush.repositories.RefreshTokenRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
 import com.glotrush.security.jwt.JwtService;
 import com.glotrush.services.auth.AuthService;
+import com.glotrush.services.auth.LoginAttemptService;
 import com.glotrush.services.subscription.ISubscriptionService;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -103,6 +104,9 @@ class AuthServiceTest {
     private RefreshTokenBuilder refreshTokenBuilder;
 
     @Mock
+    private LoginAttemptService loginAttemptService;
+
+    @Mock
     private HttpServletResponse httpServletResponse;
 
     private AuthService authService;
@@ -114,7 +118,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(messageSource, accountsRepository, twoFactorAuthRepository, refreshTokenRepository, passwordResetTokenRepository, passwordEncoder, jwtService, authenticationManager, emailService, accountBuilder, refreshTokenBuilder, subscriptionService);
+        authService = new AuthService(messageSource, accountsRepository, twoFactorAuthRepository, refreshTokenRepository, passwordResetTokenRepository, passwordEncoder, jwtService, authenticationManager, emailService, accountBuilder, refreshTokenBuilder, subscriptionService, loginAttemptService);
         testAccountId = UUID.randomUUID();
 
         ReflectionTestUtils.setField(authService, "refreshTokenExpiration", 604800000L);
@@ -260,17 +264,16 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Should lock account after max failed login attempts")
+    @DisplayName("Should call loginAttemptService on failed login")
     void testAccountLockAfterMaxAttempts() {
         testAccount.setFailedLoginAttempts(4);
         when(accountsRepository.findByEmail(anyString())).thenReturn(Optional.of(testAccount));
         when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("Invalid"));
 
         assertThatThrownBy(() -> authService.login(loginRequest, httpServletResponse))
-                .isInstanceOf(AccountLockedException.class)
-                .hasMessageContaining("Account locked");
+                .isInstanceOf(BadCredentialsException.class);
 
-        verify(accountsRepository).save(any(Accounts.class));
+        verify(loginAttemptService).handleFailedLogin(testAccount);
     }
 
     @Test
