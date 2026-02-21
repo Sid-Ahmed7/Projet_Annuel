@@ -13,5 +13,7 @@ public interface TwoFactorAuthRepository extends JpaRepository<TwoFactorAuth, UU
     boolean existsByAccount_IdAndActiveTrue(UUID accountId);
 
     Optional<TwoFactorAuth> findFirstByAccount_IdAndActiveTrue(UUID accountId);
+    
+    Optional<TwoFactorAuth> findFirstByAccount_IdAndActiveFalse(UUID accountId);
 
 }

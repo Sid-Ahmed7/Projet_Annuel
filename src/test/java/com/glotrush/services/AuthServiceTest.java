@@ -58,6 +58,7 @@ import com.glotrush.repositories.PasswordResetTokenRepository;
 import com.glotrush.repositories.RefreshTokenRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
 import com.glotrush.security.jwt.JwtService;
+import com.glotrush.security.totp.TotpService;
 import com.glotrush.services.auth.AuthService;
 import com.glotrush.services.auth.LoginAttemptService;
 import com.glotrush.services.subscription.ISubscriptionService;
@@ -109,7 +110,12 @@ class AuthServiceTest {
     private LoginAttemptService loginAttemptService;
 
     @Mock
+    private TotpService totpService;
+
+    @Mock
     private HttpServletResponse httpServletResponse;
+
+
 
     private AuthService authService;
 
@@ -121,7 +127,7 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
-        authService = new AuthService(messageSource, accountsRepository, twoFactorAuthRepository, refreshTokenRepository, passwordResetTokenRepository, passwordEncoder, jwtService, authenticationManager, emailService, accountBuilder, refreshTokenBuilder, subscriptionService, loginAttemptService);
+        authService = new AuthService(messageSource, accountsRepository, twoFactorAuthRepository, refreshTokenRepository, passwordResetTokenRepository, passwordEncoder, jwtService, authenticationManager, emailService, accountBuilder, refreshTokenBuilder, subscriptionService, loginAttemptService, totpService);
         testAccountId = UUID.randomUUID();
 
         ReflectionTestUtils.setField(authService, "refreshTokenExpiration", 604800000L);

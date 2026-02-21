@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.core.Authentication;
 
 import com.glotrush.dto.request.Disable2FARequest;
-import com.glotrush.dto.request.Enable2FARequest;
 import com.glotrush.dto.request.ForgotPasswordRequest;
 import com.glotrush.dto.request.LoginRequest;
 import com.glotrush.dto.request.RegisterRequest;
@@ -100,9 +99,9 @@ public class AuthController {
     }
 
     @PostMapping("/2fa/enable")
-    public ResponseEntity<Enable2FAResponse> enable2FA(@Valid @RequestBody Enable2FARequest request,Authentication authentication) {
+    public ResponseEntity<Enable2FAResponse> enable2FA(Authentication authentication) {
         UUID accountId = extractUserIdFromAuth(authentication);
-        Enable2FAResponse response = twoFactorAuthService.enable2FA(request, accountId);
+        Enable2FAResponse response = twoFactorAuthService.enable2FA(accountId);
         return ResponseEntity.ok(response);
     }
 

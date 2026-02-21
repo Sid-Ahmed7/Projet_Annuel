@@ -9,7 +9,6 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.TwoFactorAuthBuilder;
-import com.glotrush.dto.request.Enable2FARequest;
 import com.glotrush.dto.request.Verify2FASetupRequest;
 import com.glotrush.dto.response.Enable2FAResponse;
 import com.glotrush.entities.Accounts;
@@ -40,7 +39,7 @@ public class TwoFactorAuthService implements ITwoFactorAuthService {
     }
 
     @Transactional
-    public Enable2FAResponse enable2FA(Enable2FARequest request, UUID userId) {
+    public Enable2FAResponse enable2FA(UUID userId) {
         Accounts account = accountsRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, getCurrentLocale())));
 
         if (twoFactorAuthRepository.existsByAccount_IdAndActiveTrue(userId)) {
@@ -50,12 +49,18 @@ public class TwoFactorAuthService implements ITwoFactorAuthService {
         String secret = totpService.generateSecret();
         String encryptedSecret = totpService.encryptSecret(secret);
 
-        TwoFactorAuth twoFactorAuth = twoFactorAuthBuilder.buildTwoFactorAuth(account, encryptedSecret);
+        TwoFactorAuth twoFactorAuth = twoFactorAuthRepository.findFirstByAccount_IdAndActiveFalse(userId).map(
+            existingTwoFactor -> {
+                existingTwoFactor.setSecret(encryptedSecret);
+                existingTwoFactor.setCreatedAt(LocalDateTime.now());
+                return existingTwoFactor;
+            }).orElseGet(() -> twoFactorAuthBuilder.buildTwoFactorAuth(account, encryptedSecret));
+        
 
         TwoFactorAuth saved = twoFactorAuthRepository.save(twoFactorAuth);
 
         String issuer = account.getUsername() != null ? account.getUsername() : "Glotrush";
-        String qrCodeUri = totpService.generateQrCodeImageUri(secret, account.getEmail(), issuer);
+        String qrCodeUri = totpService.generateOtpUri(secret, account.getEmail(), issuer);
 
         log.info("2FA setup initiated for account with this email: {}", account.getEmail());
 
@@ -105,6 +110,7 @@ public class TwoFactorAuthService implements ITwoFactorAuthService {
             throw new InvalidTotpCodeException(messageSource.getMessage("error.2fa.invalid_code", null, getCurrentLocale()));
         }
 
+        account.setTwoFactorAuth(null);
         twoFactorAuthRepository.delete(twoFactorAuth);
 
         log.info("2FA disabled for account: {}", account.getEmail());
