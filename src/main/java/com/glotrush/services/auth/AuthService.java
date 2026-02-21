@@ -30,6 +30,7 @@ import com.glotrush.entities.TwoFactorAuth;
 import com.glotrush.exceptions.AccountLockedException;
 import com.glotrush.exceptions.EmailAlreadyExistsException;
 import com.glotrush.exceptions.InvalidTokenException;
+import com.glotrush.exceptions.InvalidTotpCodeException;
 import com.glotrush.exceptions.PasswordExpiredException;
 import com.glotrush.exceptions.TwoFactorNotEnabledException;
 import com.glotrush.exceptions.UserNotFoundException;
@@ -40,6 +41,7 @@ import com.glotrush.repositories.PasswordResetTokenRepository;
 import com.glotrush.repositories.RefreshTokenRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
 import com.glotrush.security.jwt.JwtService;
+import com.glotrush.security.totp.TotpService;
 import com.glotrush.services.EmailService;
 import com.glotrush.services.subscription.ISubscriptionService;
 
@@ -66,6 +68,7 @@ public class AuthService implements IAuthService {
     private final RefreshTokenBuilder refreshTokenBuilder;
     private final ISubscriptionService subscriptionService;
     private final LoginAttemptService loginAttemptService;
+    private final TotpService totpService;
 
 
     @Value("${jwt.refresh-token.expiration}")
@@ -143,6 +146,12 @@ public class AuthService implements IAuthService {
 
         TwoFactorAuth twoFactorAuth = twoFactorAuthRepository.findFirstByAccount_IdAndActiveTrue(userId)
                 .orElseThrow(() -> new TwoFactorNotEnabledException(messageSource.getMessage("error.2fa.not_enabled", null, getCurrentLocale())));
+        String decrtypt = totpService.decryptSecret(twoFactorAuth.getSecret());
+        boolean isValid = totpService.verifyCode(decrtypt, request.getCode());
+       
+        if(!isValid) {
+            throw new InvalidTotpCodeException(messageSource.getMessage("error.2fa.invalid_code", null, getCurrentLocale()));
+        }
 
         twoFactorAuth.setLastUsedAt(LocalDateTime.now());
         twoFactorAuthRepository.save(twoFactorAuth);

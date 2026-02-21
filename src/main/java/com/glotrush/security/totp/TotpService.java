@@ -62,7 +62,7 @@ public class TotpService {
         return new DefaultSecretGenerator().generate();
     }
 
-    public String generateQrCodeImageUri(String secret, String email, String issuer) {
+    public String generateOtpUri(String secret, String email, String issuer) {
         try {
             if (secret == null || email == null || issuer == null) {
                 throw new IllegalArgumentException(messageSource.getMessage("error.security.invalid_params", null, getCurrentLocale()));
@@ -77,19 +77,9 @@ public class TotpService {
                     .period(30)
                     .build();
 
-            String otpAuthUrl = data.getUri();
-            
-            QRCodeWriter qrCodeWriter = new QRCodeWriter();
-            BitMatrix bitMatrix = qrCodeWriter.encode(otpAuthUrl, BarcodeFormat.QR_CODE, 250, 250);
-            
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
-            byte[] qrCodeBytes = outputStream.toByteArray();
-            
-            return "data:image/png;base64," + Base64.getEncoder().encodeToString(qrCodeBytes);
-            
+                    return data.getUri();
         } catch (Exception e) {
-            log.error("Error generating QR code", e);
+            log.error("Error generating OTP code", e);
             throw new QrCodeGenerationException(messageSource.getMessage("error.security.qr_code_failed", null, getCurrentLocale()), e);
         }
     }

@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +21,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glotrush.dto.request.ForgotPasswordRequest;
@@ -33,13 +33,15 @@ import com.glotrush.enumerations.AccountStatus;
 import com.glotrush.enumerations.UserRole;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.PasswordResetTokenRepository;
+import com.glotrush.repositories.RefreshTokenRepository;
+import com.glotrush.repositories.SubscriptionRepository;
+import com.glotrush.repositories.TwoFactorAuthRepository;
 
 import jakarta.servlet.http.Cookie;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Transactional
 class AuthControllerIntegrationTest {
 
     @Autowired
@@ -55,6 +57,15 @@ class AuthControllerIntegrationTest {
     private PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private TwoFactorAuthRepository twoFactorAuthRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     private Accounts testAccount;
@@ -64,8 +75,12 @@ class AuthControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        accountsRepository.deleteAll();
+        Locale.setDefault(Locale.ENGLISH);
+        twoFactorAuthRepository.deleteAll();
+        refreshTokenRepository.deleteAll();
         passwordResetTokenRepository.deleteAll();
+        subscriptionRepository.deleteAll();
+        accountsRepository.deleteAll();
 
         testAccount = Accounts.builder()
                 .email(TEST_EMAIL)
@@ -94,7 +109,7 @@ class AuthControllerIntegrationTest {
 
         mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Accept-Language", "en")  // Force la locale anglaise
+                .param("lang", "en")
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("newuser@example.com"))
@@ -190,7 +205,7 @@ class AuthControllerIntegrationTest {
 
         mockMvc.perform(post("/api/v1/auth/forgot-password")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Accept-Language", "en")
+                .param("lang", "en")
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Password reset email sent"));
@@ -216,7 +231,7 @@ class AuthControllerIntegrationTest {
 
         mockMvc.perform(post("/api/v1/auth/reset-password")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Accept-Language", "en")
+                .param("lang", "en")
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Password reset successfully"));
