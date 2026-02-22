@@ -37,8 +37,8 @@ public class SubscriptionBuilder {
                 .id(subscription.getId())
                 .subscriptionType(subscription.getSubscriptionType())
                 .isActive(subscription.getIsActive())
-                .startDate(subscription.getStartDate().toString())
-                .endDate(subscription.getEndDate() != null ? subscription.getEndDate().toString() : null)
+                .startDate(subscription.getStartDate())
+                .endDate(subscription.getEndDate() != null ? subscription.getEndDate() : null)
                 .build();
     }
 }

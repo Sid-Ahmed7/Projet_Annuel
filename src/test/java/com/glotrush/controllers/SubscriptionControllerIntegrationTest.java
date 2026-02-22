@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.glotrush.dto.request.ChangeSubscriptionRequest;
 import com.glotrush.dto.request.LoginRequest;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.Subscription;
@@ -105,7 +104,7 @@ class SubscriptionControllerIntegrationTest {
                 .isActive(true)
                 .startDate(LocalDateTime.now())
                 .endDate(type == SubscriptionType.PREMIUM ? LocalDateTime.now().plusSeconds(60) : null)
-                .updatedDate(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
         subscriptionRepository.save(subscription);
     }
@@ -151,87 +150,6 @@ class SubscriptionControllerIntegrationTest {
                 .andExpect(jsonPath("$.endDate").exists());
     }
 
-    @Test
-    @DisplayName("Should change subscription from FREE to PREMIUM ")
-    void changeSubscription() throws Exception {
-        Accounts saveAccounts = accountsRepository.save(account);
-        createSubscriptionForAccount(saveAccounts, SubscriptionType.FREE);
+   
 
-        Cookie cookie = logAndGetCookie();
-
-        ChangeSubscriptionRequest request = ChangeSubscriptionRequest.builder()
-                .subscriptionType(SubscriptionType.PREMIUM)
-                .build();
-        mockMvc.perform(put("/api/v1/subscriptions/change-subscription")
-                .cookie(cookie)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.subscriptionType").value("PREMIUM"))
-                .andExpect(jsonPath("$.endDate").exists());
-    }
-
-    @Test
-    @DisplayName("Should change subscription from PREMIUM to FREE successfully")
-    void changeSubscriptionToFree() throws Exception {
-        Accounts saveAccounts = accountsRepository.save(account);
-        createSubscriptionForAccount(saveAccounts, SubscriptionType.PREMIUM);
-
-        Cookie cookie = logAndGetCookie();
-
-        ChangeSubscriptionRequest request = ChangeSubscriptionRequest.builder()
-                .subscriptionType(SubscriptionType.FREE)
-                .build();
-        mockMvc.perform(put("/api/v1/subscriptions/change-subscription")
-                .cookie(cookie)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.subscriptionType").value("FREE"));    
-    }
-
-    @Test
-    @DisplayName("Should return 401 when changing subscription without authentication")
-    void changeSubscriptionWithoutAuth() throws Exception {
-        ChangeSubscriptionRequest request = ChangeSubscriptionRequest.builder()
-                .subscriptionType(SubscriptionType.FREE)
-                .build();
-        mockMvc.perform(put("/api/v1/subscriptions/change-subscription")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized());
-    } 
-    
-    @Test
-    @DisplayName("Should return 400 when changing subscription with null type")
-    void changeSubscriptionWithNullType() throws Exception {
-      Accounts saveAccounts = accountsRepository.save(account);
-      createSubscriptionForAccount(saveAccounts, SubscriptionType.FREE);
-      Cookie cookie = logAndGetCookie();
-      ChangeSubscriptionRequest request = new ChangeSubscriptionRequest();
-
-        mockMvc.perform(put("/api/v1/subscriptions/change-subscription")
-                .cookie(cookie)        
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("Should return 404 when user has no subscription")
-    void testChangeSubscriptionWhenNoSubscriptionExists() throws Exception {
-        accountsRepository.save(account);
-
-        Cookie cookie = logAndGetCookie();
-
-        ChangeSubscriptionRequest request = ChangeSubscriptionRequest.builder()
-                .subscriptionType(SubscriptionType.PREMIUM)
-                .build();
-
-        mockMvc.perform(put("/api/v1/subscriptions/change-subscription")
-                .cookie(cookie)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound());
-    }
 }

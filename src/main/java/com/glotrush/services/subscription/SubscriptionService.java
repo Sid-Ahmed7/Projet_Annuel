@@ -12,7 +12,6 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.SubscriptionBuilder;
-import com.glotrush.dto.request.ChangeSubscriptionRequest;
 import com.glotrush.dto.response.SubscriptionResponse;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.Subscription;
@@ -55,28 +54,6 @@ public class SubscriptionService implements ISubscriptionService {
     public SubscriptionResponse getSubscription(UUID accountId) {
         Subscription subscription = subscriptionRepository.findByAccount_Id(accountId)
                 .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, getCurrentLocale())));
-
-        return subscriptionBuilder.mapToSubscriptionResponse(subscription);
-    }
-
-    @Override
-    @Transactional
-    public SubscriptionResponse changeSubscriptionType(UUID accountId, ChangeSubscriptionRequest subscriptionType) {
-        Subscription subscription = subscriptionRepository.findByAccount_Id(accountId)
-                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound",null, getCurrentLocale())));
-
-        subscription.setSubscriptionType(subscriptionType.getSubscriptionType());
-        
-        if(subscriptionType.getSubscriptionType() == SubscriptionType.PREMIUM) {
-            subscription.setStartDate(LocalDateTime.now());
-            subscription.setEndDate(LocalDateTime.now().plusDays(PREMIUM_DAYS_SUBSCRIPTION));
-            subscription.setIsActive(true);
-            sendEmailWhenSubscriptionTypeChangedInPremium(subscription);
-        } else {
-            subscription.setStartDate(LocalDateTime.now());
-            subscription.setEndDate(null);
-            subscription.setIsActive(true);
-        }
 
         return subscriptionBuilder.mapToSubscriptionResponse(subscription);
     }

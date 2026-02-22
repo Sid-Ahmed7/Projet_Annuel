@@ -1,12 +1,11 @@
 package com.glotrush.entities;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.glotrush.enumerations.SubscriptionStatus;
 import com.glotrush.enumerations.SubscriptionType;
 
-import jakarta.annotation.Generated;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,6 +15,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -43,9 +43,20 @@ public class Subscription {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private SubscriptionType subscriptionType = SubscriptionType.FREE;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "plan_id", nullable = false)
+    private Plan plan;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private SubscriptionStatus status = SubscriptionStatus.ACTIVE;
+
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
 
     @Column(name = "start_date" , nullable = false)
@@ -53,22 +64,55 @@ public class Subscription {
 
     @Column(name = "end_date" , nullable = true)
     private LocalDateTime endDate;
+    
+    @Column(name = "current_period_start")
+    private LocalDateTime currentPeriodStart;
+
+    @Column(name = "current_period_end")
+    private LocalDateTime currentPeriodEnd;
+
+    @Column(name = "auto_renew")
+    @Builder.Default
+    private Boolean autoRenew = false;
+
+    @Column(name = "cancel_at_period_end")
+    @Builder.Default
+    private Boolean cancelAtPeriodEnd = false;
+
+    @Column(name = "canceled_at")
+    private LocalDateTime canceledAt;
+
+    @Column(name = "cancel_reason")
+    private String cancelReason;
+
+    @Column(name = "stripe_customer_id")
+    private String stripeCustomerId;
+
+    @Column(name = "stripe_subscription_id")
+    private String stripeSubscriptionId;
 
     @Column(name = "created_date" , nullable = false)
-    private LocalDateTime createdDate;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_date" , nullable = false)
-    private LocalDateTime updatedDate;
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        this.createdDate = LocalDateTime.now();
-        this.updatedDate = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        if(this.startDate == null) {
+            this.startDate = LocalDateTime.now();
+        }
+        if(this.currentPeriodStart == null) {
+            this.currentPeriodStart = LocalDateTime.now();
+        }
+
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedDate = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
 

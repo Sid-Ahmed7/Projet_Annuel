@@ -31,7 +31,6 @@ import static org.mockito.ArgumentMatchers.eq;
 
 import com.glotrush.builder.SubscriptionBuilder;
 import com.glotrush.config.TestMessageSourceConfig;
-import com.glotrush.dto.request.ChangeSubscriptionRequest;
 import com.glotrush.dto.response.SubscriptionResponse;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.Subscription;
@@ -128,7 +127,7 @@ class SubscriptionServiceTest {
             .id(subscriptionId)
             .subscriptionType(SubscriptionType.FREE)
             .isActive(true)
-            .startDate(LocalDateTime.now().toString())
+            .startDate(LocalDateTime.now())
             .endDate(null)
             .build();
         
@@ -149,86 +148,6 @@ class SubscriptionServiceTest {
         when(subscriptionRepository.findByAccount_Id(accountId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> subscriptionService.getSubscription(accountId)).isInstanceOf(SubscriptionNotFoundException.class);
-    }
-
-    @Test
-    @DisplayName("Should change to premium subscription for an account")
-    void shouldChangeToPremiumSubscription() {
-
-        ChangeSubscriptionRequest request = ChangeSubscriptionRequest.builder()
-                .subscriptionType(SubscriptionType.PREMIUM)
-                .build();
-
-        SubscriptionResponse subscriptionResponsePremium = SubscriptionResponse.builder()
-                .id(subscriptionId)
-                .subscriptionType(SubscriptionType.PREMIUM)
-                .isActive(true)
-                .startDate(LocalDateTime.now().toString())
-                .endDate(null)
-                .build();
-        when(subscriptionRepository.findByAccount_Id(accountId)).thenReturn(Optional.of(subscription));
-        when(subscriptionBuilder.mapToSubscriptionResponse(any(Subscription.class))).thenReturn(subscriptionResponsePremium);
-        SubscriptionResponse result = subscriptionService.changeSubscriptionType(accountId, request);
-        assertThat(result.getSubscriptionType()).isEqualTo(SubscriptionType.PREMIUM);
-        verify(emailService).sendPremiumUpgratedEmail(eq(accounts.getEmail()), eq(accounts.getUsername()), any(LocalDateTime.class));
-    }
-
-    @Test
-    @DisplayName("Should change to FREE successfully without sending email")
-    void shouldChangeToFreeSuccessfully() {
-        subscription.setSubscriptionType(SubscriptionType.PREMIUM);
-        subscription.setEndDate(LocalDateTime.now().plusDays(30));
-
-        ChangeSubscriptionRequest request = ChangeSubscriptionRequest.builder()
-                .subscriptionType(SubscriptionType.FREE)
-                .build();
-
-        SubscriptionResponse expectedResponse = SubscriptionResponse.builder()
-                .id(subscriptionId)
-                .subscriptionType(SubscriptionType.FREE)
-                .isActive(true)
-                .build();
-
-        when(subscriptionRepository.findByAccount_Id(accountId)).thenReturn(Optional.of(subscription));
-        when(subscriptionBuilder.mapToSubscriptionResponse(any(Subscription.class))).thenReturn(expectedResponse);
-
-        SubscriptionResponse result = subscriptionService.changeSubscriptionType(accountId, request);
-
-        assertThat(result.getSubscriptionType()).isEqualTo(SubscriptionType.FREE);
-        verify(emailService, never()).sendPremiumUpgratedEmail(anyString(), anyString(), any(LocalDateTime.class));
-    }
-    
-    @Test
-    @DisplayName("Should throw exception when account not found for change subscription")
-    void shouldThrowExceptionWhenAccountNotFoundForChangeSubscription() {
-        ChangeSubscriptionRequest request = ChangeSubscriptionRequest.builder()
-                .subscriptionType(SubscriptionType.PREMIUM)
-                .build();
-
-        when(subscriptionRepository.findByAccount_Id(accountId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> subscriptionService.changeSubscriptionType(accountId, request)).isInstanceOf(SubscriptionNotFoundException.class);
-    }
-    
-    @Test
-    @DisplayName("Should set correct dates when upgrading to PREMIUM")
-    void shouldSetCorrectDatesWhenUpgradingToPremium() {
-        ChangeSubscriptionRequest request = ChangeSubscriptionRequest.builder()
-                .subscriptionType(SubscriptionType.PREMIUM)
-                .build();
-
-        when(subscriptionRepository.findByAccount_Id(accountId)).thenReturn(Optional.of(subscription));
-        when(subscriptionBuilder.mapToSubscriptionResponse(any(Subscription.class))).thenAnswer(invocation -> {
-            Subscription sub = invocation.getArgument(0);
-            assertThat(sub.getStartDate()).isNotNull();
-            assertThat(sub.getEndDate()).isNotNull();
-            assertThat(sub.getEndDate()).isAfter(sub.getStartDate());
-            return SubscriptionResponse.builder().build();
-        });
-
-        subscriptionService.changeSubscriptionType(accountId, request);
-
-        verify(emailService).sendPremiumUpgratedEmail(anyString(), anyString(), any(LocalDateTime.class));
     }
 
 
