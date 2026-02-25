@@ -35,6 +35,7 @@ import com.glotrush.entities.Accounts;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.UserLanguage;
 import com.glotrush.enumerations.LanguageType;
+import com.glotrush.enumerations.ProficiencyLevel;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.UserLanguageRepository;
@@ -99,7 +100,7 @@ class UserLanguageServiceTest {
                 .account(testAccount)
                 .language(japanese)
                 .languageType(LanguageType.LEARNING)
-                .proficiencyLevel(2)
+                .proficiencyLevel(ProficiencyLevel.A2)
                 .isPrimary(true)
                 .startedAt(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
@@ -113,7 +114,7 @@ class UserLanguageServiceTest {
         AddUserLanguageRequest request = AddUserLanguageRequest.builder()
                 .languageId(languageId)
                 .languageType(LanguageType.LEARNING)
-                .proficiencyLevel(1)
+                .proficiencyLevel(ProficiencyLevel.A1)
                 .isPrimary(true)
                 .build();
 
@@ -123,7 +124,7 @@ class UserLanguageServiceTest {
                 .languageCode("ja")
                 .languageName("Japanese")
                 .languageType(LanguageType.LEARNING)
-                .proficiencyLevel(2)
+                .proficiencyLevel(ProficiencyLevel.A2)
                 .isPrimary(true)
                 .startedAt(userLanguage.getStartedAt())
                 .build();
@@ -152,7 +153,7 @@ class UserLanguageServiceTest {
         AddUserLanguageRequest request = AddUserLanguageRequest.builder()
                 .languageId(languageId)
                 .languageType(LanguageType.LEARNING)
-                .proficiencyLevel(1)
+                .proficiencyLevel(ProficiencyLevel.A1)
                 .build();
 
         when(accountsRepository.findById(accountId)).thenReturn(Optional.of(testAccount));
@@ -171,7 +172,7 @@ class UserLanguageServiceTest {
     void shouldUpdateLanguageSuccessfully() {
 
         UpdateUserLanguageRequest request = UpdateUserLanguageRequest.builder()
-                .proficiencyLevel(3)
+                .proficiencyLevel(ProficiencyLevel.B1)
                 .isPrimary(false)
                 .build();
 
@@ -181,7 +182,7 @@ class UserLanguageServiceTest {
                 .languageCode("ja")
                 .languageName("Japanese")
                 .languageType(LanguageType.LEARNING)
-                .proficiencyLevel(3)
+                .proficiencyLevel(ProficiencyLevel.B1)
                 .isPrimary(false)
                 .startedAt(userLanguage.getStartedAt())
                 .build();
@@ -195,7 +196,7 @@ class UserLanguageServiceTest {
         UserLanguageResponse result = userLanguageService.updateLanguage(accountId, languageId, request);
 
         assertThat(result).isNotNull();
-        assertThat(result.getProficiencyLevel()).isEqualTo(3);
+        assertThat(result.getProficiencyLevel()).isEqualTo(ProficiencyLevel.B1);
         assertThat(result.getIsPrimary()).isFalse();
         verify(userLanguageRepository).save(any(UserLanguage.class));
     }
@@ -221,7 +222,7 @@ class UserLanguageServiceTest {
                 .languageCode("ja")
                 .languageName("Japanese")
                 .languageType(LanguageType.LEARNING)
-                .proficiencyLevel(2)
+                .proficiencyLevel(ProficiencyLevel.A2)
                 .isPrimary(true)
                 .startedAt(userLanguage.getStartedAt())
                 .build();

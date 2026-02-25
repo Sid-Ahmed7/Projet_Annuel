@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.glotrush.enumerations.LanguageType;
+import com.glotrush.enumerations.ProficiencyLevel;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,8 +51,9 @@ public class UserLanguage {
     @Column(name = "language_type", nullable = false)
     private LanguageType languageType; 
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "proficiency_level")
-    private Integer proficiencyLevel; // TODO CONF, MISE EN PLACE D'UNE LOGIQUE PERMETTANT DE DETERMINER SUR CHAQUE LANGUE LE NIVEAU DE L'UTILISATEUR,
+    private ProficiencyLevel proficiencyLevel; // TODO CONF, MISE EN PLACE D'UNE LOGIQUE PERMETTANT DE DETERMINER SUR CHAQUE LANGUE LE NIVEAU DE L'UTILISATEUR,
     // PAR EXEMPLE, PASSAGE DU A1 A A2 CONDITIONNER APRES AVOIR REUSSI 10 TOPIC DIFFERENT NIVEAU A2
 
     @Column(name = "is_primary", nullable = false)

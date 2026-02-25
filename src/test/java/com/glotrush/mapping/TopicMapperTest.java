@@ -4,6 +4,7 @@ import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.dto.response.TopicResponse;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.Topic;
+import com.glotrush.enumerations.ProficiencyLevel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,7 @@ class TopicMapperTest {
                 .languageId(languageId)
                 .name("Test Topic")
                 .description("Test Description")
-                .difficulty(3)
+                .difficulty(ProficiencyLevel.B1)
                 .totalLessons(5)
                 .orderIndex(1)
                 .isActive(true)
@@ -64,7 +65,7 @@ class TopicMapperTest {
                 .language(language)
                 .name("Test Topic")
                 .description("Test Description")
-                .difficulty(3)
+                .difficulty(ProficiencyLevel.B2)
                 .totalLessons(5)
                 .orderIndex(1)
                 .isActive(true)
