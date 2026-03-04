@@ -53,11 +53,11 @@ public class UserLanguage {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "proficiency_level")
-    private ProficiencyLevel proficiencyLevel; // TODO CONF, MISE EN PLACE D'UNE LOGIQUE PERMETTANT DE DETERMINER SUR CHAQUE LANGUE LE NIVEAU DE L'UTILISATEUR,
+    private ProficiencyLevel proficiencyLevel;
     // PAR EXEMPLE, PASSAGE DU A1 A A2 CONDITIONNER APRES AVOIR REUSSI 10 TOPIC DIFFERENT NIVEAU A2
 
     @Column(name = "is_primary", nullable = false)
-    private Boolean isPrimary = false; // TODO JE PENSE QU'ON PEUT ENLEVER MAIS A VOIR SI IL Y A UNE UTILITE
+    private Boolean isPrimary = false;
 
     @Column(name = "started_at")
     private LocalDateTime startedAt;

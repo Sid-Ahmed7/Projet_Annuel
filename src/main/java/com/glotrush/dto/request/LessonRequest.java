@@ -38,8 +38,6 @@ public abstract class LessonRequest {
     @NotNull
     private Integer xpReward;
     @NotNull
-    private Boolean isLocked;
-    @NotNull
     private Integer minLevelRequired;
     @NotNull
     private Integer durationMinutes;

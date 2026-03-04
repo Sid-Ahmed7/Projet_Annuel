@@ -31,7 +31,6 @@ public class LessonBuilder {
                 .description(lesson.getDescription())
                 .orderIndex(lesson.getOrderIndex())
                 .xpReward(lesson.getXpReward())
-                .isLocked(lesson.getIsLocked())
                 .minLevelRequired(lesson.getMinLevelRequired())
                 .durationMinutes(lesson.getDurationMinutes())
                 .isActive(lesson.getIsActive())

@@ -125,7 +125,6 @@ class LessonServiceTest {
                 .xpReward(50)
                 .orderIndex(1)
                 .isActive(true)
-                .isLocked(false)
                 .minLevelRequired(1)
                 .durationMinutes(15)
                 .build();

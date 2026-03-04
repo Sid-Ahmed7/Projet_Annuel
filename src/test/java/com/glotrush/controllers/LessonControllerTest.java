@@ -154,7 +154,7 @@ class LessonControllerTest {
                     "description": "Description",
                     "orderIndex": 1,
                     "xpReward": 50,
-                    "isLocked": false,
+                    
                     "minLevelRequired": 1,
                     "durationMinutes": 15,
                     "isActive": true
@@ -180,7 +180,7 @@ class LessonControllerTest {
                     "description": "Description",
                     "orderIndex": 1,
                     "xpReward": 50,
-                    "isLocked": false,
+                    
                     "minLevelRequired": 1,
                     "durationMinutes": 15,
                     "isActive": true,
