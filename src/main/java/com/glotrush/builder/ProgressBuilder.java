@@ -2,6 +2,7 @@ package com.glotrush.builder;
 
 import java.util.List;
 
+import com.glotrush.utils.LevelUtils;
 import org.springframework.stereotype.Component;
 
 import com.glotrush.dto.response.ProgressOverviewResponse;
@@ -32,10 +33,11 @@ public class ProgressBuilder {
     }
 
     public UserProgressResponse mapToUserProgressResponse(UserProgress progress) {
-        Double levelProgressPercentage = calculateLevelProgressPercentage(
-                progress.getCurrentLevelXP(),
-                progress.getNextLevelXP()
-        );
+        Long totalXP = progress.getTotalXP();
+        Integer level = LevelUtils.calculateLevel(totalXP);
+        Long currentLevelXP = LevelUtils.calculateCurrentLevelXP(totalXP);
+        Long nextLevelXP = LevelUtils.calculateNextLevelXP(level);
+        Double levelProgressPercentage = LevelUtils.calculateLevelProgressPercentage(totalXP);
 
         return UserProgressResponse.builder()
                 .id(progress.getId())
@@ -44,10 +46,10 @@ public class ProgressBuilder {
                 .topicName(progress.getTopic().getName())
                 .languageCode(progress.getTopic().getLanguage().getCode())
                 .languageName(progress.getTopic().getLanguage().getName())
-                .totalXP(progress.getTotalXP())
-                .level(progress.getLevel())
-                .currentLevelXP(progress.getCurrentLevelXP())
-                .nextLevelXP(progress.getNextLevelXP())
+                .totalXP(totalXP)
+                .level(level)
+                .currentLevelXP(currentLevelXP)
+                .nextLevelXP(nextLevelXP)
                 .levelProgressPercentage(levelProgressPercentage)
                 .completedLessons(progress.getCompletedLessons())
                 .totalLessons(progress.getTopic().getTotalLessons())
@@ -62,10 +64,4 @@ public class ProgressBuilder {
                 .build();
     }
 
-    private Double calculateLevelProgressPercentage(Long currentLevelXP, Long nextLevelXP) {
-        if (nextLevelXP == null || nextLevelXP == 0) {
-            return 0.0;
-        }
-        return (currentLevelXP.doubleValue() / nextLevelXP.doubleValue()) * 100.0;
-    }
 }

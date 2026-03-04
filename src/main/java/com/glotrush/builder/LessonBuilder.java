@@ -2,6 +2,7 @@ package com.glotrush.builder;
 
 import java.util.Optional;
 
+import com.glotrush.utils.LevelUtils;
 import org.springframework.stereotype.Component;
 
 import com.glotrush.dto.response.CompleteLessonResponse;
@@ -44,7 +45,6 @@ public class LessonBuilder {
                 .attempts(progress.getAttempts())
                 .score(progress.getScore())
                 .timeSpentSeconds(progress.getTimeSpentSeconds())
-                .completedAt(progress.getCompletedAt())
                 .lastAttemptAt(progress.getLastAttemptAt())
                 .build();
     }
@@ -71,7 +71,7 @@ public class LessonBuilder {
                 .message(leveledUp ? "Congratulations! You leveled up!" : "Lesson completed successfully!")
                 .xpEarned(xpEarned)
                 .totalXP(topicProgress.getTotalXP())
-                .currentLevel(topicProgress.getLevel())
+                .currentLevel(LevelUtils.calculateLevel(topicProgress.getTotalXP()))
                 .leveledUp(leveledUp)
                 .newLevel(leveledUp ? newLevel : null)
                 .progress(progressResponse)
@@ -84,7 +84,7 @@ public class LessonBuilder {
                 .message("Lesson re-completed. Score updated.")
                 .xpEarned(0)
                 .totalXP(progressResponse.getTotalXP())
-                .currentLevel(progressResponse.getLevel())
+                .currentLevel(LevelUtils.calculateLevel(progressResponse.getTotalXP()))
                 .leveledUp(false)
                 .progress(progressResponse)
                 .build();

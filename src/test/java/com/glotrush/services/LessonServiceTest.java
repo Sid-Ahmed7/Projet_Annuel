@@ -294,7 +294,6 @@ class LessonServiceTest {
         userLessonProgress.setStatus(LessonStatus.IN_PROGRESS);
 
         UserProgress topicProgress = UserProgress.builder()
-                .level(1)
                 .totalXP(50L)
                 .build();
 
@@ -338,13 +337,11 @@ class LessonServiceTest {
         userLessonProgress.setStatus(LessonStatus.IN_PROGRESS);
 
         UserProgress topicProgressBefore = UserProgress.builder()
-                .level(1)
-                .totalXP(90L)
+                .totalXP(990L)
                 .build();
 
         UserProgress topicProgressAfter = UserProgress.builder()
-                .level(2)
-                .totalXP(140L)
+                .totalXP(1040L)
                 .build();
 
         UserProgressResponse progressResponse = new UserProgressResponse();

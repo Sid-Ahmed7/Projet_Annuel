@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
+import com.glotrush.utils.LevelUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -98,9 +99,6 @@ class ProgressServiceTest {
                 .account(testAccount)
                 .topic(testTopic)
                 .totalXP(500L)
-                .level(2)
-                .currentLevelXP(50L)
-                .nextLevelXP(150L)
                 .completedLessons(5)
                 .completionPercentage(50.0)
                 .correctAnswers(80)
@@ -169,7 +167,7 @@ class ProgressServiceTest {
         UserProgressResponse expectedResponse = UserProgressResponse.builder()
                 .topicId(topicId)
                 .topicName("Grammar Basics")
-                .level(2)
+                .level(1)
                 .totalXP(500L)
                 .build();
 
@@ -181,7 +179,7 @@ class ProgressServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getTopicId()).isEqualTo(topicId);
-        assertThat(result.getLevel()).isEqualTo(2);
+        assertThat(result.getLevel()).isEqualTo(1);
 
         verify(userProgressRepository).findByAccount_IdAndTopic_Id(accountId, topicId);
     }
@@ -240,7 +238,7 @@ class ProgressServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getTotalXP()).isEqualTo(0L);
-        assertThat(result.getLevel()).isEqualTo(1);
+        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(1);
 
         verify(userProgressRepository).save(any(UserProgress.class));
     }
@@ -273,8 +271,7 @@ class ProgressServiceTest {
     @Test
     @DisplayName("Should add XP without level up")
     void shouldAddXPWithoutLevelUp() {
-        testProgress.setCurrentLevelXP(50L);
-        testProgress.setNextLevelXP(150L);
+        testProgress.setTotalXP(500L);
 
         when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId))
                 .thenReturn(Optional.of(testProgress));
@@ -283,8 +280,7 @@ class ProgressServiceTest {
         UserProgress result = progressService.addXP(accountId, topicId, 50);
 
         assertThat(result.getTotalXP()).isEqualTo(550L);
-        assertThat(result.getCurrentLevelXP()).isEqualTo(100L);
-        assertThat(result.getLevel()).isEqualTo(2);
+        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(1);
 
         verify(userProgressRepository).save(any(UserProgress.class));
     }
@@ -292,18 +288,17 @@ class ProgressServiceTest {
     @Test
     @DisplayName("Should add XP and level up")
     void shouldAddXPAndLevelUp() {
-        testProgress.setCurrentLevelXP(140L);
-        testProgress.setNextLevelXP(150L);
-        testProgress.setLevel(2);
+        testProgress.setTotalXP(950L);
 
         when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId))
                 .thenReturn(Optional.of(testProgress));
         when(userProgressRepository.save(any(UserProgress.class))).thenAnswer(i -> i.getArgument(0));
 
-        UserProgress result = progressService.addXP(accountId, topicId, 50);
+        UserProgress result = progressService.addXP(accountId, topicId, 100);
 
-        assertThat(result.getLevel()).isEqualTo(3);
-        assertThat(result.getCurrentLevelXP()).isEqualTo(40L);
+        assertThat(result.getTotalXP()).isEqualTo(1050L);
+        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(2);
+        assertThat(LevelUtils.calculateCurrentLevelXP(result.getTotalXP())).isEqualTo(50L);
     }
 
     @Test

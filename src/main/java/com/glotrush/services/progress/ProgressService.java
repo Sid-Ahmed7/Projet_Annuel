@@ -20,6 +20,7 @@ import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserProgressRepository;
 
+import com.glotrush.utils.LevelUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -45,7 +46,7 @@ public class ProgressService implements IProgressService {
         List<UserProgress> allProgress = userProgressRepository.findByAccount_Id(accountId);
 
         Long totalXP = allProgress.stream().mapToLong(UserProgress::getTotalXP).sum();
-        Integer overallLevel = calculateOverallLevel(totalXP);
+        Integer overallLevel = LevelUtils.calculateLevel(totalXP);
         Integer totalTopicsStarted = allProgress.size();
 
         Integer totalLessonsCompleted = allProgress.stream().mapToInt(UserProgress::getCompletedLessons).sum();
@@ -104,9 +105,6 @@ public class ProgressService implements IProgressService {
                             .account(account)
                             .topic(topic)
                             .totalXP(0L)
-                            .level(1)
-                            .currentLevelXP(0L)
-                            .nextLevelXP(100L)
                             .completedLessons(0)
                             .completionPercentage(0.0)
                             .correctAnswers(0)
@@ -124,13 +122,6 @@ public class ProgressService implements IProgressService {
         UserProgress progress = getOrCreateProgress(accountId, topicId);
 
         progress.setTotalXP(progress.getTotalXP() + xpToAdd);
-        progress.setCurrentLevelXP(progress.getCurrentLevelXP() + xpToAdd);
-
-        while (progress.getCurrentLevelXP() >= progress.getNextLevelXP()) {
-            progress.setCurrentLevelXP(progress.getCurrentLevelXP() - progress.getNextLevelXP());
-            progress.setLevel(progress.getLevel() + 1);
-            progress.setNextLevelXP(calculateNextLevelXP(progress.getLevel()));
-        }
 
         return userProgressRepository.save(progress);
     }
@@ -155,14 +146,6 @@ public class ProgressService implements IProgressService {
         progress.calculateAccuracy();
 
         return userProgressRepository.save(progress);
-    }
-
-    private Integer calculateOverallLevel(Long totalXP) {
-        return (int) (totalXP / BASE_XP_PER_LEVEL) + 1;
-    }
-
-    private Long calculateNextLevelXP(Integer level) {
-        return 100L + (level - 1) * 50L;
     }
 
     @Override

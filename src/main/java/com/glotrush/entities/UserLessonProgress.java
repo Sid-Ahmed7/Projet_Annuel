@@ -59,9 +59,6 @@ public class UserLessonProgress {
     @Column(name = "time_spent_seconds")
     private Integer timeSpentSeconds = 0;
 
-    @Column(name = "completed_at")
-    private LocalDateTime completedAt; // TODO SUPPRIMER CETTE COLONNE
-
     @Column(name = "last_attempt_at")
     private LocalDateTime lastAttemptAt;
 

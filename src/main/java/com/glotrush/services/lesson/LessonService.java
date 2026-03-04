@@ -28,10 +28,10 @@ import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
 import com.glotrush.repositories.*;
-import com.glotrush.services.progress.ProgressService;
 import com.glotrush.entities.Topic;
 import com.glotrush.exceptions.TopicNotFoundException;
 
+import com.glotrush.utils.LevelUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -101,7 +101,6 @@ public class LessonService implements ILessonService {
         progress.setScore(lessonRequest.getScore());
         progress.setAttempts(progress.getAttempts() + 1);
         progress.setTimeSpentSeconds(progress.getTimeSpentSeconds() + lessonRequest.getTimeSpentSeconds());
-        progress.setCompletedAt(LocalDateTime.now());
         progress.setLastAttemptAt(LocalDateTime.now());
 
         userLessonProgressRepository.save(progress);
@@ -117,12 +116,12 @@ public class LessonService implements ILessonService {
         Integer xpEarned = lesson.getXpReward();
         
         UserProgress topicProgress = progressService.getOrCreateProgress(accountId, lesson.getTopic().getId());
-        Integer oldLevel = topicProgress.getLevel();
+        Integer oldLevel = LevelUtils.calculateLevel(topicProgress.getTotalXP());
 
         topicProgress = progressService.addXP(accountId, lesson.getTopic().getId(), xpEarned);
         topicProgress = progressService.incrementLessonCompletion(accountId, lesson.getTopic().getId());
         topicProgress = progressService.updateLastStudiedAt(accountId, lesson.getTopic().getId());
-        Integer newLevel = topicProgress.getLevel();
+        Integer newLevel = LevelUtils.calculateLevel(topicProgress.getTotalXP());
         boolean leveledUp = !oldLevel.equals(newLevel);
 
         UserProgressResponse progressResponse = progressService.getProgressByTopic(accountId, lesson.getTopic().getId());

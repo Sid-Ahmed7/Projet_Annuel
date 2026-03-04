@@ -95,7 +95,6 @@ class TopicServiceTest {
         userProgress = UserProgress.builder()
                 .id(UUID.randomUUID())
                 .topic(topic)
-                .level(2)
                 .totalXP(500L)
                 .completedLessons(5)
                 .completionPercentage(40.0)
