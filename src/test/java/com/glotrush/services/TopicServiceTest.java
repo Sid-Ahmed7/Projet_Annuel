@@ -87,7 +87,6 @@ class TopicServiceTest {
                 .name("Basics")
                 .description("Basics Course")
                 .language(language)
-                .totalLessons(10)
                 .orderIndex(1)
                 .isActive(true)
                 .build();

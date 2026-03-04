@@ -30,10 +30,6 @@ public class TopicRequest {
 
     @NotNull
     @Min(0)
-    private Integer totalLessons;
-
-    @NotNull
-    @Min(0)
     private Integer orderIndex;
 
     @NotNull

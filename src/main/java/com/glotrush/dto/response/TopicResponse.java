@@ -20,7 +20,6 @@ public class TopicResponse {
     private String name;
     private String description;
     private ProficiencyLevel difficulty;
-    private Integer totalLessons;
     private Integer orderIndex;
     private Boolean isActive;
     private UserProgressSummary userProgress;

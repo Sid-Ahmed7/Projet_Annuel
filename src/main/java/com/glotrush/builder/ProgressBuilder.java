@@ -52,7 +52,6 @@ public class ProgressBuilder {
                 .nextLevelXP(nextLevelXP)
                 .levelProgressPercentage(levelProgressPercentage)
                 .completedLessons(progress.getCompletedLessons())
-                .totalLessons(progress.getTopic().getTotalLessons())
                 .completionPercentage(progress.getCompletionPercentage())
                 .correctAnswers(progress.getCorrectAnswers())
                 .totalAnswers(progress.getTotalAnswers())

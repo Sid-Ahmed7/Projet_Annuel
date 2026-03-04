@@ -74,7 +74,6 @@ class TopicControllerTest {
                 .name("Basics")
                 .description("Description")
                 .difficulty(ProficiencyLevel.A1)
-                .totalLessons(10)
                 .orderIndex(1)
                 .isActive(true)
                 .userProgress(new UserProgressSummary())

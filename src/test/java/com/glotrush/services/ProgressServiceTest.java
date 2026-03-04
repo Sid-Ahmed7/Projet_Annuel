@@ -32,6 +32,7 @@ import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
 import com.glotrush.exceptions.ResourceNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.services.progress.ProgressService;
@@ -61,6 +62,9 @@ class ProgressServiceTest {
     @Mock
     private ProgressBuilder progressBuilder;
 
+    @Mock
+    private LessonRepository lessonRepository;
+
     private UUID accountId;
     private UUID topicId;
     private UUID languageId;
@@ -71,7 +75,7 @@ class ProgressServiceTest {
 
      @BeforeEach
     void setUp() {
-        progressService = new ProgressService(messageSource, userProgressRepository, topicRepository, accountsRepository, progressBuilder );
+        progressService = new ProgressService(messageSource, userProgressRepository, topicRepository, accountsRepository, progressBuilder, lessonRepository );
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
         languageId = UUID.randomUUID();
@@ -91,7 +95,6 @@ class ProgressServiceTest {
                 .id(topicId)
                 .name("Grammar Basics")
                 .language(testLanguage)
-                .totalLessons(10)
                 .build();
 
         testProgress = UserProgress.builder()
@@ -308,6 +311,7 @@ class ProgressServiceTest {
 
         when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId))
                 .thenReturn(Optional.of(testProgress));
+        when(lessonRepository.countByTopic_Id(topicId)).thenReturn(10);
         when(userProgressRepository.save(any(UserProgress.class))).thenAnswer(i -> i.getArgument(0));
 
         UserProgress result = progressService.incrementLessonCompletion(accountId, topicId);
@@ -316,6 +320,7 @@ class ProgressServiceTest {
         assertThat(result.getCompletionPercentage()).isEqualTo(50.0);
 
         verify(userProgressRepository).save(any(UserProgress.class));
+        verify(lessonRepository).countByTopic_Id(topicId);
     }
 
     @Test

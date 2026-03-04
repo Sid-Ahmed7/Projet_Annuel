@@ -33,7 +33,6 @@ public class TopicBuilder {
                 .name(topic.getName())
                 .description(topic.getDescription())
                 .difficulty(topic.getDifficulty())
-                .totalLessons(topic.getTotalLessons())
                 .orderIndex(topic.getOrderIndex())
                 .isActive(topic.getIsActive())
                 .userProgress(progressSummary)

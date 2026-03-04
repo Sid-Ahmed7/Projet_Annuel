@@ -24,7 +24,6 @@ public class LessonTestFactory {
         return Topic.builder()
                 .id(id)
                 .name(name)
-                .totalLessons(10)
                 .build();
     }
 

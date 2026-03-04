@@ -17,6 +17,7 @@ import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
 import com.glotrush.exceptions.ResourceNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserProgressRepository;
 
@@ -34,6 +35,7 @@ public class ProgressService implements IProgressService {
     private final TopicRepository topicRepository;
     private final AccountsRepository accountsRepository;
     private final ProgressBuilder progressBuilder;
+    private final LessonRepository lessonRepository;
 
     protected final Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
@@ -129,10 +131,10 @@ public class ProgressService implements IProgressService {
     @Override
     public UserProgress incrementLessonCompletion(UUID accountId, UUID topicId) {
         UserProgress progress = getOrCreateProgress(accountId, topicId);
-        Topic topic = progress.getTopic();
 
         progress.setCompletedLessons(progress.getCompletedLessons() + 1);
-        progress.calculateCompletionPercentage(topic.getTotalLessons());
+        Integer totalLessons = lessonRepository.countByTopic_Id(topicId);
+        progress.calculateCompletionPercentage(totalLessons);
 
         return userProgressRepository.save(progress);
     }

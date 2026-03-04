@@ -115,7 +115,6 @@ class LessonServiceTest {
         Topic topic = Topic.builder()
                 .id(topicId)
                 .name("Spring Basics")
-                .totalLessons(10)
                 .build();
 
         lesson = FlashcardLesson.builder()

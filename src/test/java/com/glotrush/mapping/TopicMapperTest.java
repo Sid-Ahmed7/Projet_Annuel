@@ -32,7 +32,6 @@ class TopicMapperTest {
                 .name("Test Topic")
                 .description("Test Description")
                 .difficulty(ProficiencyLevel.B1)
-                .totalLessons(5)
                 .orderIndex(1)
                 .isActive(true)
                 .build();
@@ -43,7 +42,6 @@ class TopicMapperTest {
         assertThat(entity.getName()).isEqualTo(request.getName());
         assertThat(entity.getDescription()).isEqualTo(request.getDescription());
         assertThat(entity.getDifficulty()).isEqualTo(request.getDifficulty());
-        assertThat(entity.getTotalLessons()).isEqualTo(request.getTotalLessons());
         assertThat(entity.getOrderIndex()).isEqualTo(request.getOrderIndex());
         assertThat(entity.getIsActive()).isEqualTo(request.getIsActive());
         // languageId n'est pas mappé directement car Topic a une entité Language
@@ -66,7 +64,6 @@ class TopicMapperTest {
                 .name("Test Topic")
                 .description("Test Description")
                 .difficulty(ProficiencyLevel.B2)
-                .totalLessons(5)
                 .orderIndex(1)
                 .isActive(true)
                 .build();
@@ -78,7 +75,6 @@ class TopicMapperTest {
         assertThat(response.getName()).isEqualTo(entity.getName());
         assertThat(response.getDescription()).isEqualTo(entity.getDescription());
         assertThat(response.getDifficulty()).isEqualTo(entity.getDifficulty());
-        assertThat(response.getTotalLessons()).isEqualTo(entity.getTotalLessons());
         assertThat(response.getOrderIndex()).isEqualTo(entity.getOrderIndex());
         assertThat(response.getIsActive()).isEqualTo(entity.getIsActive());
 

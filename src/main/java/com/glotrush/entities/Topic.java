@@ -46,10 +46,7 @@ public class Topic {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty", nullable = false)
-    private ProficiencyLevel difficulty; // TODO METTRE UNE ENUMERATION A1, A2
-
-    @Column(name = "total_lessons", nullable = false)
-    private Integer totalLessons = 0;// TODO SUPPRIMER
+    private ProficiencyLevel difficulty;
 
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex = 0;
