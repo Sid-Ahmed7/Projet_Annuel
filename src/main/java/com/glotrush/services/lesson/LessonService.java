@@ -89,23 +89,39 @@ public class LessonService implements ILessonService {
 
     @Override
     public CompleteLessonResponse completeLesson(UUID accountId, UUID lessonId, CompleteLessonRequest lessonRequest) {
-       Lesson lesson  = lessonRepository.findById(lessonId)
+        Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale())));
 
         UserLessonProgress progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.progress.notfound", null, getCurrentLocale())));
 
-        boolean isLessonCompleted = progress.getStatus() == LessonStatus.COMPLETED;
-    
-        progress.setStatus(LessonStatus.COMPLETED);
-        progress.setScore(lessonRequest.getScore());
-        progress.setAttempts(progress.getAttempts() + 1);
+        boolean isSuccessful = lessonRequest.getScore() >= lesson.getPassScorePercentage();
+        progress.setTotalAttempts(progress.getTotalAttempts() + 1);
         progress.setTimeSpentSeconds(progress.getTimeSpentSeconds() + lessonRequest.getTimeSpentSeconds());
         progress.setLastAttemptAt(LocalDateTime.now());
 
+        if (!isSuccessful) {
+            progress.setFailedAttempts(progress.getFailedAttempts() + 1);
+            userLessonProgressRepository.save(progress);
+            return CompleteLessonResponse.builder()
+                    .success(false)
+                    .message(messageSource.getMessage("error.lesson.failed", null, getCurrentLocale()))
+                    .xpEarned(0)
+                    .totalXP(0L)
+                    .build();
+        }
+
+        boolean isFirstCompletion = progress.getStatus() != LessonStatus.COMPLETED;
+        progress.setStatus(LessonStatus.COMPLETED);
+
+        // On garde le meilleur score
+        if (progress.getScore() == null || lessonRequest.getScore() > progress.getScore()) {
+            progress.setScore(lessonRequest.getScore());
+        }
+
         userLessonProgressRepository.save(progress);
 
-        if (!isLessonCompleted) {
+        if (isFirstCompletion) {
             return handleFirstCompletion(accountId, lesson);
         } else {
             return handleRecompletion(accountId, lesson);

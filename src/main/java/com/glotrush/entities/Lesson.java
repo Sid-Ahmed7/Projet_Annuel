@@ -47,6 +47,9 @@ public abstract class Lesson {
     @Column(name = "duration_minutes")
     private Integer durationMinutes;
 
+    @Column(name = "pass_score_percentage", nullable = false)
+    private Integer passScorePercentage = 70;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 

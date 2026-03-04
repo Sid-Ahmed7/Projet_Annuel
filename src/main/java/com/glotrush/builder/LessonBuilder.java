@@ -33,6 +33,7 @@ public class LessonBuilder {
                 .xpReward(lesson.getXpReward())
                 .minLevelRequired(lesson.getMinLevelRequired())
                 .durationMinutes(lesson.getDurationMinutes())
+                .passScorePercentage(lesson.getPassScorePercentage())
                 .isActive(lesson.getIsActive())
                 .userProgress(progressSummary)
                 .build();
@@ -41,7 +42,8 @@ public class LessonBuilder {
     public UserLessonProgressSummary mapToUserLessonProgressSummary(UserLessonProgress progress) {
         return UserLessonProgressSummary.builder()
                 .status(progress.getStatus())
-                .attempts(progress.getAttempts())
+                .totalAttempts(progress.getTotalAttempts())
+                .failedAttempts(progress.getFailedAttempts())
                 .score(progress.getScore())
                 .timeSpentSeconds(progress.getTimeSpentSeconds())
                 .lastAttemptAt(progress.getLastAttemptAt())
@@ -53,7 +55,7 @@ public class LessonBuilder {
                 .account(account)
                 .lesson(lesson)
                 .status(LessonStatus.NOT_STARTED)
-                .attempts(0)
+                .totalAttempts(0)
                 .timeSpentSeconds(0)
                 .build();
     }

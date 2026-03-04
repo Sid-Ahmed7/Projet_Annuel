@@ -31,6 +31,7 @@ public class LessonTestFactory {
         request.setXpReward(50);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(15);
+        request.setPassScorePercentage(70);
         request.setIsActive(true);
         request.setFlashcards(new ArrayList<>());
         request.setLessonType(LessonType.FLASHCARD);
@@ -46,6 +47,7 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
+                .passScorePercentage(70)
                 .isActive(true)
                 .flashcards(new ArrayList<>())
                 .build();
@@ -59,6 +61,7 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
+                .passScorePercentage(70)
                 .isActive(true)
                 .flashcards(new ArrayList<>())
                 .lessonType(LessonType.MATCHING_PAIR)
@@ -74,6 +77,7 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
+                .passScorePercentage(70)
                 .isActive(true)
                 .matchingPairEntities(new ArrayList<>())
                 .build();
@@ -87,6 +91,7 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
+                .passScorePercentage(70)
                 .isActive(true)
                 .matchingPairResponses(new ArrayList<>())
                 .lessonType(LessonType.MATCHING_PAIR)
@@ -102,6 +107,7 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
+                .passScorePercentage(70)
                 .isActive(true)
                 .questions(new ArrayList<>())
                 .build();
@@ -115,6 +121,7 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
+                .passScorePercentage(70)
                 .isActive(true)
                 .qcmQuestionResponses(new ArrayList<>())
                 .lessonType(LessonType.QCM)
@@ -130,6 +137,7 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
+                .passScorePercentage(70)
                 .isActive(true)
                 .sortingExerciseEntities(new ArrayList<>())
                 .build();
@@ -143,6 +151,7 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
+                .passScorePercentage(70)
                 .isActive(true)
                 .sortingExerciseResponses(new ArrayList<>())
                 .lessonType(LessonType.SORTING_EXERCISE)
@@ -157,6 +166,7 @@ public class LessonTestFactory {
         request.setXpReward(50);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(15);
+        request.setPassScorePercentage(70);
         request.setIsActive(true);
         request.setQcmQuestionRequests(new ArrayList<>());
         request.setLessonType(LessonType.QCM);
@@ -171,6 +181,7 @@ public class LessonTestFactory {
         request.setXpReward(50);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(15);
+        request.setPassScorePercentage(70);
         request.setIsActive(true);
         request.setMatchingPairRequests(new ArrayList<>());
         request.setLessonType(LessonType.MATCHING_PAIR);
@@ -185,6 +196,7 @@ public class LessonTestFactory {
         request.setXpReward(50);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(15);
+        request.setPassScorePercentage(70);
         request.setIsActive(true);
         request.setSortingExerciseRequests(new ArrayList<>());
         request.setLessonType(LessonType.SORTING_EXERCISE);
