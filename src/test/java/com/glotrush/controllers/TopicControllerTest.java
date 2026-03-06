@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.UUID;
 
+import com.glotrush.enumerations.ProficiencyLevel;
 import com.glotrush.security.jwt.JwtAuthenticationEntryPoint;
 import com.glotrush.security.jwt.JwtAuthenticationFilter;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,8 +73,7 @@ class TopicControllerTest {
                 .languageId(UUID.randomUUID())
                 .name("Basics")
                 .description("Description")
-                .difficulty(1)
-                .totalLessons(10)
+                .difficulty(ProficiencyLevel.A1)
                 .orderIndex(1)
                 .isActive(true)
                 .userProgress(new UserProgressSummary())

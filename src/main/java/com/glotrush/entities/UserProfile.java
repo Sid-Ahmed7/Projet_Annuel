@@ -3,8 +3,13 @@ package com.glotrush.entities;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.glotrush.enumerations.CountryCode;
+import com.glotrush.enumerations.TimeZone;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -44,11 +49,13 @@ public class UserProfile {
     @Column(name = "display_name", length = 100)
     private String displayName;
     
+    @Enumerated(EnumType.STRING)
     @Column(name = "country_code", length = 2)
-    private String countryCode; // TODO A DETERMINER : METTRE EN PLACE UNE ENUMERATION POUR CHAQUE CODE PAYS QU'ON GERE
+    private CountryCode countryCode;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "timezone", length = 50)
-    private String timezone; // TODO PEUX ETRE UNE ENUMERATION EGALEMENT A VOIR LORS DE L'IMPLEMENTATION
+    private TimeZone timezone;
 
     @Column(name = "is_public", nullable = false)
     private Boolean isPublic = true;

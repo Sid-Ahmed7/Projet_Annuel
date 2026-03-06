@@ -1,6 +1,7 @@
 package com.glotrush.dto.request;
 
 import com.glotrush.dto.response.UserProgressSummary;
+import com.glotrush.enumerations.ProficiencyLevel;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,13 +26,7 @@ public class TopicRequest {
     private String description;
 
     @NotNull
-    @Min(1)
-    @Max(10)
-    private Integer difficulty;
-
-    @NotNull
-    @Min(0)
-    private Integer totalLessons;
+    private ProficiencyLevel difficulty;
 
     @NotNull
     @Min(0)

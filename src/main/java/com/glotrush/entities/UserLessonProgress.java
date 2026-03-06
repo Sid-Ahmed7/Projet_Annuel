@@ -50,17 +50,17 @@ public class UserLessonProgress {
     @Column(name = "status", nullable = false)
     private LessonStatus status = LessonStatus.NOT_STARTED;
 
-    @Column(name = "attempts", nullable = false)
-    private Integer attempts = 0; // TODO AMELIORER L'IMPLEMTATION POUR QUE CA PRENNE EN COMPTE LE NOMBRE D'ECHEC, ECHEC A DETERMINER VIA UN INT QUE LE USER VA RENSEIGNER
+    @Column(name = "total_attempts", nullable = false)
+    private Integer totalAttempts = 0;
+
+    @Column(name = "failed_attempts", nullable = false)
+    private Integer failedAttempts = 0;
 
     @Column(name = "score")
     private Double score; 
 
     @Column(name = "time_spent_seconds")
     private Integer timeSpentSeconds = 0;
-
-    @Column(name = "completed_at")
-    private LocalDateTime completedAt; // TODO SUPPRIMER CETTE COLONNE
 
     @Column(name = "last_attempt_at")
     private LocalDateTime lastAttemptAt;

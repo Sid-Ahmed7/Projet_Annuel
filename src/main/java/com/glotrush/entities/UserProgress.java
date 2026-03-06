@@ -44,18 +44,7 @@ public class UserProgress {
     @Column(name = "total_xp", nullable = false)
     private Long totalXP = 0L;
 
-    @Column(name = "level", nullable = false)
-    private Integer level = 1; // TODO SUPPRIMER
-
-    @Column(name = "current_level_xp", nullable = false)
-    private Long currentLevelXP = 0L; /* TODO SUPPRIMER ET METTRE EN PLACE UN ALGO DANS UN UTILS ET DE LA CONF POUR GERER LA GESTION DES LEVELS ET SINON SI IL Y A
-    UNE TABLE LEVEL AVEC DES BADGES ETC.. SUPPRIMER QUAND MEME ET GARDER QUE LE NOMBRE DE XP DU USER
-    */
-
-    @Column(name = "next_level_xp", nullable = false)
-    private Long nextLevelXP = 100L; // TODO SUPPRIMER,
-
-   @Column(name = "completed_lessons", nullable = false)
+    @Column(name = "completed_lessons", nullable = false)
     private Integer completedLessons = 0;
 
     @Column(name = "completion_percentage", nullable = false)

@@ -28,7 +28,6 @@ public class UserProgressResponse {
     private Double levelProgressPercentage; 
 
     private Integer completedLessons;
-    private Integer totalLessons;
     private Double completionPercentage;
 
     private Integer correctAnswers;

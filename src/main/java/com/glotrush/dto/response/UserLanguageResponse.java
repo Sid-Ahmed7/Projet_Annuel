@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.glotrush.enumerations.LanguageType;
+import com.glotrush.enumerations.ProficiencyLevel;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +21,7 @@ public class UserLanguageResponse {
     private String languageCode;
     private String languageName;
     private LanguageType languageType;
-    private Integer proficiencyLevel;
+    private ProficiencyLevel proficiencyLevel;
     private Boolean isPrimary;
     private LocalDateTime startedAt;
     

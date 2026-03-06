@@ -15,6 +15,7 @@ import com.glotrush.dto.request.AddUserLanguageRequest;
 import com.glotrush.dto.request.UpdateUserLanguageRequest;
 import com.glotrush.dto.response.UserLanguageResponse;
 import com.glotrush.enumerations.LanguageType;
+import com.glotrush.enumerations.ProficiencyLevel;
 import com.glotrush.services.languages.IUserLanguageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -85,7 +86,7 @@ class UserLanguageControllerTest {
         AddUserLanguageRequest request = AddUserLanguageRequest.builder()
                 .languageId(UUID.randomUUID())
                 .languageType(LanguageType.LEARNING)
-                .proficiencyLevel(1)
+                .proficiencyLevel(ProficiencyLevel.A1)
                 .isPrimary(false)
                 .build();
 
@@ -110,7 +111,7 @@ class UserLanguageControllerTest {
         UUID languageId = UUID.randomUUID();
         UpdateUserLanguageRequest request = UpdateUserLanguageRequest.builder()
                 .languageType(LanguageType.NATIVE)
-                .proficiencyLevel(6)
+                .proficiencyLevel(ProficiencyLevel.B2)
                 .isPrimary(true)
                 .build();
 

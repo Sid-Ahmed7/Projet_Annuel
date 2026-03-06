@@ -335,7 +335,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("Should lock account after multiple failed login attempts")
+    @DisplayName("Should lock account after multiple failed login totalAttempts")
     void testAccountLockAfterFailedAttempts() throws Exception {
         accountsRepository.save(testAccount);
 

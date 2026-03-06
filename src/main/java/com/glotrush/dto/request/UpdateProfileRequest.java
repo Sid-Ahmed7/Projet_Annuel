@@ -1,5 +1,8 @@
 package com.glotrush.dto.request;
 
+import com.glotrush.enumerations.CountryCode;
+import com.glotrush.enumerations.TimeZone;
+
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,11 +24,9 @@ public class UpdateProfileRequest {
     @Size(max = 100, message = "Display name must not exceed 100 characters")
     private String displayName;
 
-    @Size(min = 2, max = 2, message = "Country code must be 2 characters (ISO 3166-1)")
-    private String countryCode;
+    private CountryCode countryCode;
 
-    @Size(max = 50, message = "Timezone must not exceed 50 characters")
-    private String timezone;
+    private TimeZone timezone;
 
     private Boolean isPublic;
 }
