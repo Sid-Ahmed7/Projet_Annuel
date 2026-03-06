@@ -49,7 +49,7 @@ public class Plan {
     private String currency = "EUR";
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private PaymentInterval paymentInterval;
 
     @Column(name = "stripe_price_id")

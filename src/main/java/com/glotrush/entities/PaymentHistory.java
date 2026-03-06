@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PayementHistory {
+public class PaymentHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -65,6 +65,10 @@ public class PayementHistory {
 
     @Column(name = "failure_reason")
     private String failureReason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_interval")
+    private PaymentInterval paymentInterval;
 
     @Column(name = "payment_date" , nullable = false)
     private LocalDateTime paymentAt;

@@ -1,5 +1,6 @@
 package com.glotrush.services.subscription;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -14,10 +15,13 @@ import org.springframework.stereotype.Service;
 import com.glotrush.builder.SubscriptionBuilder;
 import com.glotrush.dto.response.SubscriptionResponse;
 import com.glotrush.entities.Accounts;
+import com.glotrush.entities.Plan;
 import com.glotrush.entities.Subscription;
+import com.glotrush.enumerations.SubscriptionStatus;
 import com.glotrush.enumerations.SubscriptionType;
 import com.glotrush.exceptions.SubscriptionAlreadyExistException;
 import com.glotrush.exceptions.SubscriptionNotFoundException;
+import com.glotrush.repositories.PlanRepository;
 import com.glotrush.repositories.SubscriptionRepository;
 import com.glotrush.services.EmailService;
 
@@ -30,10 +34,10 @@ public class SubscriptionService implements ISubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionBuilder subscriptionBuilder;
+    private final PlanRepository planRepository;
     private final MessageSource messageSource;  
     private final EmailService emailService;
 
-    private static final int PREMIUM_DAYS_SUBSCRIPTION = 50;
 
 
     protected final Locale getCurrentLocale() {
@@ -45,8 +49,9 @@ public class SubscriptionService implements ISubscriptionService {
         if(subscriptionRepository.existsByAccount_Id(account.getId())) {
             throw new SubscriptionAlreadyExistException(messageSource.getMessage("error.subscription.alreadyExist", null, getCurrentLocale()));
         }
-
-        Subscription subscription = subscriptionBuilder.buildFreeSubscription(account);
+        Plan freePlan = planRepository.findByPriceAndIsActiveTrue(BigDecimal.ZERO)
+            .orElse(null);
+        Subscription subscription = subscriptionBuilder.buildFreeSubscription(account, freePlan);
         subscriptionRepository.save(subscription);
     }
 
@@ -89,11 +94,18 @@ public class SubscriptionService implements ISubscriptionService {
             return;
         }
 
+        Plan freePlan = planRepository.findByPriceAndIsActiveTrue(BigDecimal.ZERO).orElse(null);
+
+
 
         subscription.setSubscriptionType(SubscriptionType.FREE);
+        subscription.setPlan(freePlan);
         subscription.setStartDate(LocalDateTime.now());
         subscription.setEndDate(null);
+        subscription.setCurrentPeriodEnd(null);
         subscription.setIsActive(true);
+        subscription.setStatus(SubscriptionStatus.ACTIVE);
+        subscription.setStripeSubscriptionId(null);
         subscriptionRepository.save(subscription);
         sendEmailWhenSubscriptionChangedToFree(subscription);
     }

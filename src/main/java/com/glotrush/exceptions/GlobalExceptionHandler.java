@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.glotrush.dto.response.ErrorResponse;
+import com.stripe.exception.StripeException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -58,7 +59,7 @@ public class GlobalExceptionHandler {
             PlanNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
-        return buildError("User not found", HttpStatus.NOT_FOUND);
+        return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     /* =========================
@@ -82,7 +83,10 @@ public class GlobalExceptionHandler {
         return buildError(ex.getMessage(), HttpStatus.LOCKED);
     }
 
-    
+    @ExceptionHandler(StripeException.class)
+    public ResponseEntity<ErrorResponse> handleStripeException(StripeException ex) {
+        return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {

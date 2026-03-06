@@ -18,6 +18,9 @@ import lombok.NoArgsConstructor;
 public class SubscriptionDetailResponse {
 
     private UUID id;
+    private UUID accountId;
+    private String firstName;
+    private String lastName;
     private SubscriptionType subscriptionType;
     private SubscriptionStatus status;
     private PlanResponse plan;

@@ -47,7 +47,7 @@ public class Subscription {
     private SubscriptionType subscriptionType = SubscriptionType.FREE;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "plan_id", nullable = false)
+    @JoinColumn(name = "plan_id")
     private Plan plan;
 
     @Enumerated(EnumType.STRING)
@@ -70,10 +70,6 @@ public class Subscription {
 
     @Column(name = "current_period_end")
     private LocalDateTime currentPeriodEnd;
-
-    @Column(name = "auto_renew")
-    @Builder.Default
-    private Boolean autoRenew = false;
 
     @Column(name = "cancel_at_period_end")
     @Builder.Default

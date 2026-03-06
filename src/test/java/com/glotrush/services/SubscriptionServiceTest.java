@@ -38,6 +38,7 @@ import com.glotrush.enumerations.SubscriptionType;
 import com.glotrush.enumerations.UserRole;
 import com.glotrush.exceptions.SubscriptionAlreadyExistException;
 import com.glotrush.exceptions.SubscriptionNotFoundException;
+import com.glotrush.repositories.PlanRepository;
 import com.glotrush.repositories.SubscriptionRepository;
 import com.glotrush.services.subscription.SubscriptionService;
 
@@ -57,6 +58,9 @@ class SubscriptionServiceTest {
     private SubscriptionRepository subscriptionRepository;
 
     @Mock
+    private PlanRepository planRepository;
+
+    @Mock
     private EmailService emailService;
 
     private SubscriptionService subscriptionService;
@@ -69,7 +73,7 @@ class SubscriptionServiceTest {
     @BeforeEach
     void setUp() {
 
-        subscriptionService = new SubscriptionService(subscriptionRepository, subscriptionBuilder, messageSource, emailService);
+        subscriptionService = new SubscriptionService(subscriptionRepository, subscriptionBuilder, planRepository, messageSource, emailService);
 
         accountId = UUID.randomUUID();
         subscriptionId = UUID.randomUUID();
@@ -100,12 +104,12 @@ class SubscriptionServiceTest {
     void shouldCreateSubscriptionForAnAccount() {
 
         when(subscriptionRepository.existsByAccount_Id(accountId)).thenReturn(false);
-        when(subscriptionBuilder.buildFreeSubscription(accounts)).thenReturn(subscription);
+        when(subscriptionBuilder.buildFreeSubscription(eq(accounts), any())).thenReturn(subscription);
         when(subscriptionRepository.save(any(Subscription.class))).thenReturn(subscription);
-        
+
         subscriptionService.createSubscriptionForUser(accounts);
         verify(subscriptionRepository).save(any(Subscription.class));
-        verify(subscriptionBuilder).buildFreeSubscription(accounts);
+        verify(subscriptionBuilder).buildFreeSubscription(eq(accounts), any());
     }
 
     @Test
@@ -116,7 +120,7 @@ class SubscriptionServiceTest {
         
         assertThatThrownBy(() -> subscriptionService.createSubscriptionForUser(accounts)).isInstanceOf(SubscriptionAlreadyExistException.class);
         verify(subscriptionRepository).existsByAccount_Id(accountId);
-        verify(subscriptionBuilder, never()).buildFreeSubscription(accounts);
+        verify(subscriptionBuilder, never()).buildFreeSubscription(eq(accounts), any());
         verify(subscriptionRepository, never()).save(any(Subscription.class));
     }
 

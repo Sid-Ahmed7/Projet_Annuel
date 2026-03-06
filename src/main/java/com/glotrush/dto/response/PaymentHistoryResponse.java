@@ -22,6 +22,6 @@ public class PaymentHistoryResponse {
     private String currency;
     private PaymentStatus status;
     private String paymentMethod;
-    private String paidAt;
+    private LocalDateTime paidAt;
     private LocalDateTime createdAt;
 }
