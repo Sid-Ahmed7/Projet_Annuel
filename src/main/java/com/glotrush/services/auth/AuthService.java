@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.AccountBuilder;
 import com.glotrush.builder.RefreshTokenBuilder;
+import com.glotrush.dto.request.AdminLoginRequest;
 import com.glotrush.dto.request.ForgotPasswordRequest;
 import com.glotrush.dto.request.LoginRequest;
 import com.glotrush.dto.request.RegisterRequest;
@@ -27,6 +28,7 @@ import com.glotrush.entities.Accounts;
 import com.glotrush.entities.PasswordResetToken;
 import com.glotrush.entities.RefreshToken;
 import com.glotrush.entities.TwoFactorAuth;
+import com.glotrush.enumerations.UserRole;
 import com.glotrush.exceptions.AccountLockedException;
 import com.glotrush.exceptions.EmailAlreadyExistsException;
 import com.glotrush.exceptions.InvalidTokenException;
@@ -36,6 +38,7 @@ import com.glotrush.exceptions.TwoFactorNotEnabledException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.exceptions.UsernameAlreadyExistsException;
 import com.glotrush.exceptions.WeakPasswordException;
+import org.springframework.security.access.AccessDeniedException;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.PasswordResetTokenRepository;
 import com.glotrush.repositories.RefreshTokenRepository;
@@ -84,6 +87,7 @@ public class AuthService implements IAuthService {
     }
 
     @Transactional
+    @Override
     public RegisterResponse register(RegisterRequest request) {
         if (accountsRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException(messageSource.getMessage("error.auth.email_already_registered", null, getCurrentLocale()));
@@ -105,6 +109,7 @@ public class AuthService implements IAuthService {
     }
 
     @Transactional
+    @Override
     public LoginResponse login(LoginRequest request, HttpServletResponse response) {
         Accounts account = accountsRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, getCurrentLocale())));
@@ -139,6 +144,33 @@ public class AuthService implements IAuthService {
     }
 
     @Transactional
+    @Override
+    public LoginResponse adminLogin(AdminLoginRequest request, HttpServletResponse response) {
+        Accounts account = accountsRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, getCurrentLocale())));
+
+        checkAccountLock(account);
+
+        if (account.getRole() != UserRole.ADMIN) {
+            throw new AccessDeniedException(messageSource.getMessage("error.access_required", null, getCurrentLocale()));
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), account.getPassword())) {
+            throw new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, getCurrentLocale()));
+        }
+
+        if (account.getAuthKey() == null ||
+            !passwordEncoder.matches(request.getSecretKey(), account.getAuthKey())) {
+            throw new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, getCurrentLocale()));
+        }
+
+        loginAttemptService.resetFailedLoginAttempts(account);
+
+        return generateAuthTokens(account, response);
+    }
+
+    @Transactional
+    @Override
     public LoginResponse verify2FA(Verify2FARequest request, HttpServletResponse response) {
         UUID userId = UUID.fromString(request.getTempUserId());
         Accounts account = accountsRepository.findById(userId)
@@ -160,6 +192,7 @@ public class AuthService implements IAuthService {
     }
 
     @Transactional
+    @Override
     public RefreshTokenResponse refreshToken(String refreshToken, HttpServletResponse response) {
         RefreshToken token = refreshTokenRepository.findValidToken(refreshToken, LocalDateTime.now())
                 .orElseThrow(() -> new InvalidTokenException(messageSource.getMessage("error.auth.invalid_token", null, getCurrentLocale())));
@@ -189,6 +222,7 @@ public class AuthService implements IAuthService {
     }
 
     @Transactional
+    @Override
     public void forgotPassword(ForgotPasswordRequest request) {
         Accounts account = accountsRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, getCurrentLocale())));
@@ -209,10 +243,10 @@ public class AuthService implements IAuthService {
         String resetLink = frontendUrl + "/reset-password?token=" + token;
         emailService.sendPasswordResetEmail(account.getEmail(), resetLink);
 
-        log.info("Password reset email sent to: {}", account.getEmail());
     }
 
     @Transactional
+    @Override
     public void resetPassword(ResetPasswordRequest request) {
         PasswordResetToken resetToken = passwordResetTokenRepository.findValidToken(request.getToken(), LocalDateTime.now()).orElseThrow(() -> new InvalidTokenException(messageSource.getMessage("error.auth.invalid_reset_token", null, getCurrentLocale())));
 
@@ -229,10 +263,10 @@ public class AuthService implements IAuthService {
 
         refreshTokenRepository.revokeAllUserTokens(account.getId(), LocalDateTime.now());
 
-        log.info("Password reset successfully for account: {}", account.getEmail());
     }
 
     @Transactional
+    @Override
     public void logout(String refreshToken, HttpServletResponse response) {
         refreshTokenRepository.findByToken(refreshToken)
                 .ifPresent(token -> {
@@ -241,7 +275,6 @@ public class AuthService implements IAuthService {
                 });
 
         clearAuthCookies(response);
-        log.info("User logged out successfully");
     }
 
     private LoginResponse generateAuthTokens(Accounts user, HttpServletResponse response) {

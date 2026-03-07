@@ -85,6 +85,10 @@ public class Accounts {
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserProgress> progress;
 
+    @Column(name="auth_key", nullable = true)
+    private String authKey;
+
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
