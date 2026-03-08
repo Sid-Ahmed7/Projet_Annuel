@@ -34,16 +34,7 @@ public class SubscriptionBuilder {
                 .build();
     }
 
-    // public Subscription buildPremiumSubscription(Accounts account) {
-    //     return Subscription.builder()
-    //             .account(account)
-    //             .subscriptionType(SubscriptionType.PREMIUM)
-    //             .startDate(LocalDateTime.now())
-    //             .endDate(null)
-    //             .isActive(true)
-    //             .build();
-    // }
-
+ 
     public SubscriptionResponse mapToSubscriptionResponse(Subscription subscription) {
         return SubscriptionResponse.builder()
                 .id(subscription.getId())

@@ -32,19 +32,19 @@ public class PlanController {
     private final PlanBuilder planBuilder;
 
 
-    // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create")
     public ResponseEntity<PlanResponse> createAPlan(@Valid @RequestBody CreatePlanRequest request) {
         return ResponseEntity.ok(planService.createPlan(request));
     }
 
-    // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/update/{planId}")
     public ResponseEntity<PlanResponse> updatePlan(@PathVariable UUID planId, @Valid @RequestBody UpdatePlanRequest request) {
         return ResponseEntity.ok(planService.updatePlan(planId, request));
     }   
 
-    // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/delete/{planId}")
     public ResponseEntity<Void> deletePlan(@PathVariable UUID planId) {
         planService.deletePlan(planId);

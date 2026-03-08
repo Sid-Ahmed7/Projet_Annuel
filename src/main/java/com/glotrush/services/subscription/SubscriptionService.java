@@ -5,11 +5,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.SubscriptionBuilder;
@@ -24,6 +22,7 @@ import com.glotrush.exceptions.SubscriptionNotFoundException;
 import com.glotrush.repositories.PlanRepository;
 import com.glotrush.repositories.SubscriptionRepository;
 import com.glotrush.services.EmailService;
+import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -40,14 +39,11 @@ public class SubscriptionService implements ISubscriptionService {
 
 
 
-    protected final Locale getCurrentLocale() {
-        return LocaleContextHolder.getLocale();
-    }
     @Override
     @Transactional
     public void createSubscriptionForUser(Accounts account) {
         if(subscriptionRepository.existsByAccount_Id(account.getId())) {
-            throw new SubscriptionAlreadyExistException(messageSource.getMessage("error.subscription.alreadyExist", null, getCurrentLocale()));
+            throw new SubscriptionAlreadyExistException(messageSource.getMessage("error.subscription.alreadyExist", null, LocaleUtils.getCurrentLocale()));
         }
         Plan freePlan = planRepository.findByPriceAndIsActiveTrue(BigDecimal.ZERO)
             .orElse(null);
@@ -58,7 +54,7 @@ public class SubscriptionService implements ISubscriptionService {
     @Override
     public SubscriptionResponse getSubscription(UUID accountId) {
         Subscription subscription = subscriptionRepository.findByAccount_Id(accountId)
-                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, getCurrentLocale())));
+                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, LocaleUtils.getCurrentLocale())));
 
         return subscriptionBuilder.mapToSubscriptionResponse(subscription);
     }
@@ -81,7 +77,7 @@ public class SubscriptionService implements ISubscriptionService {
     @Override
     public void expireSingleSubscription(UUID subscriptionId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, getCurrentLocale())));
+                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, LocaleUtils.getCurrentLocale())));
 
         if(subscription == null) {
             return;
@@ -113,7 +109,7 @@ public class SubscriptionService implements ISubscriptionService {
      @Override
         public void sendReminderEmailForExpiringSubscription(UUID subscriptionId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, getCurrentLocale())));
+                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, LocaleUtils.getCurrentLocale())));
             if(subscription.getEndDate() == null) {
                 return;
             }

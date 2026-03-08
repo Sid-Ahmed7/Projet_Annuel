@@ -1,22 +1,19 @@
 package com.glotrush.controllers;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 import com.glotrush.dto.request.LanguageRequest;
-import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.dto.response.ApiResponse;
-import com.glotrush.dto.response.LessonResponse;
 import jakarta.validation.Valid;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.glotrush.dto.response.LanguageResponse;
 import com.glotrush.services.languages.ILanguageService;
+import com.glotrush.utils.LocaleUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,9 +24,6 @@ public class LanguageController {
     private final MessageSource messageSource;
     private final ILanguageService languageService;
 
-    protected final Locale getCurrentLocale() {
-        return LocaleContextHolder.getLocale();
-    }
 
     @GetMapping
     public ResponseEntity<List<LanguageResponse>> getAllLanguages() {
@@ -49,7 +43,6 @@ public class LanguageController {
         return ResponseEntity.ok(language);
     }
 
-    /* PARTIE ADMINISTRATEUR */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LanguageResponse> createLanguage(@Valid @RequestBody LanguageRequest languageRequest){
@@ -68,6 +61,6 @@ public class LanguageController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> deleteLanguage(@PathVariable UUID languageId){
         languageService.removeLanguage(languageId);
-        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.language.deleted_successfully", null, getCurrentLocale())));
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.language.deleted_successfully", null, LocaleUtils.getCurrentLocale())));
     }
 }

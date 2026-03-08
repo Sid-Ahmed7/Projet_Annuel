@@ -1,9 +1,11 @@
 package com.glotrush.services.stripe;
 
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.config.StripeConfig;
 import com.glotrush.exceptions.StripeMessageException;
+import com.glotrush.utils.LocaleUtils;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
 import com.stripe.model.Subscription;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class StripeService implements IStripService {
 
     private final StripeConfig stripeConfig;
+    private final MessageSource messageSource;
 
     @Override
     public String createCustomer(String email, String name) {
@@ -31,7 +34,7 @@ public class StripeService implements IStripService {
             Customer customer = Customer.create(params);
             return customer.getId();
         } catch(StripeException e) {
-            throw new StripeMessageException("Failed to create Stripe customer", e);
+            throw new StripeMessageException(messageSource.getMessage("error.stripe.create.customer", null, LocaleUtils.getCurrentLocale()), e);
         }
     }
 
@@ -56,7 +59,7 @@ public class StripeService implements IStripService {
                 return session.getUrl();
 
             } catch(StripeException e) {
-                throw new StripeMessageException("Failed to create Stripe checkout session", e);
+                throw new StripeMessageException(messageSource.getMessage("error.stripe.create.session", null, LocaleUtils.getCurrentLocale()), e);
             }
     }
 
@@ -67,7 +70,7 @@ public class StripeService implements IStripService {
             Subscription subscription = Subscription.retrieve(stripeSubscriptionId);
             subscription.cancel();
         } catch(StripeException e) {
-            throw new StripeMessageException("Failed to cancel Stripe subscription", e);
+            throw new StripeMessageException(messageSource.getMessage("error.stripe.cancel", null, LocaleUtils.getCurrentLocale()), e);
         }
         
     }
@@ -88,7 +91,7 @@ public class StripeService implements IStripService {
             .build();
             subscription.update(params);
         } catch(StripeException e) {
-            throw new StripeMessageException("Failed to schedule plan change", e);
+            throw new StripeMessageException(messageSource.getMessage("error.stripe.schedule", null, LocaleUtils.getCurrentLocale()), e);
         }
     }
 
@@ -101,7 +104,7 @@ public class StripeService implements IStripService {
                     .build();
             subscription.update(params);
         } catch(StripeException e) {
-            throw new StripeMessageException("Failed to schedule subscription cancellation at period end", e);
+            throw new StripeMessageException(messageSource.getMessage("error.stripe.schedule.subscription", null, LocaleUtils.getCurrentLocale()), e);
         }
     
     }
@@ -115,7 +118,7 @@ public class StripeService implements IStripService {
                     .build();
             subscription.update(params);
         } catch(StripeException e) {
-            throw new StripeMessageException("Failed to reactivate subscription", e);
+            throw new StripeMessageException(messageSource.getMessage("error.stripe.reactivate", null, LocaleUtils.getCurrentLocale()), e);
         }
     
     }

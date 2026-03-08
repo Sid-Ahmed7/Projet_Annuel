@@ -11,19 +11,16 @@ import com.glotrush.entities.lesson.MatchingPairLesson;
 import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
 import com.glotrush.exceptions.LessonNotFoundException;
+import com.glotrush.utils.LocaleUtils;
+
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 
-import java.util.Locale;
 
 @Mapper(componentModel = "spring")
 public abstract class LessonEntityToLessonResponse {
-    protected final Locale getCurrentLocale() {
-        return LocaleContextHolder.getLocale();
-    }
 
     public LessonResponse lessonEntityToLessonResponse(Lesson entity, @Context MessageSource messageSource) {
         return switch (entity){
@@ -31,7 +28,7 @@ public abstract class LessonEntityToLessonResponse {
             case MatchingPairLesson matchingPairLesson -> mapMatchingPairLessonEntityToMatchingPairLessonResponse(matchingPairLesson);
             case QcmLesson qcmLesson -> mapQcmLessonEntityToQcmLessonResponse(qcmLesson);
             case SortingExerciseLesson sortingExerciseLesson -> mapSortingExerciseLessonEntityToSortingExerciseLessonResponse(sortingExerciseLesson);
-            case null, default -> throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale()));
+            case null, default -> throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale()));
         };
     }
 

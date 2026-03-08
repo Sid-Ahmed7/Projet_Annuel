@@ -10,6 +10,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.exceptions.EmailSendException;
+import com.glotrush.utils.LocaleUtils;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
@@ -22,9 +23,6 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final MessageSource messageSource;
 
-    protected final Locale getCurrentLocale() {
-        return LocaleContextHolder.getLocale();
-    }
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -34,14 +32,14 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(toEmail);
-            message.setSubject(messageSource.getMessage("email.subject.password_reset", null, getCurrentLocale()));
-            message.setText(messageSource.getMessage("email.body.password_reset", new Object[]{resetLink}, getCurrentLocale()));
+            message.setSubject(messageSource.getMessage("email.subject.password_reset", null, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.password_reset", new Object[]{resetLink}, LocaleUtils.getCurrentLocale()));
 
             mailSender.send(message);
             log.info("Password reset email sent to: {}", toEmail);
         } catch (Exception e) {
             log.error("Error sending password reset email to: {}", toEmail, e);
-            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, getCurrentLocale()), e);
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
         }
     }
 
@@ -50,14 +48,14 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(toEmail);
-            message.setSubject(messageSource.getMessage("email.subject.welcome", null, getCurrentLocale()));
-            message.setText(messageSource.getMessage("email.body.welcome", new Object[]{username != null ? username : ""}, getCurrentLocale()));
+            message.setSubject(messageSource.getMessage("email.subject.welcome", null, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.welcome", new Object[]{username != null ? username : ""}, LocaleUtils.getCurrentLocale()));
 
             mailSender.send(message);
             log.info("Welcome email sent to: {}", toEmail);
         } catch (Exception e) {
             log.error("Error sending welcome email to: {}", toEmail, e);
-            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, getCurrentLocale()), e);
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
         }
     }
 
@@ -66,14 +64,14 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(toEmail);
-            message.setSubject(messageSource.getMessage("email.subject.password_expiry", null, getCurrentLocale()));
-            message.setText(messageSource.getMessage("email.body.password_expiry", new Object[]{daysRemaining}, getCurrentLocale()));
+            message.setSubject(messageSource.getMessage("email.subject.password_expiry", null, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.password_expiry", new Object[]{daysRemaining}, LocaleUtils.getCurrentLocale()));
 
             mailSender.send(message);
             log.info("Password expiry reminder sent to: {}", toEmail);
         } catch (Exception e) {
             log.error("Error sending password expiry reminder to: {}", toEmail, e);
-            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, getCurrentLocale()), e);
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
         }
     }
 
@@ -82,11 +80,11 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(toEmail);
-            message.setSubject(messageSource.getMessage("email.subject.subscription_upgraded", null,getCurrentLocale()));
-            message.setText(messageSource.getMessage("email.body.subscription_upgraded", new Object[]{username, endDate}, getCurrentLocale()));
+            message.setSubject(messageSource.getMessage("email.subject.subscription_upgraded", null, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.subscription_upgraded", new Object[]{username, endDate}, LocaleUtils.getCurrentLocale()));
             mailSender.send(message);
         } catch(Exception e) {
-            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, getCurrentLocale()), e);
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
         }
     }
     public void sendSubscriptionExpiredSoonEmail(String toEmail, String username, long daysRemaining) {
@@ -94,11 +92,11 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(toEmail);
-            message.setSubject(messageSource.getMessage("email.subject.subscription_expiry_reminder", null,getCurrentLocale()));
-            message.setText(messageSource.getMessage("email.body.subscription_expiry_reminder", new Object[]{username, daysRemaining}, getCurrentLocale()));
+            message.setSubject(messageSource.getMessage("email.subject.subscription_expiry_reminder", null, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.subscription_expiry_reminder", new Object[]{username, daysRemaining}, LocaleUtils.getCurrentLocale()));
             mailSender.send(message);
         } catch(Exception e) {
-            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, getCurrentLocale()), e);
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
         }
     }
 
@@ -107,11 +105,11 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(toEmail);
-            message.setSubject(messageSource.getMessage("email.subject.subscription_expired", null,getCurrentLocale()));
-            message.setText(messageSource.getMessage("email.body.subscription_expired", new Object[]{username}, getCurrentLocale()));
+            message.setSubject(messageSource.getMessage("email.subject.subscription_expired", null, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.subscription_expired", new Object[]{username}, LocaleUtils.getCurrentLocale()));
             mailSender.send(message);
         } catch(Exception e) {
-            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, getCurrentLocale()), e);
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
         }
 
     }

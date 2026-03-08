@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.entities.PaymentHistory;
@@ -18,6 +19,7 @@ import com.glotrush.repositories.PaymentHistoryRepository;
 import com.glotrush.repositories.PlanRepository;
 import com.glotrush.repositories.SubscriptionRepository;
 import com.glotrush.scheduler.services.SubscriptionSchedulerService;
+import com.glotrush.utils.LocaleUtils;
 import com.stripe.model.checkout.Session;
 
 import jakarta.transaction.Transactional;
@@ -33,6 +35,7 @@ public class StripeWebhookService {
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final PlanRepository planRepository;
     private final SubscriptionSchedulerService subscriptionSchedulerService;
+    private final MessageSource messageSource;
 
 
     @Transactional
@@ -43,12 +46,11 @@ public class StripeWebhookService {
         String stripeCustomerId = session.getCustomer();
 
         if (accountId == null ||planId == null) {
-           log.warn("Checkout session {} missing metadata", session.getId());
             return;
         }
 
         Subscription subscription = subscriptionRepository.findByAccount_Id(UUID.fromString(accountId))
-                .orElseThrow(() -> new SubscriptionNotFoundException("Subscription not found for account: " + accountId));
+                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", new Object[]{accountId}, LocaleUtils.getCurrentLocale())));
 
         if(subscription.getStripeSubscriptionId() != null && subscription.getStripeSubscriptionId().equals(stripeSubscriptionId)) {
             return;

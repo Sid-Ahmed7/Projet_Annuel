@@ -11,18 +11,15 @@ import com.glotrush.entities.lesson.MatchingPairLesson;
 import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
 import com.glotrush.exceptions.LessonNotFoundException;
+import com.glotrush.utils.LocaleUtils;
+
 import org.mapstruct.*;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 
-import java.util.Locale;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public abstract class LessonRequestToLessonEntity {
 
-    protected final Locale getCurrentLocale() {
-        return LocaleContextHolder.getLocale();
-    }
 
     public Lesson lessonRequestToLessonEntity(LessonRequest request, @Context MessageSource messageSource) {
         return switch (request){
@@ -30,7 +27,7 @@ public abstract class LessonRequestToLessonEntity {
             case MatchingPairLessonRequest matchingPairLessonRequest -> mapMatchingPairLessonRequestToMatchingPairLessonEntity(matchingPairLessonRequest);
             case QcmLessonRequest qcmLessonRequest -> mapQcmLessonRequestToQcmLessonEntity(qcmLessonRequest);
             case SortingExerciseLessonRequest sortingExerciseLessonRequest -> mapSortingExerciseLessonRequestToSortingExerciseLessonEntity(sortingExerciseLessonRequest);
-            case null, default -> throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale()));
+            case null, default -> throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale()));
         };
     }
 
@@ -40,7 +37,7 @@ public abstract class LessonRequestToLessonEntity {
             case MatchingPairLessonRequest matchingPairLessonRequest -> updateMatchingPairLessonFromRequest(matchingPairLessonRequest, (MatchingPairLesson) lesson);
             case QcmLessonRequest qcmLessonRequest -> updateQcmLessonFromRequest(qcmLessonRequest, (QcmLesson) lesson);
             case SortingExerciseLessonRequest sortingExerciseLessonRequest -> updateSortingExerciseLessonFromRequest(sortingExerciseLessonRequest, (SortingExerciseLesson) lesson);
-            case null, default -> throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale()));
+            case null, default -> throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale()));
         }
     }
 

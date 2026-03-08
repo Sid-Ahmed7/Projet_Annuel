@@ -1,28 +1,22 @@
 package com.glotrush.security.totp;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.Locale;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.exceptions.DecryptException;
 import com.glotrush.exceptions.EncryptException;
 import com.glotrush.exceptions.QrCodeGenerationException;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
+import com.glotrush.utils.LocaleUtils;
+
 
 import dev.samstevens.totp.code.CodeGenerator;
 import dev.samstevens.totp.code.DefaultCodeGenerator;
@@ -49,9 +43,6 @@ public class TotpService {
     @Value("${totp.encryption}")
     private String encryptionKey;
 
-    protected final Locale getCurrentLocale() {
-        return LocaleContextHolder.getLocale();
-    }
 
     public TotpService(MessageSource messageSource) {
         this.verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
@@ -65,7 +56,7 @@ public class TotpService {
     public String generateOtpUri(String secret, String email, String issuer) {
         try {
             if (secret == null || email == null || issuer == null) {
-                throw new IllegalArgumentException(messageSource.getMessage("error.security.invalid_params", null, getCurrentLocale()));
+                throw new IllegalArgumentException(messageSource.getMessage("error.security.invalid_params", null, LocaleUtils.getCurrentLocale()));
             }
 
             QrData data = new QrData.Builder()
@@ -80,7 +71,7 @@ public class TotpService {
                     return data.getUri();
         } catch (Exception e) {
             log.error("Error generating OTP code", e);
-            throw new QrCodeGenerationException(messageSource.getMessage("error.security.qr_code_failed", null, getCurrentLocale()), e);
+            throw new QrCodeGenerationException(messageSource.getMessage("error.security.qr_code_failed", null, LocaleUtils.getCurrentLocale()), e);
         }
     }
 
@@ -100,7 +91,7 @@ public class TotpService {
             byte[] keyBytes = Base64.getDecoder().decode(encryptionKey);
 
             if (keyBytes.length != 32) {
-                throw new IllegalStateException(messageSource.getMessage("error.security.invalid_key_size", null, getCurrentLocale()));
+                throw new IllegalStateException(messageSource.getMessage("error.security.invalid_key_size", null, LocaleUtils.getCurrentLocale()));
             }
 
             byte[] iv = new byte[GCM_IV_LENGTH];
@@ -117,7 +108,7 @@ public class TotpService {
             return Base64.getEncoder().encodeToString(byteBuffer.array());
         } catch (Exception e) {
             log.error("Error encrypting secret", e);
-            throw new EncryptException(messageSource.getMessage("error.security.encrypt_failed", null, getCurrentLocale()), e);
+            throw new EncryptException(messageSource.getMessage("error.security.encrypt_failed", null, LocaleUtils.getCurrentLocale()), e);
         }
     }
 
@@ -126,7 +117,7 @@ public String decryptSecret(String encryptedSecret) {
         byte[] keyBytes = Base64.getDecoder().decode(encryptionKey);
 
         if (keyBytes.length != 32) {
-            throw new IllegalStateException(messageSource.getMessage("error.security.decrypt_failed", null, getCurrentLocale()));
+            throw new IllegalStateException(messageSource.getMessage("error.security.decrypt_failed", null, LocaleUtils.getCurrentLocale()));
         }
 
         byte[] decodedData = Base64.getDecoder().decode(encryptedSecret);
@@ -146,7 +137,7 @@ public String decryptSecret(String encryptedSecret) {
 
     } catch (Exception e) {
         log.error("Error decrypting secret", e);
-        throw new DecryptException(messageSource.getMessage("error.security.decrypt_failed", null, getCurrentLocale()), e);
+        throw new DecryptException(messageSource.getMessage("error.security.decrypt_failed", null, LocaleUtils.getCurrentLocale()), e);
     }
 }
 }
