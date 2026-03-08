@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.UUID;
@@ -29,10 +30,13 @@ import com.glotrush.dto.request.RegisterRequest;
 import com.glotrush.dto.request.ResetPasswordRequest;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.PasswordResetToken;
+import com.glotrush.entities.Plan;
 import com.glotrush.enumerations.AccountStatus;
+import com.glotrush.enumerations.SubscriptionType;
 import com.glotrush.enumerations.UserRole;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.PasswordResetTokenRepository;
+import com.glotrush.repositories.PlanRepository;
 import com.glotrush.repositories.RefreshTokenRepository;
 import com.glotrush.repositories.SubscriptionRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
@@ -68,7 +72,11 @@ class AuthControllerIntegrationTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private PlanRepository planRepository;
+
     private Accounts testAccount;
+    private Plan freePlan;
     private static final String TEST_EMAIL = "test@example.com";
     private static final String TEST_PASSWORD = "SecurePass123!@#";
     private static final String TEST_USERNAME = "testuser";
@@ -81,6 +89,7 @@ class AuthControllerIntegrationTest {
         passwordResetTokenRepository.deleteAll();
         subscriptionRepository.deleteAll();
         accountsRepository.deleteAll();
+        planRepository.deleteAll();
 
         testAccount = Accounts.builder()
                 .email(TEST_EMAIL)
@@ -95,11 +104,21 @@ class AuthControllerIntegrationTest {
                 .updatedAt(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
                 .build();
+        freePlan = new Plan();
+                freePlan.setName("Free Plan");
+                freePlan.setDescription("Free plan");
+                freePlan.setPrice(BigDecimal.ZERO);
+                freePlan.setSubscriptionType(SubscriptionType.FREE);
+                freePlan.setIsActive(true);
+                freePlan = planRepository.save(freePlan);
     }
 
     @Test
     @DisplayName("Should register new user successfully")
     void testRegisterSuccess() throws Exception {
+   
+
+
         RegisterRequest request = new RegisterRequest();
         request.setEmail("newuser@example.com");
         request.setUsername("newuser");

@@ -2,7 +2,6 @@ package com.glotrush.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -10,12 +9,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.UUID;
 
-import com.glotrush.config.TestMessageSourceConfig;
 import com.glotrush.dto.request.lesson.FlashcardLessonRequest;
 import com.glotrush.dto.request.lesson.MatchingPairLessonRequest;
 import com.glotrush.dto.request.lesson.QcmLessonRequest;
 import com.glotrush.dto.request.lesson.SortingExerciseLessonRequest;
-import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.dto.response.lesson.FlashcardLessonResponse;
 import com.glotrush.dto.response.lesson.MatchingPairLessonResponse;
 import com.glotrush.dto.response.lesson.QcmLessonResponse;
@@ -26,7 +23,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -172,28 +168,30 @@ class LessonControllerTest {
     @WithMockUser(roles = "ADMIN")
     void testCreateLessonWithExplicitType() throws Exception {
         UUID topicId = UUID.randomUUID();
-        String json = """
-                {
-                    "lessonType": "FLASHCARD",
-                    "topicId": "%s",
-                    "title": "Explicit Type Lesson",
-                    "description": "Description",
-                    "orderIndex": 1,
-                    "xpReward": 50,
+        // String json = """
+        //         {
+        //             "lessonType": "FLASHCARD",
+        //             "topicId": "%s",
+        //             "title": "Explicit Type Lesson",
+        //             "description": "Description",
+        //             "orderIndex": 1,
+        //             "xpReward": 50,
                     
-                    "minLevelRequired": 1,
-                    "durationMinutes": 15,
-                    "isActive": true,
-                    "flashcards": []
-                }
-                """.formatted(topicId);
+        //             "minLevelRequired": 1,
+        //             "durationMinutes": 15,
+        //             "isActive": true,
+        //             "flashcards": []
+        //         }
+        //         """.formatted(topicId);
+
+        FlashcardLessonRequest request = LessonTestFactory.createFlashcardLessonRequest(topicId, "Explicit Type Lesson");
 
         FlashcardLessonResponse response = LessonTestFactory.createFlashcardLessonResponse(UUID.randomUUID(), "Explicit Type Lesson");
         when(lessonService.createLesson(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/lessons")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Explicit Type Lesson"));
     }

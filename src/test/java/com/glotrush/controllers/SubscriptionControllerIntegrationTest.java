@@ -2,10 +2,10 @@ package com.glotrush.controllers;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,11 +23,14 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glotrush.dto.request.LoginRequest;
 import com.glotrush.entities.Accounts;
+import com.glotrush.entities.Plan;
 import com.glotrush.entities.Subscription;
 import com.glotrush.enumerations.SubscriptionType;
 import com.glotrush.enumerations.AccountStatus;
+import com.glotrush.enumerations.PaymentInterval;
 import com.glotrush.enumerations.UserRole;
 import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.PlanRepository;
 import com.glotrush.repositories.SubscriptionRepository;
 
 import jakarta.servlet.http.Cookie;
@@ -52,9 +55,13 @@ class SubscriptionControllerIntegrationTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private PlanRepository planRepository;
+
 
     private Accounts account;
     private Subscription subscription;
+    private Plan plan;
 
     private static final String TEST_EMAIL="factoryflop@gmail.com";
     private static final String TEST_PASSWORD="Password123!@#";
@@ -66,6 +73,7 @@ class SubscriptionControllerIntegrationTest {
 
         subscriptionRepository.deleteAll();
         accountsRepository.deleteAll();
+        planRepository.deleteAll();
 
         account = Accounts.builder()
                 .email(TEST_EMAIL)
@@ -80,6 +88,8 @@ class SubscriptionControllerIntegrationTest {
                 .updatedAt(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
                 .build();
+
+     
     }
 
 
@@ -97,10 +107,22 @@ class SubscriptionControllerIntegrationTest {
                 return result.getResponse().getCookie("access_token");
     }
 
+    private Plan getPlanBySubscriptionType(SubscriptionType type) {
+        Plan plan = Plan.builder()
+            .name(type == SubscriptionType.FREE ? "Free Plan" : "Premium Plan")
+            .description("Test plan")
+            .price(type == SubscriptionType.FREE ? BigDecimal.ZERO : new BigDecimal("999.99"))
+            .subscriptionType(type)
+            .isActive(true)
+            .build();
+        planRepository.save(plan);
+        return plan;
+    }
+
     private void createSubscriptionForAccount(Accounts accounts, SubscriptionType type) {
         subscription = Subscription.builder()
                 .account(accounts)
-                .subscriptionType(type)
+                .plan(getPlanBySubscriptionType(type))
                 .isActive(true)
                 .startDate(LocalDateTime.now())
                 .endDate(type == SubscriptionType.PREMIUM ? LocalDateTime.now().plusSeconds(60) : null)
@@ -121,8 +143,9 @@ class SubscriptionControllerIntegrationTest {
                 .cookie(cookie)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.subscriptionType").value("FREE"))
-                .andExpect(jsonPath("$.isActive").value(true));
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.isActive").value(true))
+                .andExpect(jsonPath("$.startDate").exists());
     }
     
     @Test
@@ -145,8 +168,9 @@ class SubscriptionControllerIntegrationTest {
                 .cookie(cookie)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.subscriptionType").value("PREMIUM"))
+                .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.isActive").value(true))
+                .andExpect(jsonPath("$.startDate").exists())
                 .andExpect(jsonPath("$.endDate").exists());
     }
 
