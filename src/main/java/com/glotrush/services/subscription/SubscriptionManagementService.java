@@ -1,13 +1,10 @@
 package com.glotrush.services.subscription;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.PaymentHistoryBuilder;
@@ -28,8 +25,11 @@ import com.glotrush.exceptions.SubscriptionOperationException;
 import com.glotrush.repositories.PaymentHistoryRepository;
 import com.glotrush.repositories.PlanRepository;
 import com.glotrush.repositories.SubscriptionRepository;
+import com.glotrush.scheduler.services.SubscriptionSchedulerService;
+import com.glotrush.services.EmailService;
 import com.glotrush.services.plan.IPlanService;
 import com.glotrush.services.stripe.IStripService;
+import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -48,19 +48,18 @@ public class SubscriptionManagementService implements ISubscriptionManagementSer
     private final SubscriptionBuilder subscriptionBuilder;
     private final PaymentHistoryBuilder paymentHistoryBuilder;
     private final MessageSource messageSource;
-
-    protected Locale getCurrentLocale(){
-        return LocaleContextHolder.getLocale();
-    }
-
+    private final SubscriptionSchedulerService subscriptionSchedulerService;
+    private final EmailService emailService;
 
     @Override
+    @Transactional
     public List<SubscriptionDetailResponse> getAllSubscriptions() {
         return subscriptionRepository.findAll().stream().map(subscriptionBuilder::mapToSubscriptionDetailResponse).toList();
     }
 
 
     @Override
+    @Transactional
     public SubscriptionDetailResponse getSubscriptionDetail(UUID accountId) {
         Subscription subscription = getSubscriptionByAccountId(accountId);
         return subscriptionBuilder.mapToSubscriptionDetailResponse(subscription);
@@ -72,12 +71,12 @@ public class SubscriptionManagementService implements ISubscriptionManagementSer
         Subscription subscription = getSubscriptionByAccountId(accountId);
         Plan plan = planService.getPlanById(request.getPlanId());
 
-        if(subscription.getSubscriptionType() == SubscriptionType.PREMIUM){
-            throw new SubscriptionOperationException(messageSource.getMessage("error.subscription.already_premium", null, getCurrentLocale()));
+        if(subscription.getPlan().getSubscriptionType() == SubscriptionType.PREMIUM){
+            throw new SubscriptionOperationException(messageSource.getMessage("error.subscription.already_premium", null, LocaleUtils.getCurrentLocale()));
         }
 
         if(plan.getStripePriceId() == null || plan.getStripePriceId().isBlank()) {
-            throw new SubscriptionOperationException(messageSource.getMessage("error.plan.stripe.notconfigured", null, getCurrentLocale()));
+            throw new SubscriptionOperationException(messageSource.getMessage("error.plan.stripe.notconfigured", null, LocaleUtils.getCurrentLocale()));
         }
 
         Accounts account = subscription.getAccount();
@@ -103,14 +102,14 @@ public class SubscriptionManagementService implements ISubscriptionManagementSer
         Plan newPlan = planService.getPlanById(request.getNewPlanId());
 
         if(subscription.getPlan() != null && subscription.getPlan().getId().equals(newPlan.getId())) {
-            throw new SubscriptionOperationException(messageSource.getMessage("error.subscription.same_plan", null, getCurrentLocale()));
+            throw new SubscriptionOperationException(messageSource.getMessage("error.subscription.same_plan", null, LocaleUtils.getCurrentLocale()));
         }
 
         boolean isFreePlan = newPlan.getStripePriceId() == null || newPlan.getStripePriceId().isBlank();
 
-        if(subscription.getSubscriptionType() == SubscriptionType.FREE) {
+        if(subscription.getPlan().getSubscriptionType() == SubscriptionType.FREE) {
             if(isFreePlan) {
-                throw new SubscriptionOperationException(messageSource.getMessage("error.subscription.same_plan", null, getCurrentLocale()));
+                throw new SubscriptionOperationException(messageSource.getMessage("error.subscription.same_plan", null, LocaleUtils.getCurrentLocale()));
             }
 
             String customerId = subscription.getStripeCustomerId();
@@ -151,8 +150,8 @@ public class SubscriptionManagementService implements ISubscriptionManagementSer
     @Transactional
     public SubscriptionDetailResponse cancelSubscription(UUID accountId, CancelSubscriptionRequest request) {
         Subscription subscription = getSubscriptionByAccountId(accountId);
-        if(subscription.getSubscriptionType() != SubscriptionType.PREMIUM) {
-            throw new SubscriptionOperationException(messageSource.getMessage("error.subscription.notpremium", null, getCurrentLocale()));
+        if(subscription.getPlan().getSubscriptionType() != SubscriptionType.PREMIUM) {
+            throw new SubscriptionOperationException(messageSource.getMessage("error.subscription.notpremium", null, LocaleUtils.getCurrentLocale()));
         }
 
         if(Boolean.TRUE.equals(request.getIsCancelAtPeriodEnd())) {
@@ -166,12 +165,11 @@ public class SubscriptionManagementService implements ISubscriptionManagementSer
                     stripService.cancelSubscription(subscription.getStripeSubscriptionId());
             }
                 
-            subscription.setStatus(SubscriptionStatus.CANCELED);
+            subscription.setStatus(SubscriptionStatus.ACTIVE);
             subscription.setCanceledAt(LocalDateTime.now());
             subscription.setEndDate(LocalDateTime.now());
-            subscription.setIsActive(false);
-            subscription.setSubscriptionType(SubscriptionType.FREE);
-            Plan freePlan = planRepository.findByPriceAndIsActiveTrue(BigDecimal.ZERO).orElse(null);
+            subscription.setIsActive(true);
+            Plan freePlan = planRepository.findBySubscriptionTypeAndIsActiveTrue(SubscriptionType.FREE).orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.plan.notfound", null, LocaleUtils.getCurrentLocale())));
             subscription.setPlan(freePlan);
             subscription.setStripeSubscriptionId(null);
         }
@@ -179,8 +177,11 @@ public class SubscriptionManagementService implements ISubscriptionManagementSer
         if(request.getCancellationReason() != null) {
             subscription.setCancelReason(request.getCancellationReason());
         }
+        subscriptionSchedulerService.cancelAllSchedulesForSubscription(subscription.getId());
 
         subscriptionRepository.save(subscription);
+        Accounts account = subscription.getAccount();
+        emailService.sendSubscriptionCancellationEmail(account.getEmail(), account.getUsername());
         return subscriptionBuilder.mapToSubscriptionDetailResponse(subscription);
     }
 
@@ -191,7 +192,7 @@ public class SubscriptionManagementService implements ISubscriptionManagementSer
         Subscription subscription = getSubscriptionByAccountId(accountId);
 
         if(!Boolean.TRUE.equals(subscription.getCancelAtPeriodEnd())) {
-            throw new SubscriptionOperationException(messageSource.getMessage("error.subscription.not_scheduled_for_cancellation", null, getCurrentLocale()));
+            throw new SubscriptionOperationException(messageSource.getMessage("error.subscription.not_scheduled_for_cancellation", null, LocaleUtils.getCurrentLocale()));
         }
 
         if (subscription.getStripeSubscriptionId() != null) {
@@ -213,7 +214,6 @@ public class SubscriptionManagementService implements ISubscriptionManagementSer
 
     
     private Subscription getSubscriptionByAccountId(UUID accountId) {
-        return subscriptionRepository.findByAccount_Id(accountId)
-                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, getCurrentLocale())));
+        return subscriptionRepository.findByAccount_Id(accountId).orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, LocaleUtils.getCurrentLocale())));
     }    
 }

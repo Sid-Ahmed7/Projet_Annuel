@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.glotrush.enumerations.PaymentInterval;
+import com.glotrush.enumerations.SubscriptionType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,6 +48,11 @@ public class Plan {
     @Column(nullable = false, length = 3)
     @Builder.Default
     private String currency = "EUR";
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private SubscriptionType subscriptionType = SubscriptionType.FREE;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = true)

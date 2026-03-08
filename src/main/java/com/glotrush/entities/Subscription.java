@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.glotrush.enumerations.SubscriptionStatus;
-import com.glotrush.enumerations.SubscriptionType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -40,11 +39,6 @@ public class Subscription {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false, unique = true)
     private Accounts account;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private SubscriptionType subscriptionType = SubscriptionType.FREE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id")

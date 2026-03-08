@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import com.glotrush.enumerations.PaymentInterval;
+import com.glotrush.enumerations.SubscriptionType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,5 +23,6 @@ public class PlanResponse {
     private BigDecimal price;
     private String currency;
     private PaymentInterval paymentInterval;
+    private SubscriptionType subscriptionType;
 
 }

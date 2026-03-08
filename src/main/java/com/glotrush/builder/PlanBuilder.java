@@ -20,6 +20,7 @@ public class PlanBuilder {
                 .price(plan.getPrice())
                 .currency(plan.getCurrency())
                 .paymentInterval(plan.getPaymentInterval())
+                .subscriptionType(plan.getSubscriptionType())
                 .build();
     }
     

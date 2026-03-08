@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -13,7 +12,6 @@ import com.glotrush.exceptions.EmailSendException;
 import com.glotrush.utils.LocaleUtils;
 
 import java.time.LocalDateTime;
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -111,7 +109,19 @@ public class EmailService {
         } catch(Exception e) {
             throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
         }
+    }
 
+    public void sendSubscriptionCancellationEmail(String toEmail, String username) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(messageSource.getMessage("email.subject.subscription.cancelled", null, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.subscription.cancelled", new Object[]{username}, LocaleUtils.getCurrentLocale()));
+            mailSender.send(message);
+        } catch(Exception e) {
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
+        }
     }
 
 

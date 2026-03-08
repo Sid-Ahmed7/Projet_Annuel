@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.glotrush.enumerations.SubscriptionStatus;
-import com.glotrush.enumerations.SubscriptionType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,7 +20,6 @@ public class SubscriptionDetailResponse {
     private UUID accountId;
     private String firstName;
     private String lastName;
-    private SubscriptionType subscriptionType;
     private SubscriptionStatus status;
     private PlanResponse plan;
     private Boolean isActive;

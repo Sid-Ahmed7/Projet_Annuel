@@ -3,6 +3,7 @@ package com.glotrush.dto.request;
 import java.math.BigDecimal;
 
 import com.glotrush.enumerations.PaymentInterval;
+import com.glotrush.enumerations.SubscriptionType;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -31,6 +32,9 @@ public class CreatePlanRequest {
     private String currency;
 
     private PaymentInterval paymentInterval;
+
+    @NotNull
+    private SubscriptionType subscriptionType;
 
     private String stripePriceId;
 }

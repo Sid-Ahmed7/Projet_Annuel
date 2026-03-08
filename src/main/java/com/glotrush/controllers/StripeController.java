@@ -12,6 +12,7 @@ import com.glotrush.config.StripeConfig;
 import com.glotrush.services.stripe.StripeWebhookService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
+import com.stripe.model.Invoice;
 import com.stripe.model.Subscription;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
@@ -56,10 +57,15 @@ public class StripeController {
                 }
             }
             case "customer.subscription.deleted" -> {
-                Subscription subscription = (Subscription) event.getDataObjectDeserializer()
-                        .getObject().orElse(null);
+                Subscription subscription = (Subscription) event.getDataObjectDeserializer().getObject().orElse(null);
                 if (subscription != null) {
                     stripeWebhookService.handleSubscriptionDeleted(subscription);
+                }
+            }
+            case "invoice.payment_failed" -> {
+                Invoice invoice = (Invoice) event.getDataObjectDeserializer().getObject().orElse(null);
+                if (invoice != null) {
+                    stripeWebhookService.renewSubscription(invoice);
                 }
             }
 

@@ -10,8 +10,6 @@ import com.glotrush.dto.response.SubscriptionResponse;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.Plan;
 import com.glotrush.entities.Subscription;
-import com.glotrush.enumerations.SubscriptionType;
-
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -24,7 +22,6 @@ public class SubscriptionBuilder {
         return Subscription.builder()
                 .account(account)
                 .plan(freePlan)
-                .subscriptionType(SubscriptionType.FREE)
                 .startDate(LocalDateTime.now())
                 .endDate(null)
                 .currentPeriodStart(LocalDateTime.now())
@@ -38,7 +35,6 @@ public class SubscriptionBuilder {
     public SubscriptionResponse mapToSubscriptionResponse(Subscription subscription) {
         return SubscriptionResponse.builder()
                 .id(subscription.getId())
-                .subscriptionType(subscription.getSubscriptionType())
                 .isActive(subscription.getIsActive())
                 .startDate(subscription.getStartDate())
                 .endDate(subscription.getEndDate() != null ? subscription.getEndDate() : null)
@@ -65,7 +61,6 @@ public class SubscriptionBuilder {
                 .accountId(subscription.getAccount().getId())
                 .firstName(subscription.getAccount().getFirstName())
                 .lastName(subscription.getAccount().getLastName())
-                .subscriptionType(subscription.getSubscriptionType())
                 .status(subscription.getStatus())
                 .plan(subscription.getPlan() != null ? planBuilder.mapToResponse(subscription.getPlan()) : null)
                 .isActive(subscription.getIsActive())

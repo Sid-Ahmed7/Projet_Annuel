@@ -38,37 +38,32 @@ public class SubscriptionController {
     private final ISubscriptionService subscriptionService;
     private final SubscriptionManagementService subscriptionManagementService;
 
-    // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all-subscriptions")
     public ResponseEntity<List<SubscriptionDetailResponse>> getSubscriptions() {
         return ResponseEntity.ok(subscriptionManagementService.getAllSubscriptions());
     }
 
-    // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{accountId}")
     public ResponseEntity<SubscriptionDetailResponse> getSubscriptionOfAccount(@PathVariable UUID accountId){
         return ResponseEntity.ok(subscriptionManagementService.getSubscriptionDetail(accountId));
     }
 
-    // @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/cancel/{accountId}")
-    public ResponseEntity<SubscriptionDetailResponse> cancelSubscriptionOfAccount(@PathVariable UUID accountId, @Valid @RequestBody CancelSubscriptionRequest request) {
-        return ResponseEntity.ok(subscriptionManagementService.cancelSubscription(accountId, request));
-    }
 
-    // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{accountId}/cancel")
     public ResponseEntity<SubscriptionDetailResponse> cancelSubscriptionByAdmin(@PathVariable UUID accountId,@Valid @RequestBody CancelSubscriptionRequest request) {
         return ResponseEntity.ok(subscriptionManagementService.cancelSubscription(accountId, request));
     }
 
-    // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{accountId}/payments")
     public ResponseEntity<List<PaymentHistoryResponse>> getPaymentHistoryByAccountId(@PathVariable UUID accountId) {
         return ResponseEntity.ok(subscriptionManagementService.getPaymentHistory(accountId));
     }
 
-    // @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/my-subscription")
     public ResponseEntity<SubscriptionResponse> getMySubscription(Authentication authentication) {
         UUID accountId = UUID.fromString(authentication.getName());
@@ -76,7 +71,7 @@ public class SubscriptionController {
         return ResponseEntity.ok(subscription);
     }
 
-    // @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/detail")
     public ResponseEntity<SubscriptionDetailResponse> getMySubscriptionDetail(Authentication authentication) {
         UUID accountId = UUID.fromString(authentication.getName());

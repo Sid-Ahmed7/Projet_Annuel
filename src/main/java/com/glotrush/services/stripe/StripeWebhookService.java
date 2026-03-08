@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
+import com.glotrush.entities.Accounts;
 import com.glotrush.entities.PaymentHistory;
 import com.glotrush.entities.Plan;
 import com.glotrush.entities.Subscription;
@@ -19,7 +20,9 @@ import com.glotrush.repositories.PaymentHistoryRepository;
 import com.glotrush.repositories.PlanRepository;
 import com.glotrush.repositories.SubscriptionRepository;
 import com.glotrush.scheduler.services.SubscriptionSchedulerService;
+import com.glotrush.services.EmailService;
 import com.glotrush.utils.LocaleUtils;
+import com.stripe.model.Invoice;
 import com.stripe.model.checkout.Session;
 
 import jakarta.transaction.Transactional;
@@ -36,6 +39,7 @@ public class StripeWebhookService {
     private final PlanRepository planRepository;
     private final SubscriptionSchedulerService subscriptionSchedulerService;
     private final MessageSource messageSource;
+    private final EmailService emailService;
 
 
     @Transactional
@@ -57,14 +61,10 @@ public class StripeWebhookService {
         }
 
         Plan plan = planRepository.findById(UUID.fromString(planId)).orElse(null);
-        if (plan == null) {
-            return;
-        }
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime periodEnd = calculatePeriodEnd(now, plan.getPaymentInterval());
 
-        subscription.setSubscriptionType(SubscriptionType.PREMIUM);
         subscription.setPlan(plan);
         subscription.setStatus(SubscriptionStatus.ACTIVE);
         subscription.setIsActive(true);
@@ -82,8 +82,7 @@ public class StripeWebhookService {
         subscriptionSchedulerService.scheduleExpiration(subscription);
         subscriptionSchedulerService.scheduleReminder(subscription);
         
-        BigDecimal amount = BigDecimal.valueOf(session.getAmountTotal())
-                .divide(BigDecimal.valueOf(100));
+        BigDecimal amount = BigDecimal.valueOf(session.getAmountTotal()).divide(BigDecimal.valueOf(100));
 
         PaymentHistory payment = PaymentHistory.builder()
                 .account(subscription.getAccount())
@@ -98,27 +97,63 @@ public class StripeWebhookService {
                 .build();
 
         paymentHistoryRepository.save(payment);
+        Accounts account = subscription.getAccount();
+        emailService.sendPremiumUpgratedEmail(account.getEmail(), account.getUsername(), periodEnd);
 
     }
         @Transactional
         public void handleSubscriptionDeleted(com.stripe.model.Subscription stripeSubscription) {
-        Subscription subscription = subscriptionRepository
-                .findByStripeSubscriptionId(stripeSubscription.getId()).orElse(null);
-        if (subscription == null) return;
-
+        Subscription subscription = subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId()).orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound.stripe", new Object[]{stripeSubscription.getId()}, LocaleUtils.getCurrentLocale())));
+        if (subscription == null){
+            return;
+        }
         subscriptionSchedulerService.cancelAllSchedulesForSubscription(subscription.getId());
 
-        Plan freePlan = planRepository.findByPriceAndIsActiveTrue(BigDecimal.ZERO).orElse(null);
+        Plan freePlan = planRepository.findBySubscriptionTypeAndIsActiveTrue(SubscriptionType.FREE).orElse(null);
 
-        subscription.setStatus(SubscriptionStatus.CANCELED);
-        subscription.setSubscriptionType(SubscriptionType.FREE);
+        subscription.setStatus(SubscriptionStatus.ACTIVE);
         subscription.setPlan(freePlan);
         subscription.setIsActive(true);
         subscription.setCanceledAt(LocalDateTime.now());
+        subscription.setStartDate(LocalDateTime.now());
+        subscription.setEndDate(null);
         subscription.setStripeSubscriptionId(null);
         subscription.setCurrentPeriodEnd(null);
 
         subscriptionRepository.save(subscription);
+        }
+
+        @Transactional
+        public void renewSubscription(Invoice invoice) {
+            Subscription subscription = subscriptionRepository.findByStripeSubscriptionId(invoice.getSubscription()).orElse(null);
+            if (subscription == null){
+                return;
+            }
+            subscription.setCurrentPeriodStart(LocalDateTime.now());
+            subscription.setCurrentPeriodEnd(calculatePeriodEnd(LocalDateTime.now(), subscription.getPlan().getPaymentInterval()));
+            subscription.setEndDate(calculatePeriodEnd(LocalDateTime.now(), subscription.getPlan().getPaymentInterval()));
+
+            subscriptionRepository.save(subscription);
+            subscriptionSchedulerService.cancelAllSchedulesForSubscription(subscription.getId());
+            subscriptionSchedulerService.scheduleExpiration(subscription);
+            subscriptionSchedulerService.scheduleReminder(subscription);
+
+            BigDecimal amount = BigDecimal.valueOf(invoice.getAmountPaid()).divide(BigDecimal.valueOf(100));
+            
+            PaymentHistory payment = PaymentHistory.builder()
+                    .account(subscription.getAccount())
+                    .subscription(subscription)
+                    .transactionId(invoice.getPaymentIntent())
+                    .amount(amount)
+                    .currency(invoice.getCurrency().toUpperCase())
+                    .paymentStatus(PaymentStatus.SUCCEEDED)
+                    .paymentMethod("stripe")
+                    .paymentInterval(subscription.getPlan().getPaymentInterval())
+                    .paymentAt(LocalDateTime.now())
+                    .build();
+        
+            paymentHistoryRepository.save(payment);
+        
         }
 
 

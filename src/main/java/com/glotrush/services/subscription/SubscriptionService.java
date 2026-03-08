@@ -1,6 +1,5 @@
 package com.glotrush.services.subscription;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -45,13 +44,13 @@ public class SubscriptionService implements ISubscriptionService {
         if(subscriptionRepository.existsByAccount_Id(account.getId())) {
             throw new SubscriptionAlreadyExistException(messageSource.getMessage("error.subscription.alreadyExist", null, LocaleUtils.getCurrentLocale()));
         }
-        Plan freePlan = planRepository.findByPriceAndIsActiveTrue(BigDecimal.ZERO)
-            .orElse(null);
+        Plan freePlan = planRepository.findBySubscriptionTypeAndIsActiveTrue(SubscriptionType.FREE).orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.plan.notfound", null, LocaleUtils.getCurrentLocale())));
         Subscription subscription = subscriptionBuilder.buildFreeSubscription(account, freePlan);
         subscriptionRepository.save(subscription);
     }
 
     @Override
+    @Transactional
     public SubscriptionResponse getSubscription(UUID accountId) {
         Subscription subscription = subscriptionRepository.findByAccount_Id(accountId)
                 .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, LocaleUtils.getCurrentLocale())));
@@ -63,7 +62,7 @@ public class SubscriptionService implements ISubscriptionService {
     @Transactional
     public void checkAndChangeExpiredSubscriptions() {
     
-    List<Subscription> expiredSubscriptions = subscriptionRepository.findAllBySubscriptionTypeAndIsActiveTrueAndEndDateBefore(SubscriptionType.PREMIUM, LocalDateTime.now());
+    List<Subscription> expiredSubscriptions = subscriptionRepository.findAllByPlanSubscriptionTypeAndIsActiveTrueAndEndDateBefore(SubscriptionType.PREMIUM, LocalDateTime.now());
 
         if(expiredSubscriptions.isEmpty()) {
             return;
@@ -75,26 +74,19 @@ public class SubscriptionService implements ISubscriptionService {
     }
 
     @Override
+    @Transactional
     public void expireSingleSubscription(UUID subscriptionId) {
-        Subscription subscription = subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, LocaleUtils.getCurrentLocale())));
+        Subscription subscription = subscriptionRepository.findById(subscriptionId).orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, LocaleUtils.getCurrentLocale())));
 
-        if(subscription == null) {
-            return;
-        }
-
-        if(subscription.getSubscriptionType() != SubscriptionType.PREMIUM || !subscription.getIsActive()) {
+        if(subscription.getPlan().getSubscriptionType() != SubscriptionType.PREMIUM || !subscription.getIsActive()) {
             return;
         }
           if (subscription.getEndDate() != null && subscription.getEndDate().isAfter(LocalDateTime.now())) {
             return;
         }
 
-        Plan freePlan = planRepository.findByPriceAndIsActiveTrue(BigDecimal.ZERO).orElse(null);
+        Plan freePlan = planRepository.findBySubscriptionTypeAndIsActiveTrue(SubscriptionType.FREE).orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.plan.notfound", null, LocaleUtils.getCurrentLocale())));
 
-
-
-        subscription.setSubscriptionType(SubscriptionType.FREE);
         subscription.setPlan(freePlan);
         subscription.setStartDate(LocalDateTime.now());
         subscription.setEndDate(null);
@@ -107,6 +99,7 @@ public class SubscriptionService implements ISubscriptionService {
     }
 
      @Override
+        @Transactional
         public void sendReminderEmailForExpiringSubscription(UUID subscriptionId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, LocaleUtils.getCurrentLocale())));
@@ -119,7 +112,7 @@ public class SubscriptionService implements ISubscriptionService {
     @Override
     @Transactional
     public void sendEmailWhenExpiringSoon() {
-        List<Subscription> expiringSubscriptions = subscriptionRepository.findAllBySubscriptionTypeAndIsActiveTrueAndEndDateBetween(SubscriptionType.PREMIUM, LocalDateTime.now(), LocalDateTime.now().plusHours(24));
+        List<Subscription> expiringSubscriptions = subscriptionRepository.findAllByPlanSubscriptionTypeAndIsActiveTrueAndEndDateBetween(SubscriptionType.PREMIUM, LocalDateTime.now(), LocalDateTime.now().plusHours(24));
         if(expiringSubscriptions.isEmpty()) {
             return;
         }

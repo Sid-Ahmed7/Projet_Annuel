@@ -39,6 +39,7 @@ public class PlanService implements IPlanService {
             .price(request.getPrice())
             .currency(request.getCurrency() != null ? request.getCurrency() : "EUR")
             .paymentInterval(request.getPaymentInterval())
+            .subscriptionType(request.getSubscriptionType())
             .stripePriceId(request.getStripePriceId())
             .isActive(true)
             .build();
@@ -62,6 +63,9 @@ public class PlanService implements IPlanService {
         }
         if (request.getPaymentInterval() != null) {
             plan.setPaymentInterval(request.getPaymentInterval());
+        }
+        if (request.getSubscriptionType() != null) {
+            plan.setSubscriptionType(request.getSubscriptionType());
         }
         if (request.getStripePriceId() != null) {
             plan.setStripePriceId(request.getStripePriceId());
