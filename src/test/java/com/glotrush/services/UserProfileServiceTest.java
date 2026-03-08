@@ -13,16 +13,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
-import com.glotrush.services.languages.UserLanguageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.glotrush.builder.UserProfileBuilder;
+import com.glotrush.enumerations.CountryCode;
+import com.glotrush.enumerations.TimeZone;
 import com.glotrush.dto.request.UpdateProfileRequest;
 import com.glotrush.dto.response.UserProfileResponse;
 import com.glotrush.entities.Accounts;
@@ -159,8 +159,8 @@ class UserProfileServiceTest {
         UpdateProfileRequest request = UpdateProfileRequest.builder()
                 .bio("Updated bio")
                 .displayName("Updated Name")
-                .countryCode("fr")
-                .timezone("Europe/Paris")
+                .countryCode(CountryCode.FR)
+                .timezone(TimeZone.ECT)
                 .isPublic(false)
                 .build();
 
@@ -181,7 +181,8 @@ class UserProfileServiceTest {
         verify(userProfileRepository).save(any(UserProfile.class));
         assertThat(testProfile.getBio()).isEqualTo("Updated bio");
         assertThat(testProfile.getDisplayName()).isEqualTo("Updated Name");
-        assertThat(testProfile.getCountryCode()).isEqualTo("FR");
+        assertThat(testProfile.getCountryCode()).isEqualTo(CountryCode.FR);
+        assertThat(testProfile.getTimezone()).isEqualTo(TimeZone.ECT);
     }
 
     @Test

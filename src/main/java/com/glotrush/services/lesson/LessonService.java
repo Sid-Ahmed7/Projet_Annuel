@@ -28,10 +28,10 @@ import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
 import com.glotrush.repositories.*;
-import com.glotrush.services.progress.ProgressService;
 import com.glotrush.entities.Topic;
 import com.glotrush.exceptions.TopicNotFoundException;
 
+import com.glotrush.utils.LevelUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -89,24 +89,39 @@ public class LessonService implements ILessonService {
 
     @Override
     public CompleteLessonResponse completeLesson(UUID accountId, UUID lessonId, CompleteLessonRequest lessonRequest) {
-       Lesson lesson  = lessonRepository.findById(lessonId)
+        Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, getCurrentLocale())));
 
         UserLessonProgress progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.progress.notfound", null, getCurrentLocale())));
 
-        boolean isLessonCompleted = progress.getStatus() == LessonStatus.COMPLETED;
-    
-        progress.setStatus(LessonStatus.COMPLETED);
-        progress.setScore(lessonRequest.getScore());
-        progress.setAttempts(progress.getAttempts() + 1);
+        boolean isSuccessful = lessonRequest.getScore() >= lesson.getPassScorePercentage();
+        progress.setTotalAttempts(progress.getTotalAttempts() + 1);
         progress.setTimeSpentSeconds(progress.getTimeSpentSeconds() + lessonRequest.getTimeSpentSeconds());
-        progress.setCompletedAt(LocalDateTime.now());
         progress.setLastAttemptAt(LocalDateTime.now());
+
+        if (!isSuccessful) {
+            progress.setFailedAttempts(progress.getFailedAttempts() + 1);
+            userLessonProgressRepository.save(progress);
+            return CompleteLessonResponse.builder()
+                    .success(false)
+                    .message(messageSource.getMessage("error.lesson.failed", null, getCurrentLocale()))
+                    .xpEarned(0)
+                    .totalXP(0L)
+                    .build();
+        }
+
+        boolean isFirstCompletion = progress.getStatus() != LessonStatus.COMPLETED;
+        progress.setStatus(LessonStatus.COMPLETED);
+
+        // On garde le meilleur score
+        if (progress.getScore() == null || lessonRequest.getScore() > progress.getScore()) {
+            progress.setScore(lessonRequest.getScore());
+        }
 
         userLessonProgressRepository.save(progress);
 
-        if (!isLessonCompleted) {
+        if (isFirstCompletion) {
             return handleFirstCompletion(accountId, lesson);
         } else {
             return handleRecompletion(accountId, lesson);
@@ -117,12 +132,12 @@ public class LessonService implements ILessonService {
         Integer xpEarned = lesson.getXpReward();
         
         UserProgress topicProgress = progressService.getOrCreateProgress(accountId, lesson.getTopic().getId());
-        Integer oldLevel = topicProgress.getLevel();
+        Integer oldLevel = LevelUtils.calculateLevel(topicProgress.getTotalXP());
 
         topicProgress = progressService.addXP(accountId, lesson.getTopic().getId(), xpEarned);
         topicProgress = progressService.incrementLessonCompletion(accountId, lesson.getTopic().getId());
         topicProgress = progressService.updateLastStudiedAt(accountId, lesson.getTopic().getId());
-        Integer newLevel = topicProgress.getLevel();
+        Integer newLevel = LevelUtils.calculateLevel(topicProgress.getTotalXP());
         boolean leveledUp = !oldLevel.equals(newLevel);
 
         UserProgressResponse progressResponse = progressService.getProgressByTopic(accountId, lesson.getTopic().getId());

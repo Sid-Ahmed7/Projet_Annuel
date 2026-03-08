@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,7 +51,6 @@ import com.glotrush.entities.UserProgress;
 import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.exceptions.UserNotFoundException;
-import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.entities.lesson.MatchingPairLesson;
 import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
@@ -67,7 +68,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = TestMessageSourceConfig.class)
 @DisplayName("LessonService Unit Tests")
 class LessonServiceTest {
-    @Autowired
+    @Mock
     private MessageSource messageSource;
     @Mock
     private LessonRepository lessonRepository;
@@ -115,7 +116,6 @@ class LessonServiceTest {
         Topic topic = Topic.builder()
                 .id(topicId)
                 .name("Spring Basics")
-                .totalLessons(10)
                 .build();
 
         lesson = FlashcardLesson.builder()
@@ -126,9 +126,9 @@ class LessonServiceTest {
                 .xpReward(50)
                 .orderIndex(1)
                 .isActive(true)
-                .isLocked(false)
                 .minLevelRequired(1)
                 .durationMinutes(15)
+                .passScorePercentage(70)
                 .build();
 
         userLessonProgress = UserLessonProgress.builder()
@@ -136,7 +136,8 @@ class LessonServiceTest {
                 .account(account)
                 .lesson(lesson)
                 .status(LessonStatus.NOT_STARTED)
-                .attempts(0)
+                .totalAttempts(0)
+                .failedAttempts(0)
                 .score(20.00)
                 .timeSpentSeconds(0)
                 .build();
@@ -204,6 +205,7 @@ class LessonServiceTest {
     @DisplayName("Should throw exception when lesson not found")
     void shouldThrowExceptionWhenLessonNotFound() {
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("error.lesson.notfound"), isNull(), any(Locale.class))).thenReturn("Lesson not found");
 
         assertThatThrownBy(() -> lessonService.getLessonById(lessonId, accountId))
                 .isInstanceOf(LessonNotFoundException.class)
@@ -217,7 +219,8 @@ class LessonServiceTest {
     void shouldStartLessonSuccessfully() {
         UserLessonProgressSummary expectedSummary = UserLessonProgressSummary.builder()
                 .status(LessonStatus.IN_PROGRESS)
-                .attempts(0)
+                .totalAttempts(0)
+                .failedAttempts(0)
                 .build();
 
         when(accountsRepository.findById(accountId)).thenReturn(Optional.of(account));
@@ -265,6 +268,7 @@ class LessonServiceTest {
     @DisplayName("Should throw exception when account not found on start lesson")
     void shouldThrowExceptionWhenAccountNotFoundOnStartLesson() {
         when(accountsRepository.findById(accountId)).thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("error.auth.account_not_found"), isNull(), any(Locale.class))).thenReturn("Account not found");
 
         assertThatThrownBy(() -> lessonService.startLesson(accountId, lessonId))
                 .isInstanceOf(UserNotFoundException.class)
@@ -278,6 +282,7 @@ class LessonServiceTest {
     void shouldThrowExceptionWhenLessonNotFoundOnStartLesson() {
         when(accountsRepository.findById(accountId)).thenReturn(Optional.of(account));
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("error.lesson.notfound"), isNull(), any(Locale.class))).thenReturn("Lesson not found");
 
         assertThatThrownBy(() -> lessonService.startLesson(accountId, lessonId))
                 .isInstanceOf(LessonNotFoundException.class)
@@ -294,7 +299,6 @@ class LessonServiceTest {
         userLessonProgress.setStatus(LessonStatus.IN_PROGRESS);
 
         UserProgress topicProgress = UserProgress.builder()
-                .level(1)
                 .totalXP(50L)
                 .build();
 
@@ -321,11 +325,41 @@ class LessonServiceTest {
 
         assertThat(result.getSuccess()).isTrue();
         assertThat(result.getXpEarned()).isEqualTo(50);
+        assertThat(userLessonProgress.getStatus()).isEqualTo(LessonStatus.COMPLETED);
+        assertThat(userLessonProgress.getTotalAttempts()).isEqualTo(1);
+        assertThat(userLessonProgress.getFailedAttempts()).isEqualTo(0);
 
         verify(userLessonProgressRepository).save(any(UserLessonProgress.class));
         verify(progressService).addXP(accountId, topicId, 50);
         verify(progressService).updateLastStudiedAt(accountId, topicId);
         verify(progressService).incrementLessonCompletion(accountId, topicId);
+    }
+
+    @Test
+    @DisplayName("Should fail to complete lesson when score is too low")
+    void shouldFailToCompleteLessonWhenScoreIsLow() {
+        CompleteLessonRequest request = new CompleteLessonRequest();
+        request.setScore(50.00); // 50 < 70 (passScorePercentage)
+        request.setTimeSpentSeconds(600);
+
+        userLessonProgress.setStatus(LessonStatus.IN_PROGRESS);
+
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
+        when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
+                .thenReturn(Optional.of(userLessonProgress));
+        when(messageSource.getMessage(eq("error.lesson.failed"), isNull(), any(Locale.class))).thenReturn("Lesson failed");
+
+        CompleteLessonResponse result = lessonService.completeLesson(accountId, lessonId, request);
+
+        assertThat(result.getSuccess()).isFalse();
+        assertThat(result.getMessage()).isEqualTo("Lesson failed");
+        assertThat(result.getXpEarned()).isEqualTo(0);
+        assertThat(userLessonProgress.getStatus()).isEqualTo(LessonStatus.IN_PROGRESS);
+        assertThat(userLessonProgress.getTotalAttempts()).isEqualTo(1);
+        assertThat(userLessonProgress.getFailedAttempts()).isEqualTo(1);
+
+        verify(userLessonProgressRepository).save(any(UserLessonProgress.class));
+        verify(progressService, never()).addXP(any(), any(), any());
     }
 
     @Test
@@ -338,13 +372,11 @@ class LessonServiceTest {
         userLessonProgress.setStatus(LessonStatus.IN_PROGRESS);
 
         UserProgress topicProgressBefore = UserProgress.builder()
-                .level(1)
-                .totalXP(90L)
+                .totalXP(990L)
                 .build();
 
         UserProgress topicProgressAfter = UserProgress.builder()
-                .level(2)
-                .totalXP(140L)
+                .totalXP(1040L)
                 .build();
 
         UserProgressResponse progressResponse = new UserProgressResponse();
@@ -382,7 +414,9 @@ class LessonServiceTest {
         request.setTimeSpentSeconds(500);
 
         userLessonProgress.setStatus(LessonStatus.COMPLETED);
-        userLessonProgress.setAttempts(1);
+        userLessonProgress.setTotalAttempts(1);
+        userLessonProgress.setFailedAttempts(0);
+        userLessonProgress.setScore(80.0);
 
         UserProgressResponse progressResponse = new UserProgressResponse();
 
@@ -412,10 +446,13 @@ class LessonServiceTest {
         CompleteLessonRequest request = new CompleteLessonRequest();
 
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("error.lesson.notfound"), isNull(), any(Locale.class))).thenReturn("Lesson not found");
 
         assertThatThrownBy(() -> lessonService.completeLesson(accountId, lessonId, request))
                 .isInstanceOf(LessonNotFoundException.class)
                 .hasMessage("Lesson not found");
+
+        verify(lessonRepository).findById(lessonId);
     }
 
     @Test
@@ -426,6 +463,7 @@ class LessonServiceTest {
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
         when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
                 .thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("error.lesson.progress.notfound"), isNull(), any(Locale.class))).thenReturn("Lesson progress not found");
 
         assertThatThrownBy(() -> lessonService.completeLesson(accountId, lessonId, request))
                 .isInstanceOf(LessonNotFoundException.class)
@@ -521,9 +559,11 @@ class LessonServiceTest {
     void shouldThrowTopicNotFoundOnCreateLesson() {
         FlashcardLessonRequest request = LessonTestFactory.createFlashcardLessonRequest(topicId, "New Lesson");
         when(topicRepository.findById(topicId)).thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("error.topic.notfound"), isNull(), any(Locale.class))).thenReturn("Topic not found");
 
         assertThatThrownBy(() -> lessonService.createLesson(request))
-                .isInstanceOf(TopicNotFoundException.class);
+                .isInstanceOf(TopicNotFoundException.class)
+                .hasMessage("Topic not found");
     }
 
     @Test
@@ -551,9 +591,11 @@ class LessonServiceTest {
     void shouldThrowLessonNotFoundOnUpdate() {
         FlashcardLessonRequest request = LessonTestFactory.createFlashcardLessonRequest(topicId, "Updated Lesson");
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("error.lesson.notfound"), isNull(), any(Locale.class))).thenReturn("Lesson not found");
 
         assertThatThrownBy(() -> lessonService.updateLesson(lessonId, request))
-                .isInstanceOf(LessonNotFoundException.class);
+                .isInstanceOf(LessonNotFoundException.class)
+                .hasMessage("Lesson not found");
     }
 }
 

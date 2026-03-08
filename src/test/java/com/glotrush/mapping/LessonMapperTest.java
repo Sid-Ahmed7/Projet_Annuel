@@ -47,7 +47,7 @@ class LessonMapperTest {
                 .description("Lesson Description")
                 .orderIndex(1)
                 .xpReward(20)
-                .isLocked(false)
+                
                 .isActive(true)
                 .build();
 
@@ -70,7 +70,6 @@ class LessonMapperTest {
         request.setDescription("Request Description");
         request.setOrderIndex(1);
         request.setXpReward(15);
-        request.setIsLocked(false);
         request.setIsActive(true);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(10);

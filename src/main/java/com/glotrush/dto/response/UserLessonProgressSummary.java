@@ -15,7 +15,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserLessonProgressSummary {
     private LessonStatus status;
-    private Integer attempts;
+    private Integer totalAttempts;
+    private Integer failedAttempts;
     private Double score;
     private Integer timeSpentSeconds;
     private LocalDateTime completedAt;

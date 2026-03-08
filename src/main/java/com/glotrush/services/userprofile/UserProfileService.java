@@ -72,7 +72,7 @@ public class UserProfileService implements IUserProfileService {
             profile.setDisplayName(request.getDisplayName());
         }
         if (request.getCountryCode() != null) {
-            profile.setCountryCode(request.getCountryCode().toUpperCase());
+            profile.setCountryCode(request.getCountryCode());
         }
         if (request.getTimezone() != null) {
             profile.setTimezone(request.getTimezone());

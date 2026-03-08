@@ -7,6 +7,8 @@ import com.glotrush.dto.request.lesson.MatchingPairLessonRequest;
 import com.glotrush.dto.request.lesson.QcmLessonRequest;
 import com.glotrush.dto.request.lesson.SortingExerciseLessonRequest;
 import com.glotrush.enumerations.LessonType;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -38,11 +40,13 @@ public abstract class LessonRequest {
     @NotNull
     private Integer xpReward;
     @NotNull
-    private Boolean isLocked;
-    @NotNull
     private Integer minLevelRequired;
     @NotNull
     private Integer durationMinutes;
+    @NotNull
+    @Min(1)
+    @Max(100)
+    private Integer passScorePercentage;
     @NotNull
     private Boolean isActive;
     @NotNull

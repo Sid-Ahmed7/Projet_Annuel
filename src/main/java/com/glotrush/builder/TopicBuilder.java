@@ -2,6 +2,7 @@ package com.glotrush.builder;
 
 import java.util.Optional;
 
+import com.glotrush.utils.LevelUtils;
 import org.springframework.stereotype.Component;
 
 import com.glotrush.dto.response.TopicResponse;
@@ -18,7 +19,7 @@ public class TopicBuilder {
         if (progressOpt.isPresent()) {
             UserProgress p = progressOpt.get();
             progressSummary = UserProgressSummary.builder()
-                    .level(p.getLevel())
+                    .level(LevelUtils.calculateLevel(p.getTotalXP()))
                     .totalXP(p.getTotalXP())
                     .completedLessons(p.getCompletedLessons())
                     .completionPercentage(p.getCompletionPercentage())
@@ -32,7 +33,6 @@ public class TopicBuilder {
                 .name(topic.getName())
                 .description(topic.getDescription())
                 .difficulty(topic.getDifficulty())
-                .totalLessons(topic.getTotalLessons())
                 .orderIndex(topic.getOrderIndex())
                 .isActive(topic.getIsActive())
                 .userProgress(progressSummary)
@@ -41,7 +41,7 @@ public class TopicBuilder {
 
     public UserProgressSummary buildUserProgressSummary(UserProgress progress) {
         return UserProgressSummary.builder()
-                .level(progress.getLevel())
+                .level(LevelUtils.calculateLevel(progress.getTotalXP()))
                 .totalXP(progress.getTotalXP())
                 .completedLessons(progress.getCompletedLessons())
                 .completionPercentage(progress.getCompletionPercentage())

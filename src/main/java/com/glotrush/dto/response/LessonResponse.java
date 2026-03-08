@@ -34,9 +34,9 @@ public class LessonResponse {
     private String description;
     private Integer orderIndex;
     private Integer xpReward;
-    private Boolean isLocked;
     private Integer minLevelRequired;
     private Integer durationMinutes;
+    private Integer passScorePercentage;
     private Boolean isActive;
     private LessonType lessonType;
 
