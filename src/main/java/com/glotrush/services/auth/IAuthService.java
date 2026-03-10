@@ -1,5 +1,6 @@
 package com.glotrush.services.auth;
 
+import com.glotrush.dto.request.AdminLoginRequest;
 import com.glotrush.dto.request.ForgotPasswordRequest;
 import com.glotrush.dto.request.LoginRequest;
 import com.glotrush.dto.request.RegisterRequest;
@@ -16,6 +17,7 @@ public interface IAuthService {
     RegisterResponse register(RegisterRequest request);
 
     LoginResponse login(LoginRequest request, HttpServletResponse response);
+    LoginResponse adminLogin(AdminLoginRequest request, HttpServletResponse response);
 
     LoginResponse verify2FA(Verify2FARequest request, HttpServletResponse response);
 
