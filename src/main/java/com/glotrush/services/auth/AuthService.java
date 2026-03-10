@@ -143,21 +143,21 @@ public class AuthService implements IAuthService {
     @Override
     public LoginResponse adminLogin(AdminLoginRequest request, HttpServletResponse response) {
         Accounts account = accountsRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, getCurrentLocale())));
+                .orElseThrow(() -> new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, LocaleUtils.getCurrentLocale())));
 
         checkAccountLock(account);
 
         if (account.getRole() != UserRole.ADMIN) {
-            throw new AccessDeniedException(messageSource.getMessage("error.access_required", null, getCurrentLocale()));
+            throw new AccessDeniedException(messageSource.getMessage("error.access_required", null, LocaleUtils.getCurrentLocale()));
         }
 
         if (!passwordEncoder.matches(request.getPassword(), account.getPassword())) {
-            throw new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, getCurrentLocale()));
+            throw new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, LocaleUtils.getCurrentLocale()));
         }
 
         if (account.getAuthKey() == null ||
             !passwordEncoder.matches(request.getSecretKey(), account.getAuthKey())) {
-            throw new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, getCurrentLocale()));
+            throw new BadCredentialsException(messageSource.getMessage("error.auth.invalid_credentials", null, LocaleUtils.getCurrentLocale()));
         }
 
         loginAttemptService.resetFailedLoginAttempts(account);
