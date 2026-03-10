@@ -5,6 +5,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -31,14 +32,15 @@ import static org.mockito.ArgumentMatchers.eq;
 
 import com.glotrush.builder.SubscriptionBuilder;
 import com.glotrush.config.TestMessageSourceConfig;
-import com.glotrush.dto.request.ChangeSubscriptionRequest;
 import com.glotrush.dto.response.SubscriptionResponse;
 import com.glotrush.entities.Accounts;
+import com.glotrush.entities.Plan;
 import com.glotrush.entities.Subscription;
 import com.glotrush.enumerations.SubscriptionType;
 import com.glotrush.enumerations.UserRole;
 import com.glotrush.exceptions.SubscriptionAlreadyExistException;
 import com.glotrush.exceptions.SubscriptionNotFoundException;
+import com.glotrush.repositories.PlanRepository;
 import com.glotrush.repositories.SubscriptionRepository;
 import com.glotrush.services.subscription.SubscriptionService;
 
@@ -58,6 +60,9 @@ class SubscriptionServiceTest {
     private SubscriptionRepository subscriptionRepository;
 
     @Mock
+    private PlanRepository planRepository;
+
+    @Mock
     private EmailService emailService;
 
     private SubscriptionService subscriptionService;
@@ -66,11 +71,13 @@ class SubscriptionServiceTest {
     private UUID accountId;
     private Subscription subscription;
     private UUID subscriptionId;
+    private Plan freePlan;
+    private Plan premiumPlan;
 
     @BeforeEach
     void setUp() {
 
-        subscriptionService = new SubscriptionService(subscriptionRepository, subscriptionBuilder, messageSource, emailService);
+        subscriptionService = new SubscriptionService(subscriptionRepository, subscriptionBuilder, planRepository, messageSource, emailService);
 
         accountId = UUID.randomUUID();
         subscriptionId = UUID.randomUUID();
@@ -84,10 +91,33 @@ class SubscriptionServiceTest {
                 .role(UserRole.USER)
                 .build();
 
+        freePlan = Plan.builder()
+                .id(UUID.randomUUID())
+                .name("Free Plan")
+                .description("You can use nothing AHAHAHAHA")
+                .price(BigDecimal.ZERO)
+                .subscriptionType(SubscriptionType.FREE)
+                .isActive(true)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        
+                premiumPlan = Plan.builder()
+                .id(UUID.randomUUID())
+                .name("Premium Plan")
+                .description("Sorry for before, you can use all the features")
+                .price(BigDecimal.valueOf(999.99))
+                .subscriptionType(SubscriptionType.PREMIUM)
+                .isActive(true)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+
         subscription = Subscription.builder()
                 .id(subscriptionId)
                 .account(accounts)
-                .subscriptionType(SubscriptionType.FREE)
+                .plan(freePlan)
                 .isActive(true)
                 .startDate(LocalDateTime.now())
                 .endDate(null)
@@ -100,13 +130,15 @@ class SubscriptionServiceTest {
     @DisplayName("Should create a new subscription for an account")
     void shouldCreateSubscriptionForAnAccount() {
 
+        when(planRepository.findBySubscriptionTypeAndIsActiveTrue(SubscriptionType.FREE)).thenReturn(Optional.of(freePlan));
+
         when(subscriptionRepository.existsByAccount_Id(accountId)).thenReturn(false);
-        when(subscriptionBuilder.buildFreeSubscription(accounts)).thenReturn(subscription);
+        when(subscriptionBuilder.buildFreeSubscription(eq(accounts), any())).thenReturn(subscription);
         when(subscriptionRepository.save(any(Subscription.class))).thenReturn(subscription);
-        
+
         subscriptionService.createSubscriptionForUser(accounts);
         verify(subscriptionRepository).save(any(Subscription.class));
-        verify(subscriptionBuilder).buildFreeSubscription(accounts);
+        verify(subscriptionBuilder).buildFreeSubscription(eq(accounts), any());
     }
 
     @Test
@@ -117,7 +149,7 @@ class SubscriptionServiceTest {
         
         assertThatThrownBy(() -> subscriptionService.createSubscriptionForUser(accounts)).isInstanceOf(SubscriptionAlreadyExistException.class);
         verify(subscriptionRepository).existsByAccount_Id(accountId);
-        verify(subscriptionBuilder, never()).buildFreeSubscription(accounts);
+        verify(subscriptionBuilder, never()).buildFreeSubscription(eq(accounts), any());
         verify(subscriptionRepository, never()).save(any(Subscription.class));
     }
 
@@ -126,9 +158,8 @@ class SubscriptionServiceTest {
     void shouldReturnSubscriptionForAnAccount() {
         SubscriptionResponse subscriptionResponse = SubscriptionResponse.builder()
             .id(subscriptionId)
-            .subscriptionType(SubscriptionType.FREE)
             .isActive(true)
-            .startDate(LocalDateTime.now().toString())
+            .startDate(LocalDateTime.now())
             .endDate(null)
             .build();
         
@@ -138,7 +169,6 @@ class SubscriptionServiceTest {
         SubscriptionResponse result = subscriptionService.getSubscription(accountId);
         
         assertThat(result).isNotNull();
-        assertThat(result.getSubscriptionType()).isEqualTo(SubscriptionType.FREE);
         assertThat(result.getIsActive()).isTrue();
     }
 
@@ -151,94 +181,17 @@ class SubscriptionServiceTest {
         assertThatThrownBy(() -> subscriptionService.getSubscription(accountId)).isInstanceOf(SubscriptionNotFoundException.class);
     }
 
-    @Test
-    @DisplayName("Should change to premium subscription for an account")
-    void shouldChangeToPremiumSubscription() {
-
-        ChangeSubscriptionRequest request = ChangeSubscriptionRequest.builder()
-                .subscriptionType(SubscriptionType.PREMIUM)
-                .build();
-
-        SubscriptionResponse subscriptionResponsePremium = SubscriptionResponse.builder()
-                .id(subscriptionId)
-                .subscriptionType(SubscriptionType.PREMIUM)
-                .isActive(true)
-                .startDate(LocalDateTime.now().toString())
-                .endDate(null)
-                .build();
-        when(subscriptionRepository.findByAccount_Id(accountId)).thenReturn(Optional.of(subscription));
-        when(subscriptionBuilder.mapToSubscriptionResponse(any(Subscription.class))).thenReturn(subscriptionResponsePremium);
-        SubscriptionResponse result = subscriptionService.changeSubscriptionType(accountId, request);
-        assertThat(result.getSubscriptionType()).isEqualTo(SubscriptionType.PREMIUM);
-        verify(emailService).sendPremiumUpgratedEmail(eq(accounts.getEmail()), eq(accounts.getUsername()), any(LocalDateTime.class));
-    }
-
-    @Test
-    @DisplayName("Should change to FREE successfully without sending email")
-    void shouldChangeToFreeSuccessfully() {
-        subscription.setSubscriptionType(SubscriptionType.PREMIUM);
-        subscription.setEndDate(LocalDateTime.now().plusDays(30));
-
-        ChangeSubscriptionRequest request = ChangeSubscriptionRequest.builder()
-                .subscriptionType(SubscriptionType.FREE)
-                .build();
-
-        SubscriptionResponse expectedResponse = SubscriptionResponse.builder()
-                .id(subscriptionId)
-                .subscriptionType(SubscriptionType.FREE)
-                .isActive(true)
-                .build();
-
-        when(subscriptionRepository.findByAccount_Id(accountId)).thenReturn(Optional.of(subscription));
-        when(subscriptionBuilder.mapToSubscriptionResponse(any(Subscription.class))).thenReturn(expectedResponse);
-
-        SubscriptionResponse result = subscriptionService.changeSubscriptionType(accountId, request);
-
-        assertThat(result.getSubscriptionType()).isEqualTo(SubscriptionType.FREE);
-        verify(emailService, never()).sendPremiumUpgratedEmail(anyString(), anyString(), any(LocalDateTime.class));
-    }
-    
-    @Test
-    @DisplayName("Should throw exception when account not found for change subscription")
-    void shouldThrowExceptionWhenAccountNotFoundForChangeSubscription() {
-        ChangeSubscriptionRequest request = ChangeSubscriptionRequest.builder()
-                .subscriptionType(SubscriptionType.PREMIUM)
-                .build();
-
-        when(subscriptionRepository.findByAccount_Id(accountId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> subscriptionService.changeSubscriptionType(accountId, request)).isInstanceOf(SubscriptionNotFoundException.class);
-    }
-    
-    @Test
-    @DisplayName("Should set correct dates when upgrading to PREMIUM")
-    void shouldSetCorrectDatesWhenUpgradingToPremium() {
-        ChangeSubscriptionRequest request = ChangeSubscriptionRequest.builder()
-                .subscriptionType(SubscriptionType.PREMIUM)
-                .build();
-
-        when(subscriptionRepository.findByAccount_Id(accountId)).thenReturn(Optional.of(subscription));
-        when(subscriptionBuilder.mapToSubscriptionResponse(any(Subscription.class))).thenAnswer(invocation -> {
-            Subscription sub = invocation.getArgument(0);
-            assertThat(sub.getStartDate()).isNotNull();
-            assertThat(sub.getEndDate()).isNotNull();
-            assertThat(sub.getEndDate()).isAfter(sub.getStartDate());
-            return SubscriptionResponse.builder().build();
-        });
-
-        subscriptionService.changeSubscriptionType(accountId, request);
-
-        verify(emailService).sendPremiumUpgratedEmail(anyString(), anyString(), any(LocalDateTime.class));
-    }
-
 
     @Test
     @DisplayName("Should expire all expired PREMIUM subscriptions and send emails")
     void shouldExpireAllExpiredPremiumSubscriptionsAndSendEmails() {
+
+        when(planRepository.findBySubscriptionTypeAndIsActiveTrue(SubscriptionType.FREE)).thenReturn(Optional.of(freePlan));
+
         Subscription expiredFirstSubscription = Subscription.builder()
                 .id(UUID.randomUUID())
                 .account(accounts)
-                .subscriptionType(SubscriptionType.PREMIUM)
+                .plan(premiumPlan)
                 .isActive(true)
                 .endDate(LocalDateTime.now().minusDays(1))
                 .build();
@@ -255,12 +208,12 @@ class SubscriptionServiceTest {
         Subscription expiredSecondSubscription = Subscription.builder()
                 .id(UUID.randomUUID())
                 .account(secondAccounts)
-                .subscriptionType(SubscriptionType.PREMIUM)
+                .plan(premiumPlan)
                 .isActive(true)
                 .endDate(LocalDateTime.now().minusDays(2))
                 .build();
 
-        when(subscriptionRepository.findAllBySubscriptionTypeAndIsActiveTrueAndEndDateBefore(eq(SubscriptionType.PREMIUM), any(LocalDateTime.class))).thenReturn(List.of(expiredFirstSubscription, expiredSecondSubscription));
+        when(subscriptionRepository.findAllByPlanSubscriptionTypeAndIsActiveTrueAndEndDateBefore(eq(SubscriptionType.PREMIUM), any(LocalDateTime.class))).thenReturn(List.of(expiredFirstSubscription, expiredSecondSubscription));
         when(subscriptionRepository.findById(expiredFirstSubscription.getId())).thenReturn(Optional.of(expiredFirstSubscription));
         when(subscriptionRepository.findById(expiredSecondSubscription.getId())).thenReturn(Optional.of(expiredSecondSubscription));
 
@@ -273,7 +226,7 @@ class SubscriptionServiceTest {
     @Test
     @DisplayName("Should do nothing when no expired subscriptions")
     void shouldDoNothingWhenNoExpiredSubscriptions() {
-        when(subscriptionRepository.findAllBySubscriptionTypeAndIsActiveTrueAndEndDateBefore(eq(SubscriptionType.PREMIUM), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+        when(subscriptionRepository.findAllByPlanSubscriptionTypeAndIsActiveTrueAndEndDateBefore(eq(SubscriptionType.PREMIUM), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
 
         subscriptionService.checkAndChangeExpiredSubscriptions();
 
@@ -284,10 +237,14 @@ class SubscriptionServiceTest {
     @Test
     @DisplayName("Should expire PREMIUM subscription successfully and send email")
     void shouldExpirePremiumSubscriptionSuccessfullyAndSendEmail() {
+       
+       
+       when(planRepository.findBySubscriptionTypeAndIsActiveTrue(SubscriptionType.FREE)).thenReturn(Optional.of(freePlan));
+       
         Subscription premiumSub = Subscription.builder()
                 .id(subscriptionId)
                 .account(accounts)
-                .subscriptionType(SubscriptionType.PREMIUM)
+                .plan(premiumPlan)
                 .isActive(true)
                 .endDate(LocalDateTime.now().minusDays(1))
                 .build();
@@ -312,7 +269,7 @@ class SubscriptionServiceTest {
     @Test
     @DisplayName("Should not expire if subscription is not PREMIUM")
     void shouldNotExpireIfSubscriptionIsNotPremium() {
-        subscription.setSubscriptionType(SubscriptionType.FREE);
+        subscription.setPlan(freePlan);
 
         when(subscriptionRepository.findById(subscriptionId)).thenReturn(Optional.of(subscription));
 
@@ -325,7 +282,7 @@ class SubscriptionServiceTest {
     @Test
     @DisplayName("Should not expire if subscription is inactive")
     void shouldNotExpireIfSubscriptionIsInactive() {
-        subscription.setSubscriptionType(SubscriptionType.PREMIUM);
+        subscription.setPlan(premiumPlan);
         subscription.setIsActive(false);
 
         when(subscriptionRepository.findById(subscriptionId)).thenReturn(Optional.of(subscription));
@@ -339,7 +296,7 @@ class SubscriptionServiceTest {
     @Test
     @DisplayName("Should not expire if end date is in future")
     void shouldNotExpireIfEndDateIsInFuture() {
-        subscription.setSubscriptionType(SubscriptionType.PREMIUM);
+        subscription.setPlan(premiumPlan);
         subscription.setIsActive(true);
         subscription.setEndDate(LocalDateTime.now().plusDays(10));
 
@@ -357,12 +314,12 @@ class SubscriptionServiceTest {
         Subscription expiringSub = Subscription.builder()
                 .id(subscriptionId)
                 .account(accounts)
-                .subscriptionType(SubscriptionType.PREMIUM)
+                .plan(premiumPlan)
                 .isActive(true)
                 .endDate(LocalDateTime.now().plusHours(12))
                 .build();
 
-        when(subscriptionRepository.findAllBySubscriptionTypeAndIsActiveTrueAndEndDateBetween(eq(SubscriptionType.PREMIUM), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of(expiringSub));
+        when(subscriptionRepository.findAllByPlanSubscriptionTypeAndIsActiveTrueAndEndDateBetween(eq(SubscriptionType.PREMIUM), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(List.of(expiringSub));
 
         subscriptionService.sendEmailWhenExpiringSoon();
 
@@ -372,7 +329,7 @@ class SubscriptionServiceTest {
     @Test
     @DisplayName("Should do nothing when no subscriptions expiring soon")
     void shouldDoNothingWhenNoSubscriptionsExpiringSoon() {
-        when(subscriptionRepository.findAllBySubscriptionTypeAndIsActiveTrueAndEndDateBetween(eq(SubscriptionType.PREMIUM), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+        when(subscriptionRepository.findAllByPlanSubscriptionTypeAndIsActiveTrueAndEndDateBetween(eq(SubscriptionType.PREMIUM), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(Collections.emptyList());
 
         subscriptionService.sendEmailWhenExpiringSoon();
 

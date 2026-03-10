@@ -1,8 +1,7 @@
 package com.glotrush.dto.response;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
-
-import com.glotrush.enumerations.SubscriptionType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,8 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SubscriptionResponse {
     private UUID id;
-    private SubscriptionType subscriptionType;
     private Boolean isActive;
-    private String startDate;
-    private String endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
 }

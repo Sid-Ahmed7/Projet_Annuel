@@ -1,11 +1,9 @@
 package com.glotrush.services.auth;
 
 import java.time.LocalDateTime;
-import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.TwoFactorAuthBuilder;
@@ -19,6 +17,7 @@ import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
 import com.glotrush.security.totp.TotpService;
+import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -34,16 +33,13 @@ public class TwoFactorAuthService implements ITwoFactorAuthService {
     private final TotpService totpService;
     private final TwoFactorAuthBuilder twoFactorAuthBuilder;
 
-    protected final Locale getCurrentLocale() {
-        return LocaleContextHolder.getLocale();
-    }
 
     @Transactional
     public Enable2FAResponse enable2FA(UUID userId) {
-        Accounts account = accountsRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, getCurrentLocale())));
+        Accounts account = accountsRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
 
         if (twoFactorAuthRepository.existsByAccount_IdAndActiveTrue(userId)) {
-            throw new TwoFactorAlreadyEnabledException(messageSource.getMessage("error.2fa.already_enabled", null, getCurrentLocale()));
+            throw new TwoFactorAlreadyEnabledException(messageSource.getMessage("error.2fa.already_enabled", null, LocaleUtils.getCurrentLocale()));
         }
 
         String secret = totpService.generateSecret();
@@ -68,24 +64,24 @@ public class TwoFactorAuthService implements ITwoFactorAuthService {
                 .secret(secret)
                 .qrCodeUri(qrCodeUri)
                 .twoFactorAuthId(saved.getId())
-                .message(messageSource.getMessage("info.2fa.scan_qr", null, getCurrentLocale()))
+                .message(messageSource.getMessage("info.2fa.scan_qr", null, LocaleUtils.getCurrentLocale()))
                 .build();
     }
 
     @Transactional
     public void verify2FASetup(Verify2FASetupRequest request, UUID userId) {
         Accounts account = accountsRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, getCurrentLocale())));
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
 
         TwoFactorAuth twoFactorAuth = twoFactorAuthRepository.findById(request.getTwoFactorAuthId())
                 .filter(tfa -> tfa.getAccount().getId().equals(userId) && !tfa.getActive())
-                .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.2fa.setup_not_found", null, getCurrentLocale())));
+                .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.2fa.setup_not_found", null, LocaleUtils.getCurrentLocale())));
 
         String decryptedSecret = totpService.decryptSecret(twoFactorAuth.getSecret());
         boolean isValid = totpService.verifyCode(decryptedSecret, request.getCode());
 
         if (!isValid) {
-            throw new InvalidTotpCodeException(messageSource.getMessage("error.2fa.invalid_code", null, getCurrentLocale()));
+            throw new InvalidTotpCodeException(messageSource.getMessage("error.2fa.invalid_code", null, LocaleUtils.getCurrentLocale()));
         }
 
         twoFactorAuth.setActive(true);
@@ -98,16 +94,16 @@ public class TwoFactorAuthService implements ITwoFactorAuthService {
     @Transactional
     public void disable2FA(UUID userId, String verificationCode) {
         Accounts account = accountsRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, getCurrentLocale())));
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
 
         TwoFactorAuth twoFactorAuth = twoFactorAuthRepository.findFirstByAccount_IdAndActiveTrue(userId)
-                .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.2fa.not_enabled", null, getCurrentLocale())));
+                .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.2fa.not_enabled", null, LocaleUtils.getCurrentLocale())));
 
         String decryptedSecret = totpService.decryptSecret(twoFactorAuth.getSecret());
         boolean isValid = totpService.verifyCode(decryptedSecret, verificationCode);
 
         if (!isValid) {
-            throw new InvalidTotpCodeException(messageSource.getMessage("error.2fa.invalid_code", null, getCurrentLocale()));
+            throw new InvalidTotpCodeException(messageSource.getMessage("error.2fa.invalid_code", null, LocaleUtils.getCurrentLocale()));
         }
 
         account.setTwoFactorAuth(null);

@@ -1,11 +1,9 @@
 package com.glotrush.services.languages;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.UserLanguageBuilder;
@@ -22,6 +20,7 @@ import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.UserLanguageRepository;
+import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,21 +34,17 @@ public class UserLanguageService implements IUserLanguageService {
     private final LanguageRepository languageRepository;
     private final UserLanguageBuilder userLanguageBuilder;
 
-    protected final Locale getCurrentLocale() {
-        return LocaleContextHolder.getLocale();
-    }
-
     @Override
     @Transactional
     public UserLanguageResponse addLanguage(UUID accountId, AddUserLanguageRequest request) {
         Accounts account = accountsRepository.findById(accountId)
-                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, getCurrentLocale())));
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
 
         Language language = languageRepository.findById(request.getLanguageId())
-                .orElseThrow(() -> new LanguageException(messageSource.getMessage("error.language.not_found", null, getCurrentLocale())));
+                .orElseThrow(() -> new LanguageException(messageSource.getMessage("error.language.not_found", null, LocaleUtils.getCurrentLocale())));
 
         if (userLanguageRepository.existsByAccount_IdAndLanguage_Id(accountId, request.getLanguageId())) {
-            throw new LanguageException(messageSource.getMessage("error.language.already_added", null, getCurrentLocale()));
+            throw new LanguageException(messageSource.getMessage("error.language.already_added", null, LocaleUtils.getCurrentLocale()));
         }
 
         UserLanguage userLanguage = userLanguageBuilder.buildUserLanguage(account, language, request);
@@ -63,7 +58,7 @@ public class UserLanguageService implements IUserLanguageService {
     @Transactional
     public UserLanguageResponse updateLanguage(UUID accountId, UUID languageId, UpdateUserLanguageRequest request) {
         UserLanguage userLanguage = userLanguageRepository.findByAccount_IdAndLanguage_Id(accountId, languageId)
-                .orElseThrow(() -> new UserLanguageException(messageSource.getMessage("error.language.user_language_not_found", null, getCurrentLocale())));
+                .orElseThrow(() -> new UserLanguageException(messageSource.getMessage("error.language.user_language_not_found", null, LocaleUtils.getCurrentLocale())));
 
         if (request.getLanguageType() != null) {
             userLanguage.setLanguageType(request.getLanguageType());
@@ -84,7 +79,7 @@ public class UserLanguageService implements IUserLanguageService {
     @Transactional
     public void removeLanguage(UUID accountId, UUID languageId) {
         if (!userLanguageRepository.existsByAccount_IdAndLanguage_Id(accountId, languageId)) {
-            throw new UserLanguageException(messageSource.getMessage("error.language.user_language_not_found", null, getCurrentLocale()));
+            throw new UserLanguageException(messageSource.getMessage("error.language.user_language_not_found", null, LocaleUtils.getCurrentLocale()));
         }
         userLanguageRepository.deleteByAccount_IdAndLanguage_Id(accountId, languageId);
     }

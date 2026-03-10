@@ -1,6 +1,6 @@
 package com.glotrush.dto.request;
 
-import com.glotrush.enumerations.SubscriptionType;
+import java.util.UUID;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -12,8 +12,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChangeSubscriptionRequest {
+public class ChangePlanRequest {
+
+    @NotNull(message = "{error.plan.required}")
+    private UUID newPlanId;
     
-    @NotNull(message = "Subscription type is required")
-    private SubscriptionType subscriptionType;
+    
 }

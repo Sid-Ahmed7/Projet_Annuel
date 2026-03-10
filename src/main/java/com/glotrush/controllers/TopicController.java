@@ -1,16 +1,12 @@
 package com.glotrush.controllers;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
-import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.dto.response.ApiResponse;
-import com.glotrush.dto.response.LessonResponse;
 import jakarta.validation.Valid;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -18,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.glotrush.dto.response.TopicResponse;
 import com.glotrush.services.topic.ITopicService;
+import com.glotrush.utils.LocaleUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,10 +26,6 @@ public class TopicController {
 
     private final ITopicService topicService;
     private final MessageSource messageSource;
-
-    protected final Locale getCurrentLocale() {
-        return LocaleContextHolder.getLocale();
-    }
 
     @GetMapping
     public ResponseEntity<List<TopicResponse>> getAllTopics(Authentication authentication) {
@@ -55,7 +48,6 @@ public class TopicController {
         return ResponseEntity.ok(topic);
     }
 
-    /* PARTIE ADMINISTRATEUR */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TopicResponse> createTopic(@Valid @RequestBody TopicRequest topicRequest){
@@ -74,6 +66,6 @@ public class TopicController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> deleteTopic(@PathVariable UUID topicId){
         topicService.removeTopic(topicId);
-        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.topic.deleted_successfully", null, getCurrentLocale())));
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.topic.deleted_successfully", null, LocaleUtils.getCurrentLocale())));
     }
 }

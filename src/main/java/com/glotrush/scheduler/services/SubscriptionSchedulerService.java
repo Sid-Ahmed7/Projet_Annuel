@@ -37,18 +37,18 @@ public class SubscriptionSchedulerService implements ISubscriptionSchedulerServi
 
     @Override
     public void scheduleExpiration(Subscription subscription) {
-        if(subscription.getEndDate() == null) {
+        if(subscription.getCurrentPeriodEnd() == null) {
             return;
         }
         
         cancelExpirationSchedule(subscription.getId());
 
-        if(subscription.getEndDate().isBefore(LocalDateTime.now())) {
+        if(subscription.getCurrentPeriodEnd().isBefore(LocalDateTime.now())) {
             return;
         }
 
         JobDetail jobDetail = buildJobDetail(subscription.getId());
-        Trigger trigger = buildTrigger(subscription.getId(), subscription.getEndDate());
+        Trigger trigger = buildTrigger(subscription.getId(), subscription.getCurrentPeriodEnd());
 
         try {
             scheduler.scheduleJob(jobDetail, trigger);
@@ -85,13 +85,13 @@ public class SubscriptionSchedulerService implements ISubscriptionSchedulerServi
 
     @Override
     public void scheduleReminder(Subscription subscription) {
-        if(subscription.getEndDate() == null) {
+        if(subscription.getCurrentPeriodEnd() == null) {
             return;
         }
         
         cancelReminderSchedule(subscription.getId());
 
-        LocalDateTime reminderTime = subscription.getEndDate().minusHours(REMINDER_HOUR_BEFORE_EXPIRATION);
+        LocalDateTime reminderTime = subscription.getCurrentPeriodEnd().minusHours(REMINDER_HOUR_BEFORE_EXPIRATION);
 
         if(reminderTime.isBefore(LocalDateTime.now())) {
             return;

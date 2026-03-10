@@ -1,8 +1,6 @@
 package com.glotrush.services.topic;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,7 +9,6 @@ import com.glotrush.entities.Language;
 import com.glotrush.mapping.TopicMapper;
 import com.glotrush.repositories.LanguageRepository;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.entities.Topic;
@@ -21,6 +18,7 @@ import com.glotrush.builder.TopicBuilder;
 import com.glotrush.dto.response.TopicResponse;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserProgressRepository;
+import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -36,10 +34,6 @@ public class TopicService implements ITopicService {
     private final LanguageRepository languageRepository;
     private final TopicBuilder topicBuilder;
     private final TopicMapper topicMapper;
-
-    protected final Locale getCurrentLocale() {
-        return LocaleContextHolder.getLocale();
-    }
 
     @Override
     public List<TopicResponse> getAllTopics(UUID accountId) {
@@ -62,7 +56,7 @@ public class TopicService implements ITopicService {
     @Override
     public TopicResponse getTopicById(UUID topicId, UUID accountId) {
         Topic topic = topicRepository.findById(topicId)
-                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, getCurrentLocale())));
+                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
         Optional<UserProgress> progressOpt = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId);
         return topicBuilder.mapToTopicResponse(topic, progressOpt);
     }
@@ -70,7 +64,7 @@ public class TopicService implements ITopicService {
     @Override
     public TopicResponse createTopic(TopicRequest topicRequest) {
         Language language = languageRepository.findById(topicRequest.getLanguageId())
-                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, getCurrentLocale())));
+                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
         
         Topic topicEntity = topicMapper.mapTopicRequestToMapTopicEntities(topicRequest);
         topicEntity.setLanguage(language);
@@ -82,7 +76,7 @@ public class TopicService implements ITopicService {
     @Override
     public void removeTopic(UUID topicId) {
         if(!topicRepository.existsById(topicId)) {
-            throw new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, getCurrentLocale()));
+            throw new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale()));
         }
         topicRepository.deleteById(topicId);
     }
@@ -90,11 +84,11 @@ public class TopicService implements ITopicService {
     @Override
     public TopicResponse updateTopic(UUID topicId, TopicRequest topicRequest) {
         Topic topic = topicRepository.findById(topicId)
-                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, getCurrentLocale())));
+                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
 
         if (topicRequest.getLanguageId() != null && !topicRequest.getLanguageId().equals(topic.getLanguage().getId())) {
             Language language = languageRepository.findById(topicRequest.getLanguageId())
-                    .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, getCurrentLocale())));
+                    .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
             topic.setLanguage(language);
         }
 

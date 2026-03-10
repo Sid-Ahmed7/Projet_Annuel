@@ -1,13 +1,11 @@
 package com.glotrush.controllers;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.dto.response.ApiResponse;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -18,6 +16,7 @@ import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.dto.response.UserLessonProgressSummary;
 import com.glotrush.services.lesson.ILessonService;
+import com.glotrush.utils.LocaleUtils;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,10 +28,6 @@ import lombok.RequiredArgsConstructor;
 public class LessonController {
     private final MessageSource messageSource;
     private final ILessonService lessonService;
-
-    protected final Locale getCurrentLocale() {
-        return LocaleContextHolder.getLocale();
-    }
 
     @GetMapping("/topic/{topicId}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
@@ -66,7 +61,6 @@ public class LessonController {
         return ResponseEntity.ok(response);
     }
 
-    /* PARTIE ADMINISTRATEUR */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LessonResponse> createLesson(@Valid @RequestBody LessonRequest lessonRequest){
@@ -85,6 +79,6 @@ public class LessonController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> deleteLesson(@PathVariable UUID lessonId){
         lessonService.removeLesson(lessonId);
-        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.lesson.deleted_successfully", null, getCurrentLocale())));
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.lesson.deleted_successfully", null, LocaleUtils.getCurrentLocale())));
     }
 }

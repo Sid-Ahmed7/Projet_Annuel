@@ -6,6 +6,7 @@ import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.glotrush.dto.response.ErrorResponse;
+import com.stripe.exception.StripeException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -25,7 +27,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             WeakPasswordException.class,
-            TwoFactorNotEnabledException.class
+            TwoFactorNotEnabledException.class,
+            SubscriptionOperationException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -52,10 +55,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             UserNotFoundException.class,
             UsernameNotFoundException.class,
-            SubscriptionNotFoundException.class
+            SubscriptionNotFoundException.class,
+            PlanNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
-        return buildError("User not found", HttpStatus.NOT_FOUND);
+        return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     /* =========================
@@ -79,8 +83,13 @@ public class GlobalExceptionHandler {
         return buildError(ex.getMessage(), HttpStatus.LOCKED);
     }
 
-    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+    @ExceptionHandler(StripeException.class)
+    public ResponseEntity<ErrorResponse> handleStripeException(StripeException ex) {
+        return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
         log.error("JSON parse error: ", ex);
         String message = "Invalid request body";
         if (ex.getMessage() != null && ex.getMessage().contains("Could not resolve subtype")) {
