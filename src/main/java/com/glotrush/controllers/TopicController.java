@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.dto.response.ApiResponse;
+import com.glotrush.enumerations.ProficiencyLevel;
 import jakarta.validation.Valid;
 import org.springframework.context.MessageSource;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,15 @@ public class TopicController {
     public ResponseEntity<List<TopicResponse>> getAllTopicsByActive(Authentication authentication) {
         UUID accountId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         List<TopicResponse> topics = topicService.getAllTopics(accountId);
+        return ResponseEntity.ok(topics);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<TopicResponse>> searchTopics(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) ProficiencyLevel difficulty,
+            @RequestParam(required = false) Boolean isActive) {
+        List<TopicResponse> topics = topicService.searchTopics(name, difficulty, isActive);
         return ResponseEntity.ok(topics);
     }
 

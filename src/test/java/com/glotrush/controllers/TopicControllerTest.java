@@ -143,6 +143,21 @@ class TopicControllerTest {
     }
 
     @Test
+    @WithMockUser
+    @DisplayName("Should search topics")
+    void shouldSearchTopics() throws Exception {
+        when(topicService.searchTopics(eq("Basics"), eq(ProficiencyLevel.A1), eq(true)))
+                .thenReturn(List.of(topicResponse));
+
+        mockMvc.perform(get("/api/v1/topics/search")
+                .param("name", "Basics")
+                .param("difficulty", "A1")
+                .param("isActive", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(topicId.toString()));
+    }
+
+    @Test
     @WithMockUser(roles = "USER")
     @DisplayName("Should return 403 when creating topic as USER")
     void shouldReturnForbiddenWhenCreatingAsUser() throws Exception {

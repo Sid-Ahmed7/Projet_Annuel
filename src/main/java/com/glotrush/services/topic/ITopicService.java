@@ -7,6 +7,7 @@ import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.dto.response.TopicResponse;
+import com.glotrush.enumerations.ProficiencyLevel;
 
 public interface ITopicService {
     
@@ -17,4 +18,5 @@ public interface ITopicService {
     TopicResponse createTopic(TopicRequest topic);
     void removeTopic(UUID topicId);
     TopicResponse updateTopic(UUID topicId, TopicRequest topic);
+    List<TopicResponse> searchTopics(String name, ProficiencyLevel difficulty, Boolean isActive);
 }

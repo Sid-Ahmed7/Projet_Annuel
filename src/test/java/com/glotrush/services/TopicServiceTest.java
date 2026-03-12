@@ -14,12 +14,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
+import com.glotrush.enumerations.ProficiencyLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 
 import com.glotrush.builder.TopicBuilder;
 import com.glotrush.dto.response.TopicResponse;
@@ -311,5 +313,31 @@ class TopicServiceTest {
 
         assertThatThrownBy(() -> topicService.updateTopic(topicId, request))
                 .isInstanceOf(TopicNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("Should search topics with all filters")
+    void shouldSearchTopicsWithAllFilters() {
+        TopicResponse response = TopicResponse.builder().id(topicId).name("Basics").build();
+        when(topicRepository.findAll(any(Specification.class))).thenReturn(List.of(topic));
+        when(topicMapper.mapTopicEntitiesToTopicResponse(topic)).thenReturn(response);
+
+        List<TopicResponse> result = topicService.searchTopics("Basics", ProficiencyLevel.A1, true);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Basics");
+    }
+
+    @Test
+    @DisplayName("Should search topics with name filter only")
+    void shouldSearchTopicsWithNameFilterOnly() {
+        TopicResponse response = TopicResponse.builder().id(topicId).name("Basics").build();
+        when(topicRepository.findAll(any(Specification.class))).thenReturn(List.of(topic));
+        when(topicMapper.mapTopicEntitiesToTopicResponse(topic)).thenReturn(response);
+
+        List<TopicResponse> result = topicService.searchTopics("Basics", null, null);
+
+        assertThat(result).hasSize(1);
+        verify(topicRepository).findAll(any(Specification.class));
     }
 }
