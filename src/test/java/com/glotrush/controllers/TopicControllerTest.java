@@ -34,8 +34,6 @@ import com.glotrush.services.topic.ITopicService;
 
 import org.springframework.security.core.userdetails.UserDetailsService;
 
-import com.glotrush.dto.response.UserProgressSummary;
-
 @WebMvcTest(TopicController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @DisplayName("TopicController Unit Tests")
@@ -76,7 +74,6 @@ class TopicControllerTest {
                 .difficulty(ProficiencyLevel.A1)
                 .orderIndex(1)
                 .isActive(true)
-                .userProgress(new UserProgressSummary())
                 .build();
 
         topicResponse = TopicResponse.builder()

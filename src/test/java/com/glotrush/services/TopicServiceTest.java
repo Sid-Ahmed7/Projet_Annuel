@@ -23,7 +23,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.glotrush.builder.TopicBuilder;
 import com.glotrush.dto.response.TopicResponse;
-import com.glotrush.dto.response.UserProgressSummary;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
@@ -106,10 +105,6 @@ class TopicServiceTest {
         TopicResponse expectedResponse = TopicResponse.builder()
                 .id(topicId)
                 .name("Basics Course")
-                .userProgress(UserProgressSummary.builder()
-                        .level(2)
-                        .completedLessons(5)
-                        .build())
                 .build();
 
         when(topicRepository.findByIsActiveTrueOrderByOrderIndexAsc()).thenReturn(List.of(topic));
@@ -121,7 +116,6 @@ class TopicServiceTest {
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("Basics Course");
-        assertThat(result.get(0).getUserProgress()).isNotNull();
 
         verify(topicRepository).findByIsActiveTrueOrderByOrderIndexAsc();
     }
@@ -132,7 +126,6 @@ class TopicServiceTest {
         TopicResponse expectedResponse = TopicResponse.builder()
                 .id(topicId)
                 .name("Basics Course")
-                .userProgress(null)
                 .build();
 
         when(topicRepository.findByIsActiveTrueOrderByOrderIndexAsc()).thenReturn(List.of(topic));
@@ -143,7 +136,6 @@ class TopicServiceTest {
         List<TopicResponse> result = topicService.getAllTopics(accountId);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getUserProgress()).isNull();
     }
 
     @Test
@@ -196,7 +188,6 @@ class TopicServiceTest {
         TopicResponse expectedResponse = TopicResponse.builder()
                 .id(topicId)
                 .name("Grammar Basics")
-                .userProgress(UserProgressSummary.builder().level(2).build())
                 .build();
 
         when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
@@ -208,7 +199,6 @@ class TopicServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(topicId);
-        assertThat(result.getUserProgress()).isNotNull();
 
         verify(topicRepository).findById(topicId);
     }
