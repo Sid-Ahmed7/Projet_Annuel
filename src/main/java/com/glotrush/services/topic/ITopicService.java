@@ -11,6 +11,7 @@ import com.glotrush.dto.response.TopicResponse;
 public interface ITopicService {
     
     List<TopicResponse> getAllTopics(UUID accountId);
+    List<TopicResponse> getAllTopics();
     List<TopicResponse> getTopicsByLanguage(UUID languageId, UUID accountId);
     TopicResponse getTopicById(UUID topicId, UUID accountId);
     TopicResponse createTopic(TopicRequest topic);

@@ -46,6 +46,13 @@ public class TopicService implements ITopicService {
     }
 
     @Override
+    public List<TopicResponse> getAllTopics() {
+        return topicRepository.findAll().stream()
+                .map(topicMapper::mapTopicEntitiesToTopicResponse)
+                .toList();
+    }
+
+    @Override
     public List<TopicResponse> getTopicsByLanguage(UUID languageId, UUID accountId) {
         return topicRepository.findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(languageId).stream().map(topic -> {
             Optional<UserProgress> progressOpt = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topic.getId());

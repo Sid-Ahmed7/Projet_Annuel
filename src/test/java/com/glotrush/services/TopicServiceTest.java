@@ -100,6 +100,25 @@ class TopicServiceTest {
     }
     
     @Test
+    @DisplayName("Should return all topics without progress")
+    void shouldGetAllTopicsWithoutProgress() {
+        TopicResponse expectedResponse = TopicResponse.builder()
+                .id(topicId)
+                .name("Basics")
+                .build();
+
+        when(topicRepository.findAll()).thenReturn(List.of(topic));
+        when(topicMapper.mapTopicEntitiesToTopicResponse(topic)).thenReturn(expectedResponse);
+
+        List<TopicResponse> result = topicService.getAllTopics();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Basics");
+
+        verify(topicRepository).findAll();
+    }
+
+    @Test
     @DisplayName("Should return all active topics with user progress")
     void shouldGetAllTopicsWithProgress() {
         TopicResponse expectedResponse = TopicResponse.builder()

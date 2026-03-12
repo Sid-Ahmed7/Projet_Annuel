@@ -28,7 +28,13 @@ public class TopicController {
     private final MessageSource messageSource;
 
     @GetMapping
-    public ResponseEntity<List<TopicResponse>> getAllTopics(Authentication authentication) {
+    public ResponseEntity<List<TopicResponse>> getAllTopics() {
+        List<TopicResponse> topics = topicService.getAllTopics();
+        return ResponseEntity.ok(topics);
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<TopicResponse>> getAllTopicsByActive(Authentication authentication) {
         UUID accountId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         List<TopicResponse> topics = topicService.getAllTopics(accountId);
         return ResponseEntity.ok(topics);
