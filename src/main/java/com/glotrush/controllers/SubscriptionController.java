@@ -10,6 +10,7 @@ import com.glotrush.dto.response.CheckoutStripeResponse;
 import com.glotrush.dto.response.PaymentHistoryResponse;
 import com.glotrush.dto.response.SubscriptionDetailResponse;
 import com.glotrush.dto.response.SubscriptionResponse;
+import com.glotrush.dto.response.SubscriptionStatsResponse;
 import com.glotrush.services.subscription.ISubscriptionService;
 import com.glotrush.services.subscription.SubscriptionManagementService;
 
@@ -114,5 +115,11 @@ public class SubscriptionController {
         UUID accountId = UUID.fromString(authentication.getName());
         return ResponseEntity.ok(subscriptionManagementService.getPaymentHistory(accountId));
     }
-}
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/stats")
+    public ResponseEntity<SubscriptionStatsResponse> getSubscriptionStats() {
+        return ResponseEntity.ok(subscriptionManagementService.getSubscriptionStats());
+    }
+
+}

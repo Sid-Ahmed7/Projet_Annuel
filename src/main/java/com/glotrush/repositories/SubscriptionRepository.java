@@ -33,4 +33,16 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     List<Subscription> findAllByStatusAndCancelAtPeriodEndTrue(SubscriptionStatus status);
     List<Subscription> findAllByStatusIn(List<SubscriptionStatus> statuses);
     List<Subscription> findAllByCurrentPeriodEndBeforeAndIsActiveTrue(LocalDateTime dateTime);
+
+    @Query("SELECT COUNT(s) FROM Subscription s WHERE s.plan.subscriptionType = 'PREMIUM' AND s.status = 'ACTIVE'")
+    Long countActivePremiumSubscription();
+
+    @Query("SELECT COUNT(s) FROM Subscription s WHERE s.plan.subscriptionType = 'FREE' AND s.status = 'ACTIVE'")
+    Long countActiveFreeSubscription();
+
+    @Query("SELECT FUNCTION('TO_CHAR', s.startDate, 'YYYY-MM') as month, COUNT(s) as count FROM Subscription s WHERE s.startDate >= :startDate AND s.plan.subscriptionType = 'PREMIUM' GROUP BY FUNCTION('TO_CHAR', s.startDate, 'YYYY-MM') ORDER BY month ASC")
+    List<Object[]> countPremiumSubscriptionsByMonth(@Param("startDate") LocalDateTime startDate);
+
+    @Query("SELECT EXTRACT(YEAR FROM s.startDate) as year, COUNT(s) as count FROM Subscription s WHERE s.plan.subscriptionType = 'PREMIUM' GROUP BY EXTRACT(YEAR FROM s.startDate) ORDER BY year ASC")
+    List<Object[]> countSubscriptionsByYear();
 }
