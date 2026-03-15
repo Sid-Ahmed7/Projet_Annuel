@@ -14,16 +14,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
+import com.glotrush.enumerations.ProficiencyLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 
 import com.glotrush.builder.TopicBuilder;
 import com.glotrush.dto.response.TopicResponse;
-import com.glotrush.dto.response.UserProgressSummary;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
@@ -101,15 +102,30 @@ class TopicServiceTest {
     }
     
     @Test
+    @DisplayName("Should return all topics without progress")
+    void shouldGetAllTopicsWithoutProgress() {
+        TopicResponse expectedResponse = TopicResponse.builder()
+                .id(topicId)
+                .name("Basics")
+                .build();
+
+        when(topicRepository.findAll()).thenReturn(List.of(topic));
+        when(topicMapper.mapTopicEntitiesToTopicResponse(topic)).thenReturn(expectedResponse);
+
+        List<TopicResponse> result = topicService.getAllTopics();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Basics");
+
+        verify(topicRepository).findAll();
+    }
+
+    @Test
     @DisplayName("Should return all active topics with user progress")
     void shouldGetAllTopicsWithProgress() {
         TopicResponse expectedResponse = TopicResponse.builder()
                 .id(topicId)
                 .name("Basics Course")
-                .userProgress(UserProgressSummary.builder()
-                        .level(2)
-                        .completedLessons(5)
-                        .build())
                 .build();
 
         when(topicRepository.findByIsActiveTrueOrderByOrderIndexAsc()).thenReturn(List.of(topic));
@@ -121,7 +137,6 @@ class TopicServiceTest {
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("Basics Course");
-        assertThat(result.get(0).getUserProgress()).isNotNull();
 
         verify(topicRepository).findByIsActiveTrueOrderByOrderIndexAsc();
     }
@@ -132,7 +147,6 @@ class TopicServiceTest {
         TopicResponse expectedResponse = TopicResponse.builder()
                 .id(topicId)
                 .name("Basics Course")
-                .userProgress(null)
                 .build();
 
         when(topicRepository.findByIsActiveTrueOrderByOrderIndexAsc()).thenReturn(List.of(topic));
@@ -143,7 +157,6 @@ class TopicServiceTest {
         List<TopicResponse> result = topicService.getAllTopics(accountId);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getUserProgress()).isNull();
     }
 
     @Test
@@ -196,7 +209,6 @@ class TopicServiceTest {
         TopicResponse expectedResponse = TopicResponse.builder()
                 .id(topicId)
                 .name("Grammar Basics")
-                .userProgress(UserProgressSummary.builder().level(2).build())
                 .build();
 
         when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
@@ -208,7 +220,6 @@ class TopicServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(topicId);
-        assertThat(result.getUserProgress()).isNotNull();
 
         verify(topicRepository).findById(topicId);
     }
@@ -302,5 +313,31 @@ class TopicServiceTest {
 
         assertThatThrownBy(() -> topicService.updateTopic(topicId, request))
                 .isInstanceOf(TopicNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("Should search topics with all filters")
+    void shouldSearchTopicsWithAllFilters() {
+        TopicResponse response = TopicResponse.builder().id(topicId).name("Basics").build();
+        when(topicRepository.findAll(any(Specification.class))).thenReturn(List.of(topic));
+        when(topicMapper.mapTopicEntitiesToTopicResponse(topic)).thenReturn(response);
+
+        List<TopicResponse> result = topicService.searchTopics("Basics", ProficiencyLevel.A1, true);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Basics");
+    }
+
+    @Test
+    @DisplayName("Should search topics with name filter only")
+    void shouldSearchTopicsWithNameFilterOnly() {
+        TopicResponse response = TopicResponse.builder().id(topicId).name("Basics").build();
+        when(topicRepository.findAll(any(Specification.class))).thenReturn(List.of(topic));
+        when(topicMapper.mapTopicEntitiesToTopicResponse(topic)).thenReturn(response);
+
+        List<TopicResponse> result = topicService.searchTopics("Basics", null, null);
+
+        assertThat(result).hasSize(1);
+        verify(topicRepository).findAll(any(Specification.class));
     }
 }

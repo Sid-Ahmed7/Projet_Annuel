@@ -10,6 +10,7 @@ import com.glotrush.dto.response.LessonResponse;
 
 public interface ILanguageService {
     List<LanguageResponse> getAllActiveLanguages();
+    List<LanguageResponse> getAllLanguages();
 
     LanguageResponse getLanguageById(UUID id);
 

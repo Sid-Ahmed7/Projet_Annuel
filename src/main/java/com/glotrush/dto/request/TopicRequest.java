@@ -1,6 +1,5 @@
 package com.glotrush.dto.request;
 
-import com.glotrush.dto.response.UserProgressSummary;
 import com.glotrush.enumerations.ProficiencyLevel;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -34,8 +33,4 @@ public class TopicRequest {
 
     @NotNull
     private Boolean isActive;
-
-    @NotNull
-    private UserProgressSummary userProgress;
-
 }

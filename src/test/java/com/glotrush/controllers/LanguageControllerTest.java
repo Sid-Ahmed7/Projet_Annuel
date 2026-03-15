@@ -41,7 +41,7 @@ class LanguageControllerTest {
     private ILanguageService languageService;
 
     @Test
-    @DisplayName("Should get all active languages")
+    @DisplayName("Should get all languages")
     @WithMockUser
     void shouldGetAllLanguages() throws Exception {
         LanguageResponse response = LanguageResponse.builder()
@@ -51,9 +51,28 @@ class LanguageControllerTest {
                 .isActive(true)
                 .build();
 
-        when(languageService.getAllActiveLanguages()).thenReturn(List.of(response));
+        when(languageService.getAllLanguages()).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/v1/languages"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].code").value("en"))
+                .andExpect(jsonPath("$[0].name").value("English"));
+    }
+
+    @Test
+    @DisplayName("Should get all active languages")
+    @WithMockUser
+    void shouldGetAllActiveLanguages() throws Exception {
+        LanguageResponse response = LanguageResponse.builder()
+                .id(UUID.randomUUID())
+                .code("en")
+                .name("English")
+                .isActive(true)
+                .build();
+
+        when(languageService.getAllActiveLanguages()).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/api/v1/languages/active"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].code").value("en"))
                 .andExpect(jsonPath("$[0].name").value("English"));
