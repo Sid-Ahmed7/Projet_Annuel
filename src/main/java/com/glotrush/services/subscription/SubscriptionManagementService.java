@@ -1,5 +1,7 @@
 package com.glotrush.services.subscription;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -15,6 +17,8 @@ import com.glotrush.dto.request.SubscribeToPlanRequest;
 import com.glotrush.dto.response.CheckoutStripeResponse;
 import com.glotrush.dto.response.PaymentHistoryResponse;
 import com.glotrush.dto.response.SubscriptionDetailResponse;
+import com.glotrush.dto.response.SubscriptionStatsResponse;
+import com.glotrush.dto.response.SubscriptionStatsResponse.*;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.Plan;
 import com.glotrush.entities.Subscription;
@@ -215,5 +219,49 @@ public class SubscriptionManagementService implements ISubscriptionManagementSer
     
     private Subscription getSubscriptionByAccountId(UUID accountId) {
         return subscriptionRepository.findByAccount_Id(accountId).orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound", null, LocaleUtils.getCurrentLocale())));
-    }    
+    }
+
+
+    @Override
+    public SubscriptionStatsResponse getSubscriptionStats() {
+        Long premiumSubscribers = subscriptionRepository.countActivePremiumSubscription();
+        Long freeSubscribers = subscriptionRepository.countActiveFreeSubscription();
+        
+        BigDecimal totalRevenue = paymentHistoryRepository.calculateTotalRevenue();
+        Long totalSubscribers = premiumSubscribers + freeSubscribers;
+
+        List<Object[]> premiumByMonth = subscriptionRepository.countPremiumSubscriptionsByMonth(LocalDateTime.now().minusMonths(12));
+        List<SubscriptionByMonth> subscriptionsByMonth = premiumByMonth.stream().map(nb -> SubscriptionByMonth.builder()
+                .month((String) nb[0])
+                .subscriberCount((Long) nb[1])
+                .build()).toList();      
+        
+        List<Object[]> premiumByYear = subscriptionRepository.countSubscriptionsByYear();
+        List<SubscriptionByYear> subscriptionsByYear = premiumByYear.stream().map(nb -> SubscriptionByYear.builder()
+                .year((Integer) nb[0])
+                .subscriberCount((Long) nb[1])
+                .build()).toList();
+
+        double total = (double) freeSubscribers + premiumSubscribers;
+        
+        SubscriptionByPlan distribution = SubscriptionByPlan.builder()
+                .freeCount(freeSubscribers)
+                .premiumCount(premiumSubscribers)
+                .freePercentage(total > 0 ? BigDecimal.valueOf(freeSubscribers / total * 100)
+                        .setScale(1, RoundingMode.HALF_UP).doubleValue() : 0)
+                .premiumPercentage(total > 0 ? BigDecimal.valueOf(premiumSubscribers / total * 100)
+                        .setScale(1, RoundingMode.HALF_UP).doubleValue() : 0)
+                .build();
+
+        return SubscriptionStatsResponse.builder()
+                .activeSubscribers(totalSubscribers)
+                .premiumSubscribers(premiumSubscribers)
+                .freeSubscribers(freeSubscribers)
+                .totalRevenue(totalRevenue)
+                .subscriptionsByMonth(subscriptionsByMonth)
+                .subscriptionsByYear(subscriptionsByYear)
+                .subscriptionsByPlan(distribution)
+                .build();
+    }
+
 }

@@ -9,6 +9,7 @@ import com.glotrush.dto.request.SubscribeToPlanRequest;
 import com.glotrush.dto.response.CheckoutStripeResponse;
 import com.glotrush.dto.response.PaymentHistoryResponse;
 import com.glotrush.dto.response.SubscriptionDetailResponse;
+import com.glotrush.dto.response.SubscriptionStatsResponse;
 
 public interface ISubscriptionManagementService {
 
@@ -19,7 +20,7 @@ public interface ISubscriptionManagementService {
     SubscriptionDetailResponse cancelSubscription(UUID accountId, CancelSubscriptionRequest request);
     SubscriptionDetailResponse reactivateSubscription(UUID accountId);
     List<PaymentHistoryResponse> getPaymentHistory(UUID accountId);
-
+    SubscriptionStatsResponse getSubscriptionStats();
 
 }
 
