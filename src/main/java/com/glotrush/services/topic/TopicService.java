@@ -6,9 +6,12 @@ import java.util.UUID;
 
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.entities.Language;
+import com.glotrush.enumerations.ProficiencyLevel;
 import com.glotrush.mapping.TopicMapper;
 import com.glotrush.repositories.LanguageRepository;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.context.MessageSource;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.entities.Topic;
@@ -22,6 +25,8 @@ import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+
+import java.util.ArrayList;
 
 
 @Service
@@ -42,6 +47,13 @@ public class TopicService implements ITopicService {
                     Optional<UserProgress> progressOpt = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topic.getId());
                     return topicBuilder.mapToTopicResponse(topic, progressOpt);
                 })
+                .toList();
+    }
+
+    @Override
+    public List<TopicResponse> getAllTopics() {
+        return topicRepository.findAll().stream()
+                .map(topicMapper::mapTopicEntitiesToTopicResponse)
                 .toList();
     }
 
@@ -95,6 +107,31 @@ public class TopicService implements ITopicService {
         topicMapper.updateTopicFromRequest(topicRequest, topic);
         
         return topicMapper.mapTopicEntitiesToTopicResponse(topicRepository.save(topic));
+    }
+
+    @Override
+    public List<TopicResponse> searchTopics(String name, ProficiencyLevel difficulty, Boolean isActive) {
+        Specification<Topic> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (name != null && !name.isBlank()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
+            }
+
+            if (difficulty != null) {
+                predicates.add(criteriaBuilder.equal(root.get("difficulty"), difficulty));
+            }
+
+            if (isActive != null) {
+                predicates.add(criteriaBuilder.equal(root.get("isActive"), isActive));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return topicRepository.findAll(spec).stream()
+                .map(topicMapper::mapTopicEntitiesToTopicResponse)
+                .toList();
     }
 
 }

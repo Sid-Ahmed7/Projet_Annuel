@@ -22,5 +22,4 @@ public class TopicResponse {
     private ProficiencyLevel difficulty;
     private Integer orderIndex;
     private Boolean isActive;
-    private UserProgressSummary userProgress;
 }

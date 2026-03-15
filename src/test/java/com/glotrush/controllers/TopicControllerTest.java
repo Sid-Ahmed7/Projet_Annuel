@@ -4,12 +4,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.UUID;
 
 import com.glotrush.enumerations.ProficiencyLevel;
@@ -33,8 +32,6 @@ import com.glotrush.dto.response.TopicResponse;
 import com.glotrush.services.topic.ITopicService;
 
 import org.springframework.security.core.userdetails.UserDetailsService;
-
-import com.glotrush.dto.response.UserProgressSummary;
 
 @WebMvcTest(TopicController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -76,13 +73,34 @@ class TopicControllerTest {
                 .difficulty(ProficiencyLevel.A1)
                 .orderIndex(1)
                 .isActive(true)
-                .userProgress(new UserProgressSummary())
                 .build();
 
         topicResponse = TopicResponse.builder()
                 .id(topicId)
                 .name("Basics")
                 .build();
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("Should get all topics")
+    void shouldGetAllTopics() throws Exception {
+        when(topicService.getAllTopics()).thenReturn(List.of(topicResponse));
+
+        mockMvc.perform(get("/api/v1/topics"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(topicId.toString()));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("Should get all active topics")
+    void shouldGetAllActiveTopics() throws Exception {
+        when(topicService.getAllTopics(any())).thenReturn(List.of(topicResponse));
+
+        mockMvc.perform(get("/api/v1/topics/active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(topicId.toString()));
     }
 
     @Test
@@ -122,6 +140,21 @@ class TopicControllerTest {
         mockMvc.perform(delete("/api/v1/topics/{topicId}", topicId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Topic deleted successfully"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("Should search topics")
+    void shouldSearchTopics() throws Exception {
+        when(topicService.searchTopics(eq("Basics"), eq(ProficiencyLevel.A1), eq(true)))
+                .thenReturn(List.of(topicResponse));
+
+        mockMvc.perform(get("/api/v1/topics/search")
+                .param("name", "Basics")
+                .param("difficulty", "A1")
+                .param("isActive", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(topicId.toString()));
     }
 
     @Test

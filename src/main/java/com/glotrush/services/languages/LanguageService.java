@@ -37,6 +37,12 @@ public class LanguageService implements ILanguageService {
 
     @Override
     @Transactional
+    public List<LanguageResponse> getAllLanguages() {
+        return languageRepository.findAll().stream().map(languageBuilder::mapToLanguageResponse).toList();
+    }
+
+    @Override
+    @Transactional
     public LanguageResponse getLanguageById(UUID id) {
         Language language = languageRepository.findById(id)
            .orElseThrow(() -> new LanguageException(messageSource.getMessage("error.language.not_found", null, LocaleUtils.getCurrentLocale())));
