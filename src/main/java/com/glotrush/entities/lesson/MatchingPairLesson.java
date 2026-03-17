@@ -24,16 +24,16 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MatchingPairLesson extends Lesson {
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MatchingPairEntity> matchingPairEntities = new ArrayList<>();
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true, fetch = jakarta.persistence.FetchType.EAGER)
+    private List<MatchingPairEntity> matchingPair = new ArrayList<>();
 
     public void addMatchingPair(MatchingPairEntity matchingPairEntity) {
-        matchingPairEntities.add(matchingPairEntity);
+        matchingPair.add(matchingPairEntity);
         matchingPairEntity.setLesson(this);
     }
 
     public void removeMatchingPair(MatchingPairEntity matchingPairEntity) {
-        matchingPairEntities.remove(matchingPairEntity);
+        matchingPair.remove(matchingPairEntity);
         matchingPairEntity.setLesson(null);
     }
 }

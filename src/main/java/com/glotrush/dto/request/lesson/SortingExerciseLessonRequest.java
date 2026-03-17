@@ -10,5 +10,5 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SortingExerciseLessonRequest extends LessonRequest {
-    private List<SortingExerciseRequest> sortingExerciseRequests;
+    private List<SortingExerciseRequest> sortingExercise;
 }

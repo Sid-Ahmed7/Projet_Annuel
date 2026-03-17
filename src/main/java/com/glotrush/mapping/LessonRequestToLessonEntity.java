@@ -20,6 +20,34 @@ import org.springframework.context.MessageSource;
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public abstract class LessonRequestToLessonEntity {
 
+    @AfterMapping
+    protected void linkFlashcards(@MappingTarget FlashcardLesson lesson) {
+        if (lesson.getFlashcards() != null) {
+            lesson.getFlashcards().forEach(f -> f.setLesson(lesson));
+        }
+    }
+
+    @AfterMapping
+    protected void linkMatchingPairs(@MappingTarget MatchingPairLesson lesson) {
+        if (lesson.getMatchingPair() != null) {
+            lesson.getMatchingPair().forEach(m -> m.setLesson(lesson));
+        }
+    }
+
+    @AfterMapping
+    protected void linkQuestions(@MappingTarget QcmLesson lesson) {
+        if (lesson.getQuestions() != null) {
+            lesson.getQuestions().forEach(q -> q.setLesson(lesson));
+        }
+    }
+
+    @AfterMapping
+    protected void linkSortingExercises(@MappingTarget SortingExerciseLesson lesson) {
+        if (lesson.getSortingExercise() != null) {
+            lesson.getSortingExercise().forEach(s -> s.setLesson(lesson));
+        }
+    }
+
 
     public Lesson lessonRequestToLessonEntity(LessonRequest request, @Context MessageSource messageSource) {
         return switch (request){

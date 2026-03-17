@@ -13,5 +13,5 @@ import java.util.List;
 @Data
 @SuperBuilder
 public class MatchingPairLessonResponse extends LessonResponse {
-    private List<MatchingPairResponse> matchingPairResponses;
+    private List<MatchingPairResponse> matchingPair;
 }

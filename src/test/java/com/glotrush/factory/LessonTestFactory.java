@@ -64,7 +64,7 @@ public class LessonTestFactory {
                 .passScorePercentage(70)
                 .isActive(true)
                 .flashcards(new ArrayList<>())
-                .lessonType(LessonType.MATCHING_PAIR)
+                .lessonType(LessonType.FLASHCARD)
                 .build();
     }
     public static MatchingPairLesson createMatchingPairLesson(UUID id, Topic topic, String title) {
@@ -79,7 +79,7 @@ public class LessonTestFactory {
                 .durationMinutes(15)
                 .passScorePercentage(70)
                 .isActive(true)
-                .matchingPairEntities(new ArrayList<>())
+                .matchingPair(new ArrayList<>())
                 .build();
     }
     public static MatchingPairLessonResponse createMatchingPairLessonResponse(UUID id, String title) {
@@ -93,7 +93,7 @@ public class LessonTestFactory {
                 .durationMinutes(15)
                 .passScorePercentage(70)
                 .isActive(true)
-                .matchingPairResponses(new ArrayList<>())
+                .matchingPair(new ArrayList<>())
                 .lessonType(LessonType.MATCHING_PAIR)
                 .build();
     }
@@ -123,7 +123,7 @@ public class LessonTestFactory {
                 .durationMinutes(15)
                 .passScorePercentage(70)
                 .isActive(true)
-                .qcmQuestionResponses(new ArrayList<>())
+                .questions(new ArrayList<>())
                 .lessonType(LessonType.QCM)
                 .build();
     }
@@ -139,7 +139,7 @@ public class LessonTestFactory {
                 .durationMinutes(15)
                 .passScorePercentage(70)
                 .isActive(true)
-                .sortingExerciseEntities(new ArrayList<>())
+                .sortingExercise(new ArrayList<>())
                 .build();
     }
     public static SortingExerciseLessonResponse createSortingExerciseLessonResponse(UUID id, String title) {
@@ -153,7 +153,7 @@ public class LessonTestFactory {
                 .durationMinutes(15)
                 .passScorePercentage(70)
                 .isActive(true)
-                .sortingExerciseResponses(new ArrayList<>())
+                .sortingExercise(new ArrayList<>())
                 .lessonType(LessonType.SORTING_EXERCISE)
                 .build();
     }
@@ -168,7 +168,7 @@ public class LessonTestFactory {
         request.setDurationMinutes(15);
         request.setPassScorePercentage(70);
         request.setIsActive(true);
-        request.setQcmQuestionRequests(new ArrayList<>());
+        request.setQuestions(new ArrayList<>());
         request.setLessonType(LessonType.QCM);
         return request;
     }
@@ -183,7 +183,7 @@ public class LessonTestFactory {
         request.setDurationMinutes(15);
         request.setPassScorePercentage(70);
         request.setIsActive(true);
-        request.setMatchingPairRequests(new ArrayList<>());
+        request.setMatchingPair(new ArrayList<>());
         request.setLessonType(LessonType.MATCHING_PAIR);
         return request;
     }
@@ -198,7 +198,7 @@ public class LessonTestFactory {
         request.setDurationMinutes(15);
         request.setPassScorePercentage(70);
         request.setIsActive(true);
-        request.setSortingExerciseRequests(new ArrayList<>());
+        request.setSortingExercise(new ArrayList<>());
         request.setLessonType(LessonType.SORTING_EXERCISE);
         return request;
     }

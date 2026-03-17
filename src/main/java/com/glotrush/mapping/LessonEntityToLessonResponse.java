@@ -23,32 +23,37 @@ import org.springframework.context.MessageSource;
 public abstract class LessonEntityToLessonResponse {
 
     public LessonResponse lessonEntityToLessonResponse(Lesson entity, @Context MessageSource messageSource) {
-        return switch (entity){
+        if (entity == null) {
+            throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale()));
+        }
+
+        return switch (entity) {
             case FlashcardLesson flashcardLesson -> mapFlashcardLessonEntityToFlashcardLessonResponse(flashcardLesson);
             case MatchingPairLesson matchingPairLesson -> mapMatchingPairLessonEntityToMatchingPairLessonResponse(matchingPairLesson);
             case QcmLesson qcmLesson -> mapQcmLessonEntityToQcmLessonResponse(qcmLesson);
             case SortingExerciseLesson sortingExerciseLesson -> mapSortingExerciseLessonEntityToSortingExerciseLessonResponse(sortingExerciseLesson);
-            case null, default -> throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale()));
+            default -> throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale()));
         };
     }
 
     // ALL MAPPING TYPE OF LESSON
     @Mapping(source = "topic.id", target = "topicId")
     @Mapping(source = "topic.name", target = "topicName")
+    @Mapping(source = "flashcards", target = "flashcards")
     protected abstract FlashcardLessonResponse mapFlashcardLessonEntityToFlashcardLessonResponse(FlashcardLesson request);
 
     @Mapping(source = "topic.id", target = "topicId")
     @Mapping(source = "topic.name", target = "topicName")
-    @Mapping(source = "matchingPairEntities", target = "matchingPairResponses")
+    @Mapping(source = "matchingPair", target = "matchingPair")
     protected abstract MatchingPairLessonResponse mapMatchingPairLessonEntityToMatchingPairLessonResponse(MatchingPairLesson request);
 
     @Mapping(source = "topic.id", target = "topicId")
     @Mapping(source = "topic.name", target = "topicName")
-    @Mapping(source = "questions", target = "qcmQuestionResponses")
+    @Mapping(source = "questions", target = "questions")
     protected abstract QcmLessonResponse mapQcmLessonEntityToQcmLessonResponse(QcmLesson request);
 
     @Mapping(source = "topic.id", target = "topicId")
     @Mapping(source = "topic.name", target = "topicName")
-    @Mapping(source = "sortingExerciseEntities", target = "sortingExerciseResponses")
+    @Mapping(source = "sortingExercise", target = "sortingExercise")
     protected abstract SortingExerciseLessonResponse mapSortingExerciseLessonEntityToSortingExerciseLessonResponse(SortingExerciseLesson request);
 }
