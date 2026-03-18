@@ -41,14 +41,11 @@ public class UserProfile {
     private Accounts account;
 
     @Column(name = "photo_url")
-    private String photoUrl; // TODO A DETERMINER LA SOLUTION TECHNIQUE
+    private String photoUrl;
 
     @Column(name ="bio")
     private String bio;
 
-    @Column(name = "display_name", length = 100)
-    private String displayName;
-    
     @Enumerated(EnumType.STRING)
     @Column(name = "country_code", length = 2)
     private CountryCode countryCode;

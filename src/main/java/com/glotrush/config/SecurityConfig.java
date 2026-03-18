@@ -61,6 +61,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/verify-2fa").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/plans/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/stripe/webhook").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/profile/files/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
             ).authenticationProvider(authenticationProvider())
