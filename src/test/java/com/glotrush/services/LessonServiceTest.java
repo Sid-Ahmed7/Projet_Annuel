@@ -59,7 +59,6 @@ import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.services.lesson.LessonService;
 import com.glotrush.services.progress.ProgressService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -504,7 +503,7 @@ class LessonServiceTest {
 
         assertThat(result).isInstanceOf(MatchingPairLessonResponse.class);
         assertThat(result.getTitle()).isEqualTo("Matching Pair Lesson");
-        assertThat(((MatchingPairLessonResponse)result).getMatchingPair()).isNotNull();
+        assertThat(((MatchingPairLessonResponse)result).getMatchingPairs()).isNotNull();
         verify(lessonRepository).save(any());
     }
 

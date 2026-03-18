@@ -29,8 +29,8 @@ public abstract class LessonRequestToLessonEntity {
 
     @AfterMapping
     protected void linkMatchingPairs(@MappingTarget MatchingPairLesson lesson) {
-        if (lesson.getMatchingPair() != null) {
-            lesson.getMatchingPair().forEach(m -> m.setLesson(lesson));
+        if (lesson.getMatchingPairs() != null) {
+            lesson.getMatchingPairs().forEach(m -> m.setLesson(lesson));
         }
     }
 

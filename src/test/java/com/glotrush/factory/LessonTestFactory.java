@@ -79,7 +79,7 @@ public class LessonTestFactory {
                 .durationMinutes(15)
                 .passScorePercentage(70)
                 .isActive(true)
-                .matchingPair(new ArrayList<>())
+                .matchingPairs(new ArrayList<>())
                 .build();
     }
     public static MatchingPairLessonResponse createMatchingPairLessonResponse(UUID id, String title) {
@@ -93,7 +93,7 @@ public class LessonTestFactory {
                 .durationMinutes(15)
                 .passScorePercentage(70)
                 .isActive(true)
-                .matchingPair(new ArrayList<>())
+                .matchingPairs(new ArrayList<>())
                 .lessonType(LessonType.MATCHING_PAIR)
                 .build();
     }
@@ -183,7 +183,7 @@ public class LessonTestFactory {
         request.setDurationMinutes(15);
         request.setPassScorePercentage(70);
         request.setIsActive(true);
-        request.setMatchingPair(new ArrayList<>());
+        request.setMatchingPairs(new ArrayList<>());
         request.setLessonType(LessonType.MATCHING_PAIR);
         return request;
     }

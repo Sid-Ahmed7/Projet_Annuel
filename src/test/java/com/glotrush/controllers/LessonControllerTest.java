@@ -84,7 +84,7 @@ class LessonControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Matching Pair Lesson"))
-                .andExpect(jsonPath("$.matchingPair").isArray());
+                .andExpect(jsonPath("$.matchingPairs").isArray());
     }
 
     @Test

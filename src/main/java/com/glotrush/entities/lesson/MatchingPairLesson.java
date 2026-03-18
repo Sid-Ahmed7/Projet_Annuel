@@ -1,7 +1,6 @@
 package com.glotrush.entities.lesson;
 
 import com.glotrush.entities.Lesson;
-import com.glotrush.entities.exercice.FlashcardEntity;
 import com.glotrush.entities.exercice.MatchingPairEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
@@ -25,15 +24,15 @@ import java.util.List;
 @AllArgsConstructor
 public class MatchingPairLesson extends Lesson {
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true, fetch = jakarta.persistence.FetchType.EAGER)
-    private List<MatchingPairEntity> matchingPair = new ArrayList<>();
+    private List<MatchingPairEntity> matchingPairs = new ArrayList<>();
 
     public void addMatchingPair(MatchingPairEntity matchingPairEntity) {
-        matchingPair.add(matchingPairEntity);
+        matchingPairs.add(matchingPairEntity);
         matchingPairEntity.setLesson(this);
     }
 
     public void removeMatchingPair(MatchingPairEntity matchingPairEntity) {
-        matchingPair.remove(matchingPairEntity);
+        matchingPairs.remove(matchingPairEntity);
         matchingPairEntity.setLesson(null);
     }
 }

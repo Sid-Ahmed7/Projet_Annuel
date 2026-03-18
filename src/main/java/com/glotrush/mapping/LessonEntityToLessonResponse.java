@@ -44,7 +44,7 @@ public abstract class LessonEntityToLessonResponse {
 
     @Mapping(source = "topic.id", target = "topicId")
     @Mapping(source = "topic.name", target = "topicName")
-    @Mapping(source = "matchingPair", target = "matchingPair")
+    @Mapping(source = "matchingPairs", target = "matchingPairs")
     protected abstract MatchingPairLessonResponse mapMatchingPairLessonEntityToMatchingPairLessonResponse(MatchingPairLesson request);
 
     @Mapping(source = "topic.id", target = "topicId")
