@@ -22,7 +22,6 @@ public class UserProfileBuilder {
     public UserProfile createDefaultProfile(Accounts account) {
         UserProfile profile = UserProfile.builder()
                 .account(account)
-                .displayName(account.getUsername())
                 .isPublic(true)
                 .build();
         return userProfileRepository.save(profile);
@@ -39,7 +38,6 @@ public class UserProfileBuilder {
                 .lastName(account.getLastName())
                 .photoUrl(profile.getPhotoUrl())
                 .bio(profile.getBio())
-                .displayName(profile.getDisplayName())
                 .countryCode(profile.getCountryCode())
                 .timezone(profile.getTimezone())
                 .isPublic(profile.getIsPublic())

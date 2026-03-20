@@ -26,7 +26,6 @@ public class UserProfileResponse {
     private String lastName;
     private String photoUrl;
     private String bio;
-    private String displayName;
     private CountryCode countryCode;
     private TimeZone timezone;
     private Boolean isPublic;

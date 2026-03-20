@@ -34,6 +34,7 @@ import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.services.userprofile.UserProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -54,6 +55,9 @@ class UserProfileServiceTest {
     @Mock
     private UserProfileBuilder userProfileBuilder;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @Autowired
     private MessageSource messageSource;
 
@@ -65,13 +69,13 @@ class UserProfileServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Initialiser le service manuellement avec toutes les dépendances
         profileService = new UserProfileService(
                 messageSource,
                 userProfileRepository,
                 accountsRepository,
                 userLanguageRepository,
-                userProfileBuilder
+                userProfileBuilder,
+                passwordEncoder
         );
         accountId = UUID.randomUUID();
 
@@ -86,7 +90,6 @@ class UserProfileServiceTest {
         testProfile = UserProfile.builder()
                 .id(UUID.randomUUID())
                 .account(testAccount)
-                .displayName("Test User")
                 .bio("Test bio")
                 .isPublic(true)
                 .createdAt(LocalDateTime.now())
@@ -158,7 +161,7 @@ class UserProfileServiceTest {
     void shouldUpdateProfileSuccessfully() {
         UpdateProfileRequest request = UpdateProfileRequest.builder()
                 .bio("Updated bio")
-                .displayName("Updated Name")
+                .username("updateduser")
                 .countryCode(CountryCode.FR)
                 .timezone(TimeZone.ECT)
                 .isPublic(false)
@@ -166,7 +169,7 @@ class UserProfileServiceTest {
 
         UserProfileResponse expectedResponse = UserProfileResponse.builder()
                 .bio("Updated bio")
-                .displayName("Updated Name")
+                .username("updateduser")
                 .build();
 
         when(accountsRepository.findById(accountId)).thenReturn(Optional.of(testAccount));
@@ -180,7 +183,6 @@ class UserProfileServiceTest {
         assertThat(result).isNotNull();
         verify(userProfileRepository).save(any(UserProfile.class));
         assertThat(testProfile.getBio()).isEqualTo("Updated bio");
-        assertThat(testProfile.getDisplayName()).isEqualTo("Updated Name");
         assertThat(testProfile.getCountryCode()).isEqualTo(CountryCode.FR);
         assertThat(testProfile.getTimezone()).isEqualTo(TimeZone.ECT);
     }
