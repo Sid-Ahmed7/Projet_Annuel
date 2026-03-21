@@ -56,9 +56,10 @@ public class TopicController {
     @GetMapping("/search/active")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<TopicResponse>> searchActiveTopics(
+            @RequestParam UUID languageId,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) ProficiencyLevel difficulty) {
-        List<TopicResponse> topics = topicService.searchActiveTopics(name, difficulty);
+        List<TopicResponse> topics = topicService.searchActiveTopics(languageId, name, difficulty);
         return ResponseEntity.ok(topics);
     }
 

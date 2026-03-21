@@ -111,7 +111,7 @@ public class TopicService implements ITopicService {
 
     @Override
     public List<TopicResponse> searchTopics(String name, ProficiencyLevel difficulty, Boolean isActive) {
-        Specification<Topic> spec = createSearchSpecification(name, difficulty, isActive);
+        Specification<Topic> spec = createSearchSpecification(null, name, difficulty, isActive);
 
         return topicRepository.findAll(spec).stream()
                 .map(topicMapper::mapTopicEntitiesToTopicResponse)
@@ -119,17 +119,21 @@ public class TopicService implements ITopicService {
     }
 
     @Override
-    public List<TopicResponse> searchActiveTopics(String name, ProficiencyLevel difficulty) {
-        Specification<Topic> spec = createSearchSpecification(name, difficulty, true);
+    public List<TopicResponse> searchActiveTopics(UUID languageId, String name, ProficiencyLevel difficulty) {
+        Specification<Topic> spec = createSearchSpecification(languageId, name, difficulty, true);
 
         return topicRepository.findAll(spec).stream()
                 .map(topicMapper::mapTopicEntitiesToTopicResponse)
                 .toList();
     }
 
-    private Specification<Topic> createSearchSpecification(String name, ProficiencyLevel difficulty, Boolean isActive) {
+    private Specification<Topic> createSearchSpecification(UUID languageId, String name, ProficiencyLevel difficulty, Boolean isActive) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (languageId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("language").get("id"), languageId));
+            }
 
             if (name != null && !name.isBlank()) {
                 predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"));

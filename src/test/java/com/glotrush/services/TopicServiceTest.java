@@ -329,6 +329,20 @@ class TopicServiceTest {
     }
 
     @Test
+    @DisplayName("Should search active topics with language filter")
+    void shouldSearchActiveTopicsWithLanguageFilter() {
+        TopicResponse response = TopicResponse.builder().id(topicId).name("Basics").build();
+        when(topicRepository.findAll(any(Specification.class))).thenReturn(List.of(topic));
+        when(topicMapper.mapTopicEntitiesToTopicResponse(topic)).thenReturn(response);
+
+        List<TopicResponse> result = topicService.searchActiveTopics(languageId, "Basics", ProficiencyLevel.A1);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Basics");
+        verify(topicRepository).findAll(any(Specification.class));
+    }
+
+    @Test
     @DisplayName("Should search topics with name filter only")
     void shouldSearchTopicsWithNameFilterOnly() {
         TopicResponse response = TopicResponse.builder().id(topicId).name("Basics").build();

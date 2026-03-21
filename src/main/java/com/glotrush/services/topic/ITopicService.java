@@ -3,9 +3,7 @@ package com.glotrush.services.topic;
 import java.util.List;
 import java.util.UUID;
 
-import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.dto.request.TopicRequest;
-import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.dto.response.TopicResponse;
 import com.glotrush.enumerations.ProficiencyLevel;
 
@@ -19,5 +17,5 @@ public interface ITopicService {
     void removeTopic(UUID topicId);
     TopicResponse updateTopic(UUID topicId, TopicRequest topic);
     List<TopicResponse> searchTopics(String name, ProficiencyLevel difficulty, Boolean isActive);
-    List<TopicResponse> searchActiveTopics(String name, ProficiencyLevel difficulty);
+    List<TopicResponse> searchActiveTopics(UUID languageId, String name, ProficiencyLevel difficulty);
 }
