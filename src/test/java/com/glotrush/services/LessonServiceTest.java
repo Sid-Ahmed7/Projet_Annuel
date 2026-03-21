@@ -59,7 +59,6 @@ import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.services.lesson.LessonService;
 import com.glotrush.services.progress.ProgressService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -154,9 +153,7 @@ class LessonServiceTest {
 
         when(lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId))
                 .thenReturn(List.of(lesson));
-        when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
-                .thenReturn(Optional.of(userLessonProgress));
-        when(lessonBuilder.mapLessonToLessonResponse(eq(lesson), any(), any()))
+        when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(eq(lesson), any()))
                 .thenReturn(expectedResponse);
 
         List<LessonResponse> result = lessonService.getLessonsByTopic(topicId, accountId);
@@ -188,9 +185,7 @@ class LessonServiceTest {
                 .build();
 
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
-        when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
-                .thenReturn(Optional.of(userLessonProgress));
-        when(lessonBuilder.mapLessonToLessonResponse(eq(lesson), any(), any()))
+        when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(eq(lesson), any()))
                 .thenReturn(expectedResponse);
 
         LessonResponse result = lessonService.getLessonById(lessonId, accountId);
@@ -508,7 +503,7 @@ class LessonServiceTest {
 
         assertThat(result).isInstanceOf(MatchingPairLessonResponse.class);
         assertThat(result.getTitle()).isEqualTo("Matching Pair Lesson");
-        assertThat(((MatchingPairLessonResponse)result).getMatchingPairResponses()).isNotNull();
+        assertThat(((MatchingPairLessonResponse)result).getMatchingPairs()).isNotNull();
         verify(lessonRepository).save(any());
     }
 
@@ -529,7 +524,7 @@ class LessonServiceTest {
 
         assertThat(result).isInstanceOf(QcmLessonResponse.class);
         assertThat(result.getTitle()).isEqualTo("QCM Lesson");
-        assertThat(((QcmLessonResponse)result).getQcmQuestionResponses()).isNotNull();
+        assertThat(((QcmLessonResponse)result).getQuestions()).isNotNull();
         verify(lessonRepository).save(any());
     }
 
@@ -550,7 +545,7 @@ class LessonServiceTest {
 
         assertThat(result).isInstanceOf(SortingExerciseLessonResponse.class);
         assertThat(result.getTitle()).isEqualTo("Sorting Exercise Lesson");
-        assertThat(((SortingExerciseLessonResponse)result).getSortingExerciseResponses()).isNotNull();
+        assertThat(((SortingExerciseLessonResponse)result).getSortingExercise()).isNotNull();
         verify(lessonRepository).save(any());
     }
 

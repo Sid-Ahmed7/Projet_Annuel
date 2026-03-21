@@ -50,14 +50,14 @@ public class LessonService implements ILessonService {
 
     @Override
     public List<LessonResponse> getLessonsByTopic(UUID topicId, UUID accountId) {
-      return lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId).stream().map(lesson -> mapToLessonResponse(lesson, accountId)).toList();
+      return lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId).stream().map(lesson -> lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource)).toList();
     }
 
     @Override
     public LessonResponse getLessonById(UUID lessonId, UUID accountId) {
        Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
-        return mapToLessonResponse(lesson, accountId);
+        return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
     }
 
     @Override
@@ -142,12 +142,6 @@ public class LessonService implements ILessonService {
     private CompleteLessonResponse handleRecompletion(UUID accountId, Lesson lesson) {
         UserProgressResponse progressResponse = progressService.getProgressByTopic(accountId, lesson.getTopic().getId());
         return lessonBuilder.buildRecompletedLessonResponse(progressResponse);
-    }
-
-    private LessonResponse mapToLessonResponse(Lesson lesson, UUID accountId) {
-        Optional<UserLessonProgress> progress = accountId != null ? userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lesson.getId()) : Optional.empty();
-        // TODO fix content plus tard
-        return lessonBuilder.mapLessonToLessonResponse(lesson, progress, "");
     }
 
     @Override
