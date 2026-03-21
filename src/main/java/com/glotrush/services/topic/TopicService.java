@@ -111,7 +111,24 @@ public class TopicService implements ITopicService {
 
     @Override
     public List<TopicResponse> searchTopics(String name, ProficiencyLevel difficulty, Boolean isActive) {
-        Specification<Topic> spec = (root, query, criteriaBuilder) -> {
+        Specification<Topic> spec = createSearchSpecification(name, difficulty, isActive);
+
+        return topicRepository.findAll(spec).stream()
+                .map(topicMapper::mapTopicEntitiesToTopicResponse)
+                .toList();
+    }
+
+    @Override
+    public List<TopicResponse> searchActiveTopics(String name, ProficiencyLevel difficulty) {
+        Specification<Topic> spec = createSearchSpecification(name, difficulty, true);
+
+        return topicRepository.findAll(spec).stream()
+                .map(topicMapper::mapTopicEntitiesToTopicResponse)
+                .toList();
+    }
+
+    private Specification<Topic> createSearchSpecification(String name, ProficiencyLevel difficulty, Boolean isActive) {
+        return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if (name != null && !name.isBlank()) {
@@ -128,10 +145,5 @@ public class TopicService implements ITopicService {
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
-
-        return topicRepository.findAll(spec).stream()
-                .map(topicMapper::mapTopicEntitiesToTopicResponse)
-                .toList();
     }
-
 }

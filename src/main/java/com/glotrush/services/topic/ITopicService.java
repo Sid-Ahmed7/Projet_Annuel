@@ -19,4 +19,5 @@ public interface ITopicService {
     void removeTopic(UUID topicId);
     TopicResponse updateTopic(UUID topicId, TopicRequest topic);
     List<TopicResponse> searchTopics(String name, ProficiencyLevel difficulty, Boolean isActive);
+    List<TopicResponse> searchActiveTopics(String name, ProficiencyLevel difficulty);
 }

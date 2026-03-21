@@ -29,12 +29,14 @@ public class TopicController {
     private final MessageSource messageSource;
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<TopicResponse>> getAllTopics() {
         List<TopicResponse> topics = topicService.getAllTopics();
         return ResponseEntity.ok(topics);
     }
 
     @GetMapping("/active")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<TopicResponse>> getAllTopicsByActive(Authentication authentication) {
         UUID accountId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         List<TopicResponse> topics = topicService.getAllTopics(accountId);
@@ -42,6 +44,7 @@ public class TopicController {
     }
 
     @GetMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<TopicResponse>> searchTopics(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) ProficiencyLevel difficulty,
@@ -50,7 +53,17 @@ public class TopicController {
         return ResponseEntity.ok(topics);
     }
 
+    @GetMapping("/search/active")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<List<TopicResponse>> searchActiveTopics(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) ProficiencyLevel difficulty) {
+        List<TopicResponse> topics = topicService.searchActiveTopics(name, difficulty);
+        return ResponseEntity.ok(topics);
+    }
+
     @GetMapping("/language/{languageId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<TopicResponse>> getTopicsByLanguage(Authentication authentication, @PathVariable UUID languageId) {
         UUID accountId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         List<TopicResponse> topics = topicService.getTopicsByLanguage(languageId, accountId);
@@ -58,6 +71,7 @@ public class TopicController {
     }
 
     @GetMapping("/{topicId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<TopicResponse> getTopicById(Authentication authentication, @PathVariable UUID topicId) {
         UUID accountId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         TopicResponse topic = topicService.getTopicById(topicId, accountId);
