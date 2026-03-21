@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.glotrush.dto.response.ErrorResponse;
 import com.stripe.exception.StripeException;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +29,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             WeakPasswordException.class,
             TwoFactorNotEnabledException.class,
-            SubscriptionOperationException.class
+            SubscriptionOperationException.class,
+            InvalidUploadException.class,
+            InvalidPasswordException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -119,6 +122,12 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors()
                 .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
         return ResponseEntity.badRequest().body(errors);
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<ErrorResponse> handleIOException(IOException ex) {
+        log.error("File operation failed: {}", ex.getMessage());
+        return buildError("File operation failed", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(Exception.class)

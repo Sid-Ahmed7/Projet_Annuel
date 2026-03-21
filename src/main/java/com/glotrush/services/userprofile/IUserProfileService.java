@@ -2,6 +2,7 @@ package com.glotrush.services.userprofile;
 
 import java.util.UUID;
 
+import com.glotrush.dto.request.PasswordRequest;
 import com.glotrush.dto.request.UpdateProfileRequest;
 import com.glotrush.dto.response.UserProfileResponse;
 
@@ -12,6 +13,8 @@ public interface IUserProfileService {
     UserProfileResponse updateProfile(UUID accountId, UpdateProfileRequest request);
     
     UserProfileResponse getPublicProfile(UUID accountId);
+
+    void changePassword(UUID accountId, PasswordRequest request);
 
     
 }

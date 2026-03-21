@@ -4,14 +4,12 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
-import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Locale;
 
@@ -29,9 +27,9 @@ public class LocaleConfig implements WebMvcConfigurer {
 
     @Bean
     public LocaleResolver localeResolver() {
-        CookieLocaleResolver resolver = new CookieLocaleResolver("myAppLocaleCookie"); // Nom du cookie passé au constructeur
+        CookieLocaleResolver resolver = new CookieLocaleResolver("myAppLocaleCookie"); 
         resolver.setDefaultLocale(Locale.ENGLISH);
-        resolver.setCookieMaxAge(Duration.ofDays(30)); // 30 jours
+        resolver.setCookieMaxAge(Duration.ofDays(30)); 
         resolver.setCookiePath("/");
         return resolver;
     }
