@@ -24,16 +24,16 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SortingExerciseLesson extends Lesson {
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SortingExerciseEntity> sortingExerciseEntities = new ArrayList<>();
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true, fetch = jakarta.persistence.FetchType.EAGER)
+    private List<SortingExerciseEntity> sortingExercise = new ArrayList<>();
 
     public void addSortingExercise(SortingExerciseEntity sortingExerciseEntity) {
-        sortingExerciseEntities.add(sortingExerciseEntity);
+        sortingExercise.add(sortingExerciseEntity);
         sortingExerciseEntity.setLesson(this);
     }
 
     public void removeSoringExercise(SortingExerciseEntity sortingExerciseEntity) {
-        sortingExerciseEntities.remove(sortingExerciseEntity);
-        sortingExerciseEntity.setLesson(this);
+        sortingExercise.remove(sortingExerciseEntity);
+        sortingExerciseEntity.setLesson(null);
     }
 }

@@ -13,5 +13,5 @@ import java.util.List;
 @Data
 @SuperBuilder
 public class SortingExerciseLessonResponse extends LessonResponse {
-    private List<SortingExerciseResponse> sortingExerciseResponses;
+    private List<SortingExerciseResponse> sortingExercise;
 }

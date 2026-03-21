@@ -24,7 +24,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QcmLesson extends Lesson {
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true, fetch = jakarta.persistence.FetchType.EAGER)
     private List<QcmQuestionEntity> questions = new ArrayList<>();
 
     public void addQuestion(QcmQuestionEntity question) {
@@ -34,6 +34,6 @@ public class QcmLesson extends Lesson {
 
     public void removeQuestion(QcmQuestionEntity question) {
         questions.remove(question);
-        question.setLesson(this);
+        question.setLesson(null);
     }
 }

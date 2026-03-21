@@ -23,7 +23,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FlashcardLesson extends Lesson {
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true, fetch = jakarta.persistence.FetchType.EAGER)
     private List<FlashcardEntity> flashcards = new ArrayList<>();
 
     public void addFlashcard(FlashcardEntity flashcard) {

@@ -13,6 +13,6 @@ import java.util.List;
 @Data
 @SuperBuilder
 public class QcmLessonResponse extends LessonResponse {
-    private List<QcmQuestionResponse> qcmQuestionResponses;
+    private List<QcmQuestionResponse> questions;
 
 }

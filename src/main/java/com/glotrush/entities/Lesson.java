@@ -3,6 +3,7 @@ package com.glotrush.entities;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.glotrush.enumerations.LessonType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -40,7 +41,6 @@ public abstract class Lesson {
     @Column(name = "xp_reward", nullable = false)
     private Integer xpReward = 10;
 
-
     @Column(name = "min_level_required")
     private Integer minLevelRequired;
 
@@ -52,6 +52,10 @@ public abstract class Lesson {
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "lesson_type", insertable = false, updatable = false)
+    private LessonType lessonType;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

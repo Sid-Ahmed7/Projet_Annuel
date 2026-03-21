@@ -19,7 +19,12 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
+        property = "lessonType",
+        visible = true
+)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = FlashcardLessonResponse.class, name = "FLASHCARD"),
         @JsonSubTypes.Type(value = MatchingPairLessonResponse.class, name = "MATCHING_PAIR"),
@@ -39,6 +44,4 @@ public class LessonResponse {
     private Integer passScorePercentage;
     private Boolean isActive;
     private LessonType lessonType;
-
-    private UserLessonProgressSummary userProgress;
 }
