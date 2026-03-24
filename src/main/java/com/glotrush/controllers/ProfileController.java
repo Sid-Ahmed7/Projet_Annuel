@@ -103,6 +103,14 @@ public class ProfileController {
             .body(resource);
     }
 
+
+    @PutMapping("/active-language/{languageId}")
+    public ResponseEntity<UserProfileResponse> setActiveLanguage(Authentication authentication, @PathVariable UUID languageId) {
+        UUID accountId = UUID.fromString(authentication.getName());
+        UserProfileResponse profile = profileService.addActiveLanguage(accountId, languageId);
+        return ResponseEntity.ok(profile);
+    }
+
     @DeleteMapping("/delete/image")
     public ResponseEntity<ApiResponse> deleteProfileImage(Authentication authentication) {
         UUID accountId = UUID.fromString(authentication.getName());

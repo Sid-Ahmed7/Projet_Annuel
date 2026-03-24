@@ -20,7 +20,6 @@ public class UserLanguageBuilder {
                 .language(language)
                 .languageType(request.getLanguageType())
                 .proficiencyLevel(request.getProficiencyLevel())
-                .isPrimary(Boolean.TRUE.equals(request.getIsPrimary()))
                 .startedAt(now)
                 .createdAt(now)
                 .updatedAt(now)
@@ -35,7 +34,6 @@ public class UserLanguageBuilder {
                 .languageName(userLanguage.getLanguage().getName())
                 .languageType(userLanguage.getLanguageType())
                 .proficiencyLevel(userLanguage.getProficiencyLevel())
-                .isPrimary(userLanguage.getIsPrimary())
                 .startedAt(userLanguage.getStartedAt())
                 .build();
     }

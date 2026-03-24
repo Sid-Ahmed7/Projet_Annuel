@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.dto.response.ApiResponse;
+import com.glotrush.dto.response.TopicWithProgressResponse;
 import com.glotrush.enumerations.ProficiencyLevel;
 import jakarta.validation.Valid;
 import org.springframework.context.MessageSource;
@@ -51,9 +52,9 @@ public class TopicController {
     }
 
     @GetMapping("/language/{languageId}")
-    public ResponseEntity<List<TopicResponse>> getTopicsByLanguage(Authentication authentication, @PathVariable UUID languageId) {
+    public ResponseEntity<List<TopicWithProgressResponse>> getTopicsByLanguage(Authentication authentication, @PathVariable UUID languageId) {
         UUID accountId = authentication != null ? UUID.fromString(authentication.getName()) : null;
-        List<TopicResponse> topics = topicService.getTopicsByLanguage(languageId, accountId);
+        List<TopicWithProgressResponse> topics = topicService.getTopicsByLanguage(languageId, accountId);
         return ResponseEntity.ok(topics);
     }
 

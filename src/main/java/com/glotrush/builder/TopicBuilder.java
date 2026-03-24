@@ -1,11 +1,13 @@
 package com.glotrush.builder;
 
+import java.util.List;
 import java.util.Optional;
 
-import com.glotrush.utils.LevelUtils;
 import org.springframework.stereotype.Component;
 
+import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.dto.response.TopicResponse;
+import com.glotrush.dto.response.TopicWithProgressResponse;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
 
@@ -22,6 +24,25 @@ public class TopicBuilder {
                 .difficulty(topic.getDifficulty())
                 .orderIndex(topic.getOrderIndex())
                 .isActive(topic.getIsActive())
+                .build();
+    }
+
+    public TopicWithProgressResponse mapToTopicWithProgressResponse(Topic topic, List<LessonResponse> lessons, int completedLessons) {
+        int totalLessons = lessons.size();
+        int progressPercent = totalLessons > 0 ? (completedLessons * 100 / totalLessons) : 0;
+
+        return TopicWithProgressResponse.builder()
+                .id(topic.getId())
+                .languageId(topic.getLanguage().getId())
+                .name(topic.getName())
+                .description(topic.getDescription())
+                .difficulty(topic.getDifficulty())
+                .orderIndex(topic.getOrderIndex())
+                .isActive(topic.getIsActive())
+                .completedLessons(completedLessons)
+                .totalLessons(totalLessons)
+                .progressPercent(progressPercent)
+                .lessons(lessons)
                 .build();
     }
 }

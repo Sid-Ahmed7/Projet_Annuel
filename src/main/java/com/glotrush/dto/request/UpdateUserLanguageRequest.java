@@ -16,6 +16,4 @@ public class UpdateUserLanguageRequest {
     private LanguageType languageType;
 
     private ProficiencyLevel proficiencyLevel;
-
-    private Boolean isPrimary;
 }

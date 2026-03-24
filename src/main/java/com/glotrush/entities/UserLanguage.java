@@ -56,9 +56,6 @@ public class UserLanguage {
     private ProficiencyLevel proficiencyLevel;
     // PAR EXEMPLE, PASSAGE DU A1 A A2 CONDITIONNER APRES AVOIR REUSSI 10 TOPIC DIFFERENT NIVEAU A2
 
-    @Column(name = "is_primary", nullable = false)
-    private Boolean isPrimary = false;
-
     @Column(name = "started_at")
     private LocalDateTime startedAt;
 

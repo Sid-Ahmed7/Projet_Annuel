@@ -27,6 +27,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.glotrush.builder.UserLanguageBuilder;
+import com.glotrush.builder.UserProfileBuilder;
 import com.glotrush.config.TestMessageSourceConfig;
 import com.glotrush.dto.request.AddUserLanguageRequest;
 import com.glotrush.dto.request.UpdateUserLanguageRequest;
@@ -39,6 +40,7 @@ import com.glotrush.enumerations.ProficiencyLevel;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.UserLanguageRepository;
+import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.services.languages.UserLanguageService;
 
 @ExtendWith({MockitoExtension.class, SpringExtension.class})
@@ -60,6 +62,11 @@ class UserLanguageServiceTest {
     @Autowired
     private MessageSource messageSource;
     
+    @Mock
+    UserProfileRepository userProfileRepository;
+    @Mock
+    private UserProfileBuilder userProfileBuilder;
+
     private UserLanguageService userLanguageService;
 
     private UUID accountId;
@@ -70,13 +77,14 @@ class UserLanguageServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Initialiser le service manuellement avec toutes les dépendances
         userLanguageService = new UserLanguageService(
             messageSource,
             userLanguageRepository,
             accountsRepository,
             languageRepository,
-            userLanguageBuilder
+            userLanguageBuilder,
+            userProfileRepository,
+            userProfileBuilder
         );
 
         accountId = UUID.randomUUID();
@@ -101,7 +109,7 @@ class UserLanguageServiceTest {
                 .language(japanese)
                 .languageType(LanguageType.LEARNING)
                 .proficiencyLevel(ProficiencyLevel.A2)
-                .isPrimary(true)
+                
                 .startedAt(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -115,7 +123,7 @@ class UserLanguageServiceTest {
                 .languageId(languageId)
                 .languageType(LanguageType.LEARNING)
                 .proficiencyLevel(ProficiencyLevel.A1)
-                .isPrimary(true)
+                
                 .build();
 
         UserLanguageResponse expectedResponse = UserLanguageResponse.builder()
@@ -125,7 +133,7 @@ class UserLanguageServiceTest {
                 .languageName("Japanese")
                 .languageType(LanguageType.LEARNING)
                 .proficiencyLevel(ProficiencyLevel.A2)
-                .isPrimary(true)
+                
                 .startedAt(userLanguage.getStartedAt())
                 .build();
 
@@ -173,7 +181,6 @@ class UserLanguageServiceTest {
 
         UpdateUserLanguageRequest request = UpdateUserLanguageRequest.builder()
                 .proficiencyLevel(ProficiencyLevel.B1)
-                .isPrimary(false)
                 .build();
 
         UserLanguageResponse expectedResponse = UserLanguageResponse.builder()
@@ -183,7 +190,6 @@ class UserLanguageServiceTest {
                 .languageName("Japanese")
                 .languageType(LanguageType.LEARNING)
                 .proficiencyLevel(ProficiencyLevel.B1)
-                .isPrimary(false)
                 .startedAt(userLanguage.getStartedAt())
                 .build();
 
@@ -197,7 +203,6 @@ class UserLanguageServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getProficiencyLevel()).isEqualTo(ProficiencyLevel.B1);
-        assertThat(result.getIsPrimary()).isFalse();
         verify(userLanguageRepository).save(any(UserLanguage.class));
     }
 
@@ -223,7 +228,6 @@ class UserLanguageServiceTest {
                 .languageName("Japanese")
                 .languageType(LanguageType.LEARNING)
                 .proficiencyLevel(ProficiencyLevel.A2)
-                .isPrimary(true)
                 .startedAt(userLanguage.getStartedAt())
                 .build();
 

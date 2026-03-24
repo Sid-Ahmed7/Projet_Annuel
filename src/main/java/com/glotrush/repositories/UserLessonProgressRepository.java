@@ -23,4 +23,6 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
 
     boolean existsByAccountIdAndLessonId(UUID accountId, UUID lessonId);
 
+    List<UserLessonProgress> findByAccount_IdAndLesson_Topic_Id(UUID accountId, UUID topicId);
+
 }

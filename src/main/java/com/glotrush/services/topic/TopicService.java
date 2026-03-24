@@ -4,11 +4,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.glotrush.builder.LessonBuilder;
 import com.glotrush.dto.request.TopicRequest;
+import com.glotrush.dto.response.LessonResponse;
+import com.glotrush.dto.response.TopicWithProgressResponse;
 import com.glotrush.entities.Language;
+import com.glotrush.entities.UserLessonProgress;
+import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.enumerations.ProficiencyLevel;
 import com.glotrush.mapping.TopicMapper;
 import com.glotrush.repositories.LanguageRepository;
+import com.glotrush.repositories.LessonRepository;
+import com.glotrush.repositories.UserLessonProgressRepository;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.context.MessageSource;
 import org.springframework.data.jpa.domain.Specification;
@@ -37,6 +44,9 @@ public class TopicService implements ITopicService {
     private final TopicRepository topicRepository;
     private final UserProgressRepository userProgressRepository;
     private final LanguageRepository languageRepository;
+    private final LessonRepository lessonRepository;
+    private final UserLessonProgressRepository userLessonProgressRepository;
+    private final LessonBuilder lessonBuilder;
     private final TopicBuilder topicBuilder;
     private final TopicMapper topicMapper;
 
@@ -58,10 +68,22 @@ public class TopicService implements ITopicService {
     }
 
     @Override
-    public List<TopicResponse> getTopicsByLanguage(UUID languageId, UUID accountId) {
+    public List<TopicWithProgressResponse> getTopicsByLanguage(UUID languageId, UUID accountId) {
         return topicRepository.findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(languageId).stream().map(topic -> {
-            Optional<UserProgress> progressOpt = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topic.getId());
-            return topicBuilder.mapToTopicResponse(topic, progressOpt);
+            List<LessonResponse> lessons = lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topic.getId()).stream()
+                    .map(lesson -> {
+                        Optional<UserLessonProgress> progressOpt = accountId != null
+                                ? userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lesson.getId())
+                                : Optional.empty();
+                        return lessonBuilder.mapLessonToLessonResponse(lesson, progressOpt, "");
+                    })
+                    .toList();
+
+            int completedLessons = (int) lessons.stream()
+                    .filter(l -> l.getUserProgress() != null && LessonStatus.COMPLETED.equals(l.getUserProgress().getStatus()))
+                    .count();
+
+            return topicBuilder.mapToTopicWithProgressResponse(topic, lessons, completedLessons);
         }).toList();
     }
 

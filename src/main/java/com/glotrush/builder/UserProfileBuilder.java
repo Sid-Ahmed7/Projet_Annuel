@@ -5,10 +5,12 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import com.glotrush.entities.Accounts;
+import com.glotrush.entities.Language;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.entities.UserLanguage;
 import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.dto.response.UserProfileResponse;
+import com.glotrush.dto.response.LanguageResponse;
 import com.glotrush.dto.response.UserLanguageResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -29,9 +31,21 @@ public class UserProfileBuilder {
 
 
     public UserProfileResponse mapToUserProfileResponse(Accounts account, UserProfile profile, List<UserLanguageResponse> languages) {
+       LanguageResponse activeLanguage = null;
+        if (profile.getActiveLanguage() != null) {
+            Language activeLang = profile.getActiveLanguage();
+            activeLanguage = LanguageResponse.builder()
+                    .id(activeLang.getId())
+                    .code(activeLang.getCode())
+                    .name(activeLang.getName())
+                    .isActive(activeLang.getIsActive())
+                    .orderIndex(activeLang.getOrderIndex())
+                    .build();
+        }
         return UserProfileResponse.builder()
                 .id(profile.getId())
                 .accountId(account.getId())
+                .activeLanguage(activeLanguage)
                 .username(account.getUsername())
                 .email(account.getEmail())
                 .firstName(account.getFirstName())
@@ -56,7 +70,6 @@ public class UserProfileBuilder {
                 .languageName(userLanguage.getLanguage().getName())
                 .languageType(userLanguage.getLanguageType())
                 .proficiencyLevel(userLanguage.getProficiencyLevel())
-                .isPrimary(userLanguage.getIsPrimary())
                 .startedAt(userLanguage.getStartedAt())
                 .build();
     }

@@ -15,6 +15,10 @@ public class LanguageResponse {
     private UUID id;
     private String code;
     private String name;
+    private String levelRange;
+    private Integer topicsCount;
+    private Integer lessonsCount;
     private Boolean isActive;
     private Integer orderIndex;
+    private Boolean isPopular;
 }

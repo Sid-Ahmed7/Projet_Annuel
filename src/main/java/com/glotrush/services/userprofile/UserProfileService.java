@@ -14,9 +14,12 @@ import com.glotrush.dto.request.UpdateProfileRequest;
 import com.glotrush.dto.response.UserLanguageResponse;
 import com.glotrush.dto.response.UserProfileResponse;
 import com.glotrush.entities.Accounts;
+import com.glotrush.entities.UserLanguage;
 import com.glotrush.entities.UserProfile;
+import com.glotrush.enumerations.LanguageType;
 import com.glotrush.exceptions.InvalidPasswordException;
 import com.glotrush.exceptions.ProfilePrivateException;
+import com.glotrush.exceptions.UserLanguageException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.exceptions.UsernameAlreadyExistsException;
 import com.glotrush.repositories.AccountsRepository;
@@ -137,5 +140,28 @@ public class UserProfileService implements IUserProfileService {
         account.setLastPasswordChange(LocalDateTime.now());
         accountsRepository.save(account);
     }
+
+    @Override
+    @Transactional
+    public UserProfileResponse addActiveLanguage(UUID accountId, UUID languageId) {
+        Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
+
+        UserLanguage userLanguage = userLanguageRepository.findByAccount_IdAndLanguage_Id(accountId, languageId).orElseThrow(() -> new UserLanguageException(messageSource.getMessage("error.language.user_language_not_found", null, LocaleUtils.getCurrentLocale())));
+        if(userLanguage.getLanguageType() != LanguageType.LEARNING) {
+            throw new UserLanguageException(messageSource.getMessage("error.user_language.not_learning", null, LocaleUtils.getCurrentLocale()));
+        }
+
+        UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElseGet(() -> userProfileBuilder.createDefaultProfile(account));
+        profile.setActiveLanguage(userLanguage.getLanguage());
+        userProfileRepository.save(profile);
+
+        List<UserLanguageResponse> languages = userLanguageRepository.findByAccount_Id(accountId)
+            .stream()
+            .map(userProfileBuilder::mapToUserLanguageResponse)
+            .toList();
+
+        return userProfileBuilder.mapToUserProfileResponse(account, profile, languages);
+
+    }   
 }
 

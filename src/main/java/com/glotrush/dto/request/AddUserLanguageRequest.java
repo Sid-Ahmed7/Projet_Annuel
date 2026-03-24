@@ -23,6 +23,4 @@ public class AddUserLanguageRequest {
     private LanguageType languageType;
 
     private ProficiencyLevel proficiencyLevel;
-
-    private Boolean isPrimary = false;
 }

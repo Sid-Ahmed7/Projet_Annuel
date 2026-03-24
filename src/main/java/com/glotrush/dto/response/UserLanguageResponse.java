@@ -22,7 +22,6 @@ public class UserLanguageResponse {
     private String languageName;
     private LanguageType languageType;
     private ProficiencyLevel proficiencyLevel;
-    private Boolean isPrimary;
     private LocalDateTime startedAt;
     
 }

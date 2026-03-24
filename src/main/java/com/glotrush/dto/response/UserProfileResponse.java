@@ -29,6 +29,7 @@ public class UserProfileResponse {
     private CountryCode countryCode;
     private TimeZone timezone;
     private Boolean isPublic;
+    private LanguageResponse activeLanguage;
     private List<UserLanguageResponse> languages;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

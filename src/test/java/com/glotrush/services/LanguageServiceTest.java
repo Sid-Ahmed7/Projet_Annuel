@@ -28,7 +28,11 @@ import com.glotrush.builder.LanguageBuilder;
 import com.glotrush.dto.response.LanguageResponse;
 import com.glotrush.entities.Language;
 import com.glotrush.exceptions.LanguageException;
+import com.glotrush.mapping.LanguageMapper;
 import com.glotrush.repositories.LanguageRepository;
+import com.glotrush.repositories.LessonRepository;
+import com.glotrush.repositories.TopicRepository;
+import com.glotrush.repositories.UserLanguageRepository;
 import com.glotrush.services.languages.LanguageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -49,13 +53,19 @@ class LanguageServiceTest {
     @Mock
     private LanguageBuilder languageBuilder;
     @Mock
-    private com.glotrush.mapping.LanguageMapper languageMapper;
+    private LanguageMapper languageMapper;
+    @Mock
+    private TopicRepository topicRepository;
+    @Mock
+    private LessonRepository lessonRepository;
+    @Mock
+    private UserLanguageRepository userLanguageRepository;
     private Language japanese;
     private Language french;
 
     @BeforeEach
     void setUp() {
-        languageService = new LanguageService(messageSource, languageRepository, languageBuilder, languageMapper);
+        languageService = new LanguageService(messageSource, languageRepository, languageBuilder, languageMapper, topicRepository, lessonRepository, userLanguageRepository);
         japanese = Language.builder()
                 .id(UUID.randomUUID())
                 .code("ja")
