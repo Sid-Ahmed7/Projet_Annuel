@@ -11,6 +11,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class QcmLessonRequest extends LessonRequest {
-    private List<QcmQuestionRequest> qcmQuestionRequests;
+    private List<QcmQuestionRequest> questions;
 
 }

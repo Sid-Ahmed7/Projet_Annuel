@@ -59,7 +59,9 @@ public class GlobalExceptionHandler {
             UserNotFoundException.class,
             UsernameNotFoundException.class,
             SubscriptionNotFoundException.class,
-            PlanNotFoundException.class
+            PlanNotFoundException.class,
+            LessonNotFoundException.class,
+            TopicNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);

@@ -1,6 +1,5 @@
 package com.glotrush.dto.response.lesson;
 
-import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.dto.response.exercice.MatchingPairResponse;
 import lombok.Data;
@@ -13,5 +12,5 @@ import java.util.List;
 @Data
 @SuperBuilder
 public class MatchingPairLessonResponse extends LessonResponse {
-    private List<MatchingPairResponse> matchingPairResponses;
+    private List<MatchingPairResponse> matchingPairs;
 }
