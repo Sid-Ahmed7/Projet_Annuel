@@ -44,4 +44,5 @@ public class LessonResponse {
     private Integer passScorePercentage;
     private Boolean isActive;
     private LessonType lessonType;
+    private UserLessonProgressSummary userProgress;
 }

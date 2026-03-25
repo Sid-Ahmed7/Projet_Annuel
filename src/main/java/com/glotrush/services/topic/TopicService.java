@@ -63,7 +63,7 @@ public class TopicService implements ITopicService {
     @Override
     public List<TopicResponse> getAllTopics() {
         return topicRepository.findAll().stream()
-                .map(topicMapper::mapTopicEntitiesToTopicResponse)
+                .map(topic -> topicMapper.mapTopicEntitiesToTopicResponse(topic))
                 .toList();
     }
 
@@ -75,7 +75,7 @@ public class TopicService implements ITopicService {
                         Optional<UserLessonProgress> progressOpt = accountId != null
                                 ? userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lesson.getId())
                                 : Optional.empty();
-                        return lessonBuilder.mapLessonToLessonResponse(lesson, progressOpt, "");
+                        return lessonBuilder.mapLessonToLessonResponse(lesson, progressOpt);
                     })
                     .toList();
 
@@ -152,7 +152,7 @@ public class TopicService implements ITopicService {
         };
 
         return topicRepository.findAll(spec).stream()
-                .map(topicMapper::mapTopicEntitiesToTopicResponse)
+                .map(topic -> topicMapper.mapTopicEntitiesToTopicResponse(topic))
                 .toList();
     }
 
