@@ -42,6 +42,18 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 
+import com.glotrush.dto.request.*;
+import com.glotrush.entities.exercice.FlashcardEntity;
+import com.glotrush.entities.exercice.MatchingPairEntity;
+import com.glotrush.entities.exercice.QcmQuestionEntity;
+import com.glotrush.entities.exercice.SortingExerciseEntity;
+import com.glotrush.repositories.exercice.FlashcardRepository;
+import com.glotrush.repositories.exercice.MatchingPairRepository;
+import com.glotrush.repositories.exercice.QcmQuestionRepository;
+import com.glotrush.repositories.exercice.SortingExerciseRepository;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -56,6 +68,13 @@ public class TopicService implements ITopicService {
     private final LessonEntityToLessonResponse lessonMapper;
     private final com.glotrush.repositories.UserLessonProgressRepository userLessonProgressRepositoryLegacy;
     private final IProgressService progressService;
+
+    private final FlashcardRepository flashcardRepository;
+    private final QcmQuestionRepository qcmQuestionRepository;
+    private final MatchingPairRepository matchingPairRepository;
+    private final SortingExerciseRepository sortingExerciseRepository;
+
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
 
     @Override
     public List<TopicResponse> getAllTopics(UUID accountId) {
@@ -232,22 +251,61 @@ public class TopicService implements ITopicService {
         UserProgress progress = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)
                 .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
 
-        boolean isSuccessful = examRequest.getScore() >= 80; // Seuil arbitraire pour l'examen
+        int calculatedCorrectAnswers = 0;
+        int totalQuestions = 0;
 
-        if (isSuccessful) {
-            progress.setExamPassed(true);
-            if (progress.getBestExamScore() == null || examRequest.getScore() > progress.getBestExamScore()) {
-                progress.setBestExamScore(examRequest.getScore());
+        // Validation des Flashcards
+        if (examRequest.getFlashcardAnswers() != null) {
+            for (FlashcardAnswerRequest ans : examRequest.getFlashcardAnswers()) {
+                totalQuestions++;
+                if (validateFlashcard(ans)) {
+                    calculatedCorrectAnswers++;
+                }
             }
         }
 
-        // Mise à jour des stats globales si nécessaire
-        if (examRequest.getCorrectAnswers() != null) {
-            progress.setCorrectAnswers(progress.getCorrectAnswers() + examRequest.getCorrectAnswers());
+        // Validation des QCM
+        if (examRequest.getQcmAnswers() != null) {
+            for (QcmAnswerRequest ans : examRequest.getQcmAnswers()) {
+                totalQuestions++;
+                if (validateQcm(ans)) {
+                    calculatedCorrectAnswers++;
+                }
+            }
         }
-        if (examRequest.getTotalAnswers() != null) {
-            progress.setTotalAnswers(progress.getTotalAnswers() + examRequest.getTotalAnswers());
+
+        // Validation des Matching Pairs
+        if (examRequest.getMatchingPairAnswers() != null) {
+            for (MatchingPairAnswerRequest ans : examRequest.getMatchingPairAnswers()) {
+                totalQuestions++;
+                if (validateMatchingPair(ans)) {
+                    calculatedCorrectAnswers++;
+                }
+            }
         }
+
+        // Validation des Sorting Exercises
+        if (examRequest.getSortingExerciseAnswers() != null) {
+            for (SortingExerciseAnswerRequest ans : examRequest.getSortingExerciseAnswers()) {
+                totalQuestions++;
+                if (validateSortingExercise(ans)) {
+                    calculatedCorrectAnswers++;
+                }
+            }
+        }
+
+        double finalScore = totalQuestions > 0 ? (double) calculatedCorrectAnswers / totalQuestions * 100 : 0;
+        boolean isSuccessful = finalScore >= 80;
+
+        if (isSuccessful) {
+            progress.setExamPassed(true);
+            if (progress.getBestExamScore() == null || finalScore > progress.getBestExamScore()) {
+                progress.setBestExamScore(finalScore);
+            }
+        }
+
+        progress.setCorrectAnswers(progress.getCorrectAnswers() + calculatedCorrectAnswers);
+        progress.setTotalAnswers(progress.getTotalAnswers() + totalQuestions);
         progress.calculateAccuracy();
         
         userProgressRepository.save(progress);
@@ -256,9 +314,76 @@ public class TopicService implements ITopicService {
                 .success(isSuccessful)
                 .message(isSuccessful ? messageSource.getMessage("info.topic.exam.success", null, LocaleUtils.getCurrentLocale()) 
                                     : messageSource.getMessage("error.topic.exam.failed", null, LocaleUtils.getCurrentLocale()))
-                .xpEarned(isSuccessful ? 50 : 0) // Bonus XP examen
+                .xpEarned(isSuccessful ? 50 : 0)
                 .totalXP(progress.getTotalXP())
                 .progress(progressService.getProgressByTopic(accountId, topicId))
                 .build();
+    }
+
+    private boolean validateFlashcard(FlashcardAnswerRequest request) {
+        FlashcardEntity entity = flashcardRepository.findById(request.getId()).orElse(null);
+        if (entity == null || request.getUserResponse() == null) return false;
+
+        String expected = entity.getBack().trim();
+        String actual = request.getUserResponse().trim();
+
+        // Niveau 1 : Comparaison exacte
+        if (expected.equalsIgnoreCase(actual)) {
+            return true;
+        }
+
+        // Niveau 2 : Extraction des nombres
+        List<String> expectedNumbers = extractNumbers(expected);
+        List<String> actualNumbers = extractNumbers(actual);
+        if (!expectedNumbers.equals(actualNumbers)) {
+            return false;
+        }
+
+        // Niveau 3 : IA (Simulé ici par Levenshtein car IA est optionnelle)
+        // Si les nombres sont bons mais que le texte ne match pas exactement, on vérifie la distance
+        return calculateLevenshteinDistance(expected.toLowerCase(), actual.toLowerCase()) <= 2;
+    }
+
+    private List<String> extractNumbers(String input) {
+        List<String> numbers = new ArrayList<>();
+        Matcher matcher = NUMBER_PATTERN.matcher(input);
+        while (matcher.find()) {
+            numbers.add(matcher.group());
+        }
+        return numbers;
+    }
+
+    private int calculateLevenshteinDistance(String x, String y) {
+        int[][] dp = new int[x.length() + 1][y.length() + 1];
+        for (int i = 0; i <= x.length(); i++) {
+            for (int j = 0; j <= y.length(); j++) {
+                if (i == 0) dp[i][j] = j;
+                else if (j == 0) dp[i][j] = i;
+                else {
+                    dp[i][j] = Math.min(dp[i - 1][j - 1] + (x.charAt(i - 1) == y.charAt(j - 1) ? 0 : 1),
+                            Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1));
+                }
+            }
+        }
+        return dp[x.length()][y.length()];
+    }
+
+    private boolean validateQcm(QcmAnswerRequest request) {
+        QcmQuestionEntity entity = qcmQuestionRepository.findById(request.getId()).orElse(null);
+        return entity != null && entity.getCorrectOptionIndex().equals(request.getSelectedOptionIndex());
+    }
+
+    private boolean validateMatchingPair(MatchingPairAnswerRequest request) {
+        MatchingPairEntity entity = matchingPairRepository.findById(request.getId()).orElse(null);
+        if (entity == null) return false;
+        // Vérification exacte
+        return entity.getItem1().equals(request.getItem1()) && entity.getItem2().equals(request.getItem2());
+    }
+
+    private boolean validateSortingExercise(SortingExerciseAnswerRequest request) {
+        SortingExerciseEntity entity = sortingExerciseRepository.findById(request.getId()).orElse(null);
+        if (entity == null || request.getUserOrder() == null) return false;
+        // Vérification exacte de l'ordre
+        return entity.getCorrectOrder().equals(request.getUserOrder());
     }
 }

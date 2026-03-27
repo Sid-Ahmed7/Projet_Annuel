@@ -132,35 +132,6 @@ public class LessonService implements ILessonService {
         }
     }
 
-    @Override
-    public CompleteLessonResponse practiceLesson(UUID accountId, UUID lessonId, CompleteLessonRequest lessonRequest) {
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
-
-        UserLessonProgress progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
-                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.progress.notfound", null, LocaleUtils.getCurrentLocale())));
-
-        // Pour la pratique, on met seulement à jour les stats d'activité sans XP ni changement de statut
-        progress.setTotalAttempts(progress.getTotalAttempts() + 1);
-        progress.setTimeSpentSeconds(progress.getTimeSpentSeconds() + lessonRequest.getTimeSpentSeconds());
-        progress.setLastAttemptAt(LocalDateTime.now());
-        if (lessonRequest.getFeedback() != null) {
-            progress.setUserFeedback(lessonRequest.getFeedback());
-        }
-
-        // Mise à jour des stats de réponses globales
-        if (lessonRequest.getCorrectAnswers() != null && lessonRequest.getTotalAnswers() != null) {
-            progressService.updateAnswerStats(accountId, lesson.getTopic().getId(), lessonRequest.getCorrectAnswers(), lessonRequest.getTotalAnswers());
-        }
-
-        userLessonProgressRepository.save(progress);
-
-        // Mise à jour de la date de dernière étude globale
-        progressService.updateLastStudiedAt(accountId, lesson.getTopic().getId());
-
-        UserProgressResponse progressResponse = progressService.getProgressByTopic(accountId, lesson.getTopic().getId());
-        return lessonBuilder.buildRecompletedLessonResponse(progressResponse);
-    }
 
     private CompleteLessonResponse handleFirstCompletion(UUID accountId, Lesson lesson) {
         Integer xpEarned = lesson.getXpReward();
@@ -180,8 +151,9 @@ public class LessonService implements ILessonService {
     }
 
     private CompleteLessonResponse handleRecompletion(UUID accountId, Lesson lesson) {
+        UserProgress topicProgress = progressService.getOrCreateProgress(accountId, lesson.getTopic().getId());
         UserProgressResponse progressResponse = progressService.getProgressByTopic(accountId, lesson.getTopic().getId());
-        return lessonBuilder.buildRecompletedLessonResponse(progressResponse);
+        return lessonBuilder.buildCompleteLessonResponse(false, 0, topicProgress, progressResponse, null);
     }
 
     @Override

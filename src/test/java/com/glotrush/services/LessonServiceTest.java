@@ -434,6 +434,7 @@ class LessonServiceTest {
         userLessonProgress.setTotalAttempts(1);
 
         UserProgressResponse progressResponse = new UserProgressResponse();
+        UserProgress topicProgress = new UserProgress();
 
         CompleteLessonResponse expectedResponse = CompleteLessonResponse.builder()
                 .success(true)
@@ -444,8 +445,10 @@ class LessonServiceTest {
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
         when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
                 .thenReturn(Optional.of(userLessonProgress));
+        when(progressService.getOrCreateProgress(accountId, topicId)).thenReturn(topicProgress);
         when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(progressResponse);
-        when(lessonBuilder.buildRecompletedLessonResponse(any())).thenReturn(expectedResponse);
+        when(lessonBuilder.buildCompleteLessonResponse(eq(false), eq(0), eq(topicProgress), eq(progressResponse), isNull()))
+                .thenReturn(expectedResponse);
 
         CompleteLessonResponse result = lessonService.completeLesson(accountId, lessonId, request);
 

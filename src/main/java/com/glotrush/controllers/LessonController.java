@@ -62,13 +62,6 @@ public class LessonController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{lessonId}/practice")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<CompleteLessonResponse> practiceLesson(Authentication authentication, @PathVariable UUID lessonId, @Valid @RequestBody CompleteLessonRequest lessonRequest) {
-        UUID accountId = UUID.fromString(authentication.getName());
-        CompleteLessonResponse response = lessonService.practiceLesson(accountId, lessonId, lessonRequest);
-        return ResponseEntity.ok(response);
-    }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")

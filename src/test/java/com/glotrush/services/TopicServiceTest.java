@@ -44,6 +44,16 @@ import org.springframework.context.MessageSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.glotrush.entities.Accounts;
+import com.glotrush.repositories.exercice.FlashcardRepository;
+import com.glotrush.repositories.exercice.MatchingPairRepository;
+import com.glotrush.repositories.exercice.QcmQuestionRepository;
+import com.glotrush.repositories.exercice.SortingExerciseRepository;
+import com.glotrush.dto.request.*;
+import com.glotrush.dto.response.CompleteLessonResponse;
+import com.glotrush.entities.exercice.*;
+import static org.mockito.Mockito.*;
+
 @ExtendWith({MockitoExtension.class, SpringExtension.class})
 @ContextConfiguration(classes = TestMessageSourceConfig.class)
 @DisplayName("TopicService Unit Tests")
@@ -77,6 +87,15 @@ class TopicServiceTest {
     @Mock
     private IProgressService progressService;
 
+    @Mock
+    private FlashcardRepository flashcardRepository;
+    @Mock
+    private QcmQuestionRepository qcmQuestionRepository;
+    @Mock
+    private MatchingPairRepository matchingPairRepository;
+    @Mock
+    private SortingExerciseRepository sortingExerciseRepository;
+
     private TopicService topicService;
 
     private UUID accountId;
@@ -98,7 +117,11 @@ class TopicServiceTest {
                 topicMapper,
                 lessonMapper,
                 userLessonProgressRepository,
-                progressService
+                progressService,
+                flashcardRepository,
+                qcmQuestionRepository,
+                matchingPairRepository,
+                sortingExerciseRepository
         );
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
@@ -380,5 +403,106 @@ class TopicServiceTest {
 
         assertThat(result).hasSize(1);
         verify(topicRepository).findAll(any(Specification.class));
+    }
+    @Test
+    @DisplayName("Should complete exam successfully with valid answers")
+    void shouldCompleteExamSuccessfully() {
+        UserProgress progress = UserProgress.builder()
+                .account(Accounts.builder().id(accountId).build())
+                .topic(Topic.builder().id(topicId).build())
+                .correctAnswers(0)
+                .totalAnswers(0)
+                .totalXP(100L)
+                .build();
+
+        FlashcardEntity flashcard = new FlashcardEntity();
+        flashcard.setId(UUID.randomUUID());
+        flashcard.setBack("Apple");
+
+        QcmQuestionEntity qcm = new QcmQuestionEntity();
+        qcm.setId(UUID.randomUUID());
+        qcm.setCorrectOptionIndex(1);
+
+        ExamResultRequest request = ExamResultRequest.builder()
+                .score(100.0)
+                .timeSpentSeconds(300)
+                .flashcardAnswers(List.of(new FlashcardAnswerRequest(flashcard.getId(), "Apple")))
+                .qcmAnswers(List.of(new QcmAnswerRequest(qcm.getId(), 1)))
+                .build();
+
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(any(UUID.class), any(UUID.class))).thenReturn(Optional.of(progress));
+        when(flashcardRepository.findById(flashcard.getId())).thenReturn(Optional.of(flashcard));
+        when(qcmQuestionRepository.findById(qcm.getId())).thenReturn(Optional.of(qcm));
+        when(userProgressRepository.save(any())).thenReturn(progress);
+        when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(new com.glotrush.dto.response.UserProgressResponse());
+
+        CompleteLessonResponse result = topicService.completeTopicExam(accountId, topicId, request);
+
+        assertThat(result.getSuccess()).isTrue();
+        assertThat(result.getXpEarned()).isEqualTo(50);
+        assertThat(progress.getExamPassed()).isTrue();
+        assertThat(progress.getCorrectAnswers()).isEqualTo(2);
+        assertThat(progress.getTotalAnswers()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Should fail exam when answers are incorrect")
+    void shouldFailExamWithIncorrectAnswers() {
+        UserProgress progress = UserProgress.builder()
+                .correctAnswers(0)
+                .totalAnswers(0)
+                .totalXP(0L)
+                .examPassed(false)
+                .build();
+
+        FlashcardEntity flashcard = new FlashcardEntity();
+        flashcard.setId(UUID.randomUUID());
+        flashcard.setBack("Apple");
+
+        ExamResultRequest request = ExamResultRequest.builder()
+                .score(0.0)
+                .timeSpentSeconds(300)
+                .flashcardAnswers(List.of(new FlashcardAnswerRequest(flashcard.getId(), "Banana")))
+                .build();
+
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)).thenReturn(Optional.of(progress));
+        when(flashcardRepository.findById(flashcard.getId())).thenReturn(Optional.of(flashcard));
+        when(userProgressRepository.save(any())).thenReturn(progress);
+        when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(new com.glotrush.dto.response.UserProgressResponse());
+
+        CompleteLessonResponse result = topicService.completeTopicExam(accountId, topicId, request);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getSuccess()).isNotNull();
+        assertThat(result.getSuccess()).isFalse();
+        assertThat(result.getXpEarned()).isEqualTo(0);
+        assertThat(progress.getExamPassed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should validate flashcard with level 2 (numbers matching)")
+    void shouldValidateFlashcardWithNumbers() {
+        UserProgress progress = new UserProgress();
+        progress.setCorrectAnswers(0);
+        progress.setTotalAnswers(0);
+        progress.setTotalXP(0L);
+        
+        FlashcardEntity flashcard = new FlashcardEntity();
+        flashcard.setId(UUID.randomUUID());
+        flashcard.setBack("100 kilometers");
+
+        ExamResultRequest request = ExamResultRequest.builder()
+                .flashcardAnswers(List.of(new FlashcardAnswerRequest(flashcard.getId(), "100 kilomete")))
+                .build();
+
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)).thenReturn(Optional.of(progress));
+        when(flashcardRepository.findById(flashcard.getId())).thenReturn(Optional.of(flashcard));
+        when(userProgressRepository.save(any())).thenReturn(progress);
+        when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(new com.glotrush.dto.response.UserProgressResponse());
+
+        CompleteLessonResponse result = topicService.completeTopicExam(accountId, topicId, request);
+
+        assertThat(result.getSuccess()).isTrue();
+        assertThat(progress.getCorrectAnswers()).isEqualTo(1);
     }
 }
