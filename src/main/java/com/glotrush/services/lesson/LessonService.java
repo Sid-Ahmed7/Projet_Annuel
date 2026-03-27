@@ -15,6 +15,7 @@ import com.glotrush.builder.LessonBuilder;
 import com.glotrush.dto.request.CompleteLessonRequest;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.LessonResponse;
+import com.glotrush.dto.response.LessonSummaryResponse;
 import com.glotrush.dto.response.UserLessonProgressSummary;
 import com.glotrush.dto.response.UserProgressResponse;
 import com.glotrush.entities.Accounts;
@@ -49,8 +50,15 @@ public class LessonService implements ILessonService {
     private final LessonRequestToLessonEntity lessonRequestToLessonEntity;
 
     @Override
-    public List<LessonResponse> getLessonsByTopic(UUID topicId, UUID accountId) {
-      return lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId).stream().map(lesson -> lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource)).toList();
+    public List<LessonSummaryResponse> getLessonsByTopic(UUID topicId, UUID accountId) {
+        return lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId).stream()
+                .map(lesson -> {
+                    boolean isAlreadyFinish = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lesson.getId())
+                            .map(progress -> progress.getTotalAttempts() > 0)
+                            .orElse(false);
+                    return lessonEntityToLessonResponse.lessonToLessonSummaryResponse(lesson, isAlreadyFinish);
+                })
+                .toList();
     }
 
     @Override
@@ -89,29 +97,31 @@ public class LessonService implements ILessonService {
         UserLessonProgress progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.progress.notfound", null, LocaleUtils.getCurrentLocale())));
 
-        boolean isSuccessful = lessonRequest.getScore() >= lesson.getPassScorePercentage();
         progress.setTotalAttempts(progress.getTotalAttempts() + 1);
         progress.setTimeSpentSeconds(progress.getTimeSpentSeconds() + lessonRequest.getTimeSpentSeconds());
         progress.setLastAttemptAt(LocalDateTime.now());
+        if (lessonRequest.getFeedback() != null) {
+            progress.setUserFeedback(lessonRequest.getFeedback());
+        }
 
-        if (!isSuccessful) {
-            progress.setFailedAttempts(progress.getFailedAttempts() + 1);
-            userLessonProgressRepository.save(progress);
-            return CompleteLessonResponse.builder()
-                    .success(false)
-                    .message(messageSource.getMessage("error.lesson.failed", null, LocaleUtils.getCurrentLocale()))
-                    .xpEarned(0)
-                    .totalXP(0L)
-                    .build();
+        // Mise à jour des stats de réponses globales
+        if (lessonRequest.getCorrectAnswers() != null && lessonRequest.getTotalAnswers() != null) {
+            progressService.updateAnswerStats(accountId, lesson.getTopic().getId(), lessonRequest.getCorrectAnswers(), lessonRequest.getTotalAnswers());
+
+            // Check if score is high enough to complete
+            double score = (double) lessonRequest.getCorrectAnswers() / lessonRequest.getTotalAnswers() * 100;
+            if (lesson.getMinScoreRequired() != null && score < lesson.getMinScoreRequired()) {
+                userLessonProgressRepository.save(progress);
+                return CompleteLessonResponse.builder()
+                        .success(false)
+                        .message(messageSource.getMessage("error.lesson.failed", null, LocaleUtils.getCurrentLocale()))
+                        .xpEarned(0)
+                        .build();
+            }
         }
 
         boolean isFirstCompletion = progress.getStatus() != LessonStatus.COMPLETED;
         progress.setStatus(LessonStatus.COMPLETED);
-
-        // On garde le meilleur score
-        if (progress.getScore() == null || lessonRequest.getScore() > progress.getScore()) {
-            progress.setScore(lessonRequest.getScore());
-        }
 
         userLessonProgressRepository.save(progress);
 
@@ -120,6 +130,36 @@ public class LessonService implements ILessonService {
         } else {
             return handleRecompletion(accountId, lesson);
         }
+    }
+
+    @Override
+    public CompleteLessonResponse practiceLesson(UUID accountId, UUID lessonId, CompleteLessonRequest lessonRequest) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
+
+        UserLessonProgress progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.progress.notfound", null, LocaleUtils.getCurrentLocale())));
+
+        // Pour la pratique, on met seulement à jour les stats d'activité sans XP ni changement de statut
+        progress.setTotalAttempts(progress.getTotalAttempts() + 1);
+        progress.setTimeSpentSeconds(progress.getTimeSpentSeconds() + lessonRequest.getTimeSpentSeconds());
+        progress.setLastAttemptAt(LocalDateTime.now());
+        if (lessonRequest.getFeedback() != null) {
+            progress.setUserFeedback(lessonRequest.getFeedback());
+        }
+
+        // Mise à jour des stats de réponses globales
+        if (lessonRequest.getCorrectAnswers() != null && lessonRequest.getTotalAnswers() != null) {
+            progressService.updateAnswerStats(accountId, lesson.getTopic().getId(), lessonRequest.getCorrectAnswers(), lessonRequest.getTotalAnswers());
+        }
+
+        userLessonProgressRepository.save(progress);
+
+        // Mise à jour de la date de dernière étude globale
+        progressService.updateLastStudiedAt(accountId, lesson.getTopic().getId());
+
+        UserProgressResponse progressResponse = progressService.getProgressByTopic(accountId, lesson.getTopic().getId());
+        return lessonBuilder.buildRecompletedLessonResponse(progressResponse);
     }
 
     private CompleteLessonResponse handleFirstCompletion(UUID accountId, Lesson lesson) {

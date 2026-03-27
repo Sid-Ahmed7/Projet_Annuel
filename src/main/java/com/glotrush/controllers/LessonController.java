@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import com.glotrush.dto.request.CompleteLessonRequest;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.LessonResponse;
+import com.glotrush.dto.response.LessonSummaryResponse;
 import com.glotrush.dto.response.UserLessonProgressSummary;
 import com.glotrush.services.lesson.ILessonService;
 import com.glotrush.utils.LocaleUtils;
@@ -31,9 +32,9 @@ public class LessonController {
 
     @GetMapping("/topic/{topicId}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<List<LessonResponse>> getLessonsByTopic(Authentication authentication, @PathVariable UUID topicId) {
+    public ResponseEntity<List<LessonSummaryResponse>> getLessonsByTopic(Authentication authentication, @PathVariable UUID topicId) {
         UUID accountId = UUID.fromString(authentication.getName());
-        List<LessonResponse> lessons = lessonService.getLessonsByTopic(topicId, accountId);
+        List<LessonSummaryResponse> lessons = lessonService.getLessonsByTopic(topicId, accountId);
         return ResponseEntity.ok(lessons);
     }
 
@@ -58,6 +59,14 @@ public class LessonController {
     public ResponseEntity<CompleteLessonResponse> completeLesson(Authentication authentication, @PathVariable UUID lessonId, @Valid @RequestBody CompleteLessonRequest lessonRequest) {
         UUID accountId = UUID.fromString(authentication.getName());
         CompleteLessonResponse response = lessonService.completeLesson(accountId, lessonId, lessonRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{lessonId}/practice")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<CompleteLessonResponse> practiceLesson(Authentication authentication, @PathVariable UUID lessonId, @Valid @RequestBody CompleteLessonRequest lessonRequest) {
+        UUID accountId = UUID.fromString(authentication.getName());
+        CompleteLessonResponse response = lessonService.practiceLesson(accountId, lessonId, lessonRequest);
         return ResponseEntity.ok(response);
     }
 

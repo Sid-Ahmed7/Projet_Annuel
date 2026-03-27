@@ -32,9 +32,13 @@ import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.mapping.TopicMapper;
 import com.glotrush.repositories.LanguageRepository;
+import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserProgressRepository;
+import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.services.topic.TopicService;
+import com.glotrush.services.progress.IProgressService;
+import com.glotrush.mapping.LessonEntityToLessonResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.test.context.ContextConfiguration;
@@ -61,6 +65,18 @@ class TopicServiceTest {
     @Mock
     private TopicMapper topicMapper;
 
+    @Mock
+    private LessonRepository lessonRepository;
+
+    @Mock
+    private LessonEntityToLessonResponse lessonMapper;
+
+    @Mock
+    private UserLessonProgressRepository userLessonProgressRepository;
+
+    @Mock
+    private IProgressService progressService;
+
     private TopicService topicService;
 
     private UUID accountId;
@@ -72,7 +88,18 @@ class TopicServiceTest {
 
     @BeforeEach
     void setUp() {
-        topicService = new TopicService(messageSource, topicRepository, userProgressRepository, languageRepository, topicBuilder, topicMapper);
+        topicService = new TopicService(
+                messageSource,
+                topicRepository,
+                userProgressRepository,
+                languageRepository,
+                lessonRepository,
+                topicBuilder,
+                topicMapper,
+                lessonMapper,
+                userLessonProgressRepository,
+                progressService
+        );
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
         languageId = UUID.randomUUID();

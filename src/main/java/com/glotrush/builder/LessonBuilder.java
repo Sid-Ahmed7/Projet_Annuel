@@ -22,8 +22,7 @@ public class LessonBuilder {
         return UserLessonProgressSummary.builder()
                 .status(progress.getStatus())
                 .totalAttempts(progress.getTotalAttempts())
-                .failedAttempts(progress.getFailedAttempts())
-                .score(progress.getScore())
+                .userFeedback(progress.getUserFeedback())
                 .timeSpentSeconds(progress.getTimeSpentSeconds())
                 .lastAttemptAt(progress.getLastAttemptAt())
                 .build();
@@ -36,6 +35,7 @@ public class LessonBuilder {
                 .status(LessonStatus.NOT_STARTED)
                 .totalAttempts(0)
                 .timeSpentSeconds(0)
+                .userFeedback(null)
                 .build();
     }
 
@@ -48,7 +48,7 @@ public class LessonBuilder {
 
         return CompleteLessonResponse.builder()
                 .success(true)
-                .message(leveledUp ? "Congratulations! You leveled up!" : "Lesson completed successfully!")
+                .message(leveledUp ? "Congratulations! You leveled up!" : "Great effort! You finished the lesson!")
                 .xpEarned(xpEarned)
                 .totalXP(topicProgress.getTotalXP())
                 .currentLevel(LevelUtils.calculateLevel(topicProgress.getTotalXP()))
@@ -61,7 +61,7 @@ public class LessonBuilder {
     public CompleteLessonResponse buildRecompletedLessonResponse(UserProgressResponse progressResponse) {
         return CompleteLessonResponse.builder()
                 .success(true)
-                .message("Lesson re-completed. Score updated.")
+                .message("Lesson practiced again! Keep it up!")
                 .xpEarned(0)
                 .totalXP(progressResponse.getTotalXP())
                 .currentLevel(LevelUtils.calculateLevel(progressResponse.getTotalXP()))

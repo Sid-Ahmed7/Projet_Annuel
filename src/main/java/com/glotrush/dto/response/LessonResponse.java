@@ -41,7 +41,6 @@ public class LessonResponse {
     private Integer xpReward;
     private Integer minLevelRequired;
     private Integer durationMinutes;
-    private Integer passScorePercentage;
     private Boolean isActive;
     private LessonType lessonType;
 }

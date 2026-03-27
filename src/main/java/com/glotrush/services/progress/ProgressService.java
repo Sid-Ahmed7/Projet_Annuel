@@ -108,6 +108,7 @@ public class ProgressService implements IProgressService {
                             .totalAnswers(0)
                             .accuracy(0.0)
                             .studyStreak(0)
+                            .examPassed(false)
                             .build();
 
                     return userProgressRepository.save(newProgress);

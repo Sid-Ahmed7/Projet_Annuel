@@ -62,6 +62,12 @@ public class UserProgress {
     @Column(name = "study_streak", nullable = false)
     private Integer studyStreak = 0; 
 
+    @Column(name = "exam_passed", nullable = false)
+    private Boolean examPassed = false;
+
+    @Column(name = "best_exam_score")
+    private Double bestExamScore;
+
     @Column(name = "last_studied_at")
     private LocalDateTime lastStudiedAt;
 

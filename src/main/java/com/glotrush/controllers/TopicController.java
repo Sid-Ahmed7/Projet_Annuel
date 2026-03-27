@@ -3,8 +3,11 @@ package com.glotrush.controllers;
 import java.util.List;
 import java.util.UUID;
 
+import com.glotrush.dto.request.ExamResultRequest;
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.dto.response.ApiResponse;
+import com.glotrush.dto.response.CompleteLessonResponse;
+import com.glotrush.dto.response.ExamResponse;
 import com.glotrush.enumerations.ProficiencyLevel;
 import jakarta.validation.Valid;
 import org.springframework.context.MessageSource;
@@ -77,6 +80,22 @@ public class TopicController {
         UUID accountId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         TopicResponse topic = topicService.getTopicById(topicId, accountId);
         return ResponseEntity.ok(topic);
+    }
+
+    @GetMapping("/{topicId}/exam")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ExamResponse> getTopicExam(Authentication authentication, @PathVariable UUID topicId) {
+        UUID accountId = UUID.fromString(authentication.getName());
+        ExamResponse exam = topicService.generateTopicExam(accountId, topicId);
+        return ResponseEntity.ok(exam);
+    }
+
+    @PostMapping("/{topicId}/exam/submit")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<CompleteLessonResponse> submitTopicExam(Authentication authentication, @PathVariable UUID topicId, @Valid @RequestBody ExamResultRequest examRequest) {
+        UUID accountId = UUID.fromString(authentication.getName());
+        CompleteLessonResponse response = topicService.completeTopicExam(accountId, topicId, examRequest);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
