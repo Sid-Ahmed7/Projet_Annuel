@@ -241,6 +241,19 @@ class LessonServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw exception when topic not found on topic lessons details")
+    void shouldThrowExceptionWhenTopicNotFoundOnTopicLessonsDetails() {
+        when(topicRepository.findById(topicId)).thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("error.topic.notfound"), isNull(), any(Locale.class))).thenReturn("Topic not found");
+
+        assertThatThrownBy(() -> lessonService.getTopicLessonsDetails(topicId, accountId))
+                .isInstanceOf(TopicNotFoundException.class)
+                .hasMessage("Topic not found");
+
+        verify(topicRepository).findById(topicId);
+    }
+
+    @Test
     @DisplayName("Should return lesson by id")
     void shouldGetLessonById() {
         LessonResponse expectedResponse = LessonResponse.builder()
