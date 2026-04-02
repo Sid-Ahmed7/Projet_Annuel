@@ -30,6 +30,7 @@ import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.builder.TopicBuilder;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserProgressRepository;
+import com.glotrush.utils.LevelUtils;
 import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
@@ -247,7 +248,7 @@ public class TopicService implements ITopicService {
     }
 
     @Override
-    public CompleteLessonResponse completeTopicExam(UUID accountId, UUID topicId, ExamResultRequest examRequest) {
+    public CompleteExamResponse completeTopicExam(UUID accountId, UUID topicId, ExamResultRequest examRequest) {
         UserProgress progress = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)
                 .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
 
@@ -297,26 +298,41 @@ public class TopicService implements ITopicService {
         double finalScore = totalQuestions > 0 ? (double) calculatedCorrectAnswers / totalQuestions * 100 : 0;
         boolean isSuccessful = finalScore >= 80;
 
+        int xpEarned = isSuccessful ? 50 : 0;
+        Long oldXP = progress.getTotalXP();
+        Integer oldLevel = LevelUtils.calculateLevel(oldXP);
+
         if (isSuccessful) {
             progress.setExamPassed(true);
             if (progress.getBestExamScore() == null || finalScore > progress.getBestExamScore()) {
                 progress.setBestExamScore(finalScore);
             }
+            progress.setTotalXP(oldXP + xpEarned);
         }
 
+        progress.setExamAttempts(progress.getExamAttempts() + 1);
         progress.setCorrectAnswers(progress.getCorrectAnswers() + calculatedCorrectAnswers);
         progress.setTotalAnswers(progress.getTotalAnswers() + totalQuestions);
         progress.calculateAccuracy();
-        
+
         userProgressRepository.save(progress);
 
-        return CompleteLessonResponse.builder()
+        Long newXP = progress.getTotalXP();
+        Integer newLevel = LevelUtils.calculateLevel(newXP);
+        boolean leveledUp = newLevel > oldLevel;
+
+        return CompleteExamResponse.builder()
                 .success(isSuccessful)
-                .message(isSuccessful ? messageSource.getMessage("info.topic.exam.success", null, LocaleUtils.getCurrentLocale()) 
+                .message(isSuccessful ? messageSource.getMessage("info.topic.exam.success", null, LocaleUtils.getCurrentLocale())
                                     : messageSource.getMessage("error.topic.exam.failed", null, LocaleUtils.getCurrentLocale()))
-                .xpEarned(isSuccessful ? 50 : 0)
-                .totalXP(progress.getTotalXP())
-                .progress(progressService.getProgressByTopic(accountId, topicId))
+                .xpEarned(xpEarned)
+                .totalXP(newXP)
+                .currentLevel(oldLevel)
+                .leveledUp(leveledUp)
+                .newLevel(newLevel)
+                .totalAnswers(totalQuestions)
+                .correctAnswers(calculatedCorrectAnswers)
+                .accuracy(totalQuestions > 0 ? (double) calculatedCorrectAnswers / totalQuestions : 0.0)
                 .build();
     }
 

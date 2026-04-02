@@ -15,18 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExamResultRequest {
-    @NotNull(message = "Score is required")
-    @Min(value = 0, message = "Score must be between 0 and 100")
-    @Max(value = 100, message = "Score must be between 0 and 100")
-    private Double score;
-
-    @NotNull(message = "Time spent is required")
-    @Min(value = 0, message = "Time spent must be positive")
-    private Integer timeSpentSeconds;
-
-    private Integer correctAnswers;
-    private Integer totalAnswers;
-
     private List<FlashcardAnswerRequest> flashcardAnswers;
     private List<QcmAnswerRequest> qcmAnswers;
     private List<MatchingPairAnswerRequest> matchingPairAnswers;

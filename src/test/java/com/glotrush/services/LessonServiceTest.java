@@ -43,6 +43,7 @@ import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.dto.response.LessonSummaryResponse;
+import com.glotrush.dto.response.TopicLessonsResponse;
 import com.glotrush.dto.response.UserLessonProgressSummary;
 import com.glotrush.dto.response.UserProgressResponse;
 import com.glotrush.entities.Accounts;
@@ -199,6 +200,44 @@ class LessonServiceTest {
         List<LessonSummaryResponse> result = lessonService.getLessonsByTopic(topicId, accountId);
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Should return topic lessons details")
+    void shouldGetTopicLessonsDetails() {
+        Topic topic = Topic.builder()
+                .id(topicId)
+                .name("Spring Basics")
+                .build();
+
+        LessonSummaryResponse lessonSummary = LessonSummaryResponse.builder()
+                .id(lessonId)
+                .title("Introduction to Spring")
+                .isAlreadyFinish(true)
+                .build();
+
+        UserProgress progress = UserProgress.builder()
+                .examPassed(true)
+                .examAttempts(3)
+                .bestExamScore(85.0)
+                .build();
+
+        when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
+        when(lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId)).thenReturn(List.of(lesson));
+        when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
+                .thenReturn(Optional.of(UserLessonProgress.builder().totalAttempts(1).build()));
+        when(lessonEntityToLessonResponse.lessonToLessonSummaryResponse(eq(lesson), eq(true)))
+                .thenReturn(lessonSummary);
+        when(progressService.getOrCreateProgress(accountId, topicId)).thenReturn(progress);
+
+        TopicLessonsResponse result = lessonService.getTopicLessonsDetails(topicId, accountId);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getTopicTitle()).isEqualTo("Spring Basics");
+        assertThat(result.getLessons()).hasSize(1);
+        assertThat(result.getExamPassed()).isTrue();
+        assertThat(result.getExamAttempts()).isEqualTo(3);
+        assertThat(result.getLastAccuracy()).isEqualTo(0.85);
     }
 
     @Test
@@ -367,6 +406,8 @@ class LessonServiceTest {
         when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
                 .thenReturn(Optional.of(userLessonProgress));
         when(messageSource.getMessage(eq("error.lesson.failed"), isNull(), any(Locale.class))).thenReturn("Lesson failed");
+        when(progressService.getOrCreateProgress(accountId, topicId)).thenReturn(UserProgress.builder().totalXP(0L).build());
+        when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(new UserProgressResponse());
 
         CompleteLessonResponse result = lessonService.completeLesson(accountId, lessonId, request);
 

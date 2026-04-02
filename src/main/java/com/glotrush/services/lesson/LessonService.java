@@ -16,6 +16,7 @@ import com.glotrush.dto.request.CompleteLessonRequest;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.dto.response.LessonSummaryResponse;
+import com.glotrush.dto.response.TopicLessonsResponse;
 import com.glotrush.dto.response.UserLessonProgressSummary;
 import com.glotrush.dto.response.UserProgressResponse;
 import com.glotrush.entities.Accounts;
@@ -59,6 +60,24 @@ public class LessonService implements ILessonService {
                     return lessonEntityToLessonResponse.lessonToLessonSummaryResponse(lesson, isAlreadyFinish);
                 })
                 .toList();
+    }
+
+    @Override
+    public TopicLessonsResponse getTopicLessonsDetails(UUID topicId, UUID accountId) {
+        Topic topic = topicRepository.findById(topicId)
+                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
+
+        List<LessonSummaryResponse> lessons = getLessonsByTopic(topicId, accountId);
+
+        UserProgress userProgress = progressService.getOrCreateProgress(accountId, topicId);
+
+        return TopicLessonsResponse.builder()
+                .topicTitle(topic.getName())
+                .lessons(lessons)
+                .examPassed(userProgress.getExamPassed())
+                .examAttempts(userProgress.getExamAttempts())
+                .lastAccuracy(userProgress.getBestExamScore() != null ? userProgress.getBestExamScore() / 100.0 : null)
+                .build();
     }
 
     @Override
@@ -112,10 +131,18 @@ public class LessonService implements ILessonService {
             double score = (double) lessonRequest.getCorrectAnswers() / lessonRequest.getTotalAnswers() * 100;
             if (lesson.getMinScoreRequired() != null && score < lesson.getMinScoreRequired()) {
                 userLessonProgressRepository.save(progress);
+                UserProgress topicProgress = progressService.getOrCreateProgress(accountId, lesson.getTopic().getId());
+                UserProgressResponse progressResponse = progressService.getProgressByTopic(accountId, lesson.getTopic().getId());
+                Integer currentLevel = LevelUtils.calculateLevel(topicProgress.getTotalXP());
+                
                 return CompleteLessonResponse.builder()
                         .success(false)
                         .message(messageSource.getMessage("error.lesson.failed", null, LocaleUtils.getCurrentLocale()))
                         .xpEarned(0)
+                        .totalXP(topicProgress.getTotalXP())
+                        .currentLevel(currentLevel)
+                        .leveledUp(false)
+                        .progress(progressResponse)
                         .build();
             }
         }

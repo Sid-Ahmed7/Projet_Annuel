@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.glotrush.dto.request.ExamResultRequest;
 import com.glotrush.dto.request.TopicRequest;
+import com.glotrush.dto.response.CompleteExamResponse;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.ExamResponse;
 import com.glotrush.dto.response.TopicResponse;
@@ -23,5 +24,5 @@ public interface ITopicService {
     List<TopicResponse> searchActiveTopics(UUID languageId, String name, ProficiencyLevel difficulty);
 
     ExamResponse generateTopicExam(UUID accountId, UUID topicId);
-    CompleteLessonResponse completeTopicExam(UUID accountId, UUID topicId, ExamResultRequest examRequest);
+    CompleteExamResponse completeTopicExam(UUID accountId, UUID topicId, ExamResultRequest examRequest);
 }

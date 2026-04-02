@@ -15,6 +15,7 @@ import com.glotrush.dto.request.CompleteLessonRequest;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.dto.response.LessonSummaryResponse;
+import com.glotrush.dto.response.TopicLessonsResponse;
 import com.glotrush.dto.response.UserLessonProgressSummary;
 import com.glotrush.services.lesson.ILessonService;
 import com.glotrush.utils.LocaleUtils;
@@ -36,6 +37,14 @@ public class LessonController {
         UUID accountId = UUID.fromString(authentication.getName());
         List<LessonSummaryResponse> lessons = lessonService.getLessonsByTopic(topicId, accountId);
         return ResponseEntity.ok(lessons);
+    }
+
+    @GetMapping("/topic/{topicId}/details")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<TopicLessonsResponse> getTopicLessonsDetails(Authentication authentication, @PathVariable UUID topicId) {
+        UUID accountId = UUID.fromString(authentication.getName());
+        TopicLessonsResponse response = lessonService.getTopicLessonsDetails(topicId, accountId);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{lessonId}")

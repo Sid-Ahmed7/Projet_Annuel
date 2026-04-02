@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.glotrush.dto.request.ExamResultRequest;
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.dto.response.ApiResponse;
+import com.glotrush.dto.response.CompleteExamResponse;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.ExamResponse;
 import com.glotrush.enumerations.ProficiencyLevel;
@@ -92,9 +93,9 @@ public class TopicController {
 
     @PostMapping("/{topicId}/exam/submit")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<CompleteLessonResponse> submitTopicExam(Authentication authentication, @PathVariable UUID topicId, @Valid @RequestBody ExamResultRequest examRequest) {
+    public ResponseEntity<CompleteExamResponse> submitTopicExam(Authentication authentication, @PathVariable UUID topicId, @Valid @RequestBody ExamResultRequest examRequest) {
         UUID accountId = UUID.fromString(authentication.getName());
-        CompleteLessonResponse response = topicService.completeTopicExam(accountId, topicId, examRequest);
+        CompleteExamResponse response = topicService.completeTopicExam(accountId, topicId, examRequest);
         return ResponseEntity.ok(response);
     }
 

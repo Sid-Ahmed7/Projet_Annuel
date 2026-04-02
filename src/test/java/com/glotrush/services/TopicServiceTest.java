@@ -50,9 +50,9 @@ import com.glotrush.repositories.exercice.MatchingPairRepository;
 import com.glotrush.repositories.exercice.QcmQuestionRepository;
 import com.glotrush.repositories.exercice.SortingExerciseRepository;
 import com.glotrush.dto.request.*;
+import com.glotrush.dto.response.CompleteExamResponse;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.entities.exercice.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith({MockitoExtension.class, SpringExtension.class})
 @ContextConfiguration(classes = TestMessageSourceConfig.class)
@@ -424,8 +424,6 @@ class TopicServiceTest {
         qcm.setCorrectOptionIndex(1);
 
         ExamResultRequest request = ExamResultRequest.builder()
-                .score(100.0)
-                .timeSpentSeconds(300)
                 .flashcardAnswers(List.of(new FlashcardAnswerRequest(flashcard.getId(), "Apple")))
                 .qcmAnswers(List.of(new QcmAnswerRequest(qcm.getId(), 1)))
                 .build();
@@ -434,15 +432,56 @@ class TopicServiceTest {
         when(flashcardRepository.findById(flashcard.getId())).thenReturn(Optional.of(flashcard));
         when(qcmQuestionRepository.findById(qcm.getId())).thenReturn(Optional.of(qcm));
         when(userProgressRepository.save(any())).thenReturn(progress);
-        when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(new com.glotrush.dto.response.UserProgressResponse());
 
-        CompleteLessonResponse result = topicService.completeTopicExam(accountId, topicId, request);
+        CompleteExamResponse result = topicService.completeTopicExam(accountId, topicId, request);
 
         assertThat(result.getSuccess()).isTrue();
         assertThat(result.getXpEarned()).isEqualTo(50);
+        assertThat(result.getTotalXP()).isEqualTo(150L);
+        assertThat(result.getCurrentLevel()).isEqualTo(1);
+        assertThat(result.getLeveledUp()).isFalse();
+        assertThat(result.getNewLevel()).isEqualTo(1);
+        assertThat(result.getTotalAnswers()).isEqualTo(2);
+        assertThat(result.getCorrectAnswers()).isEqualTo(2);
+        assertThat(result.getAccuracy()).isEqualTo(1.0);
         assertThat(progress.getExamPassed()).isTrue();
+        assertThat(progress.getTotalXP()).isEqualTo(150L);
         assertThat(progress.getCorrectAnswers()).isEqualTo(2);
         assertThat(progress.getTotalAnswers()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Should complete exam and level up")
+    void shouldCompleteExamAndLevelUp() {
+        UserProgress progress = UserProgress.builder()
+                .account(Accounts.builder().id(accountId).build())
+                .topic(Topic.builder().id(topicId).build())
+                .correctAnswers(0)
+                .totalAnswers(0)
+                .totalXP(980L)
+                .build();
+
+        FlashcardEntity flashcard = new FlashcardEntity();
+        flashcard.setId(UUID.randomUUID());
+        flashcard.setBack("Apple");
+
+        ExamResultRequest request = ExamResultRequest.builder()
+                .flashcardAnswers(List.of(new FlashcardAnswerRequest(flashcard.getId(), "Apple")))
+                .build();
+
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(any(UUID.class), any(UUID.class))).thenReturn(Optional.of(progress));
+        when(flashcardRepository.findById(flashcard.getId())).thenReturn(Optional.of(flashcard));
+        when(userProgressRepository.save(any())).thenReturn(progress);
+
+        CompleteExamResponse result = topicService.completeTopicExam(accountId, topicId, request);
+
+        assertThat(result.getSuccess()).isTrue();
+        assertThat(result.getXpEarned()).isEqualTo(50);
+        assertThat(result.getTotalXP()).isEqualTo(1030L);
+        assertThat(result.getCurrentLevel()).isEqualTo(1);
+        assertThat(result.getLeveledUp()).isTrue();
+        assertThat(result.getNewLevel()).isEqualTo(2);
+        assertThat(progress.getTotalXP()).isEqualTo(1030L);
     }
 
     @Test
@@ -460,17 +499,14 @@ class TopicServiceTest {
         flashcard.setBack("Apple");
 
         ExamResultRequest request = ExamResultRequest.builder()
-                .score(0.0)
-                .timeSpentSeconds(300)
                 .flashcardAnswers(List.of(new FlashcardAnswerRequest(flashcard.getId(), "Banana")))
                 .build();
 
         when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)).thenReturn(Optional.of(progress));
         when(flashcardRepository.findById(flashcard.getId())).thenReturn(Optional.of(flashcard));
         when(userProgressRepository.save(any())).thenReturn(progress);
-        when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(new com.glotrush.dto.response.UserProgressResponse());
 
-        CompleteLessonResponse result = topicService.completeTopicExam(accountId, topicId, request);
+        CompleteExamResponse result = topicService.completeTopicExam(accountId, topicId, request);
 
         assertThat(result).isNotNull();
         assertThat(result.getSuccess()).isNotNull();
@@ -498,9 +534,8 @@ class TopicServiceTest {
         when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)).thenReturn(Optional.of(progress));
         when(flashcardRepository.findById(flashcard.getId())).thenReturn(Optional.of(flashcard));
         when(userProgressRepository.save(any())).thenReturn(progress);
-        when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(new com.glotrush.dto.response.UserProgressResponse());
 
-        CompleteLessonResponse result = topicService.completeTopicExam(accountId, topicId, request);
+        CompleteExamResponse result = topicService.completeTopicExam(accountId, topicId, request);
 
         assertThat(result.getSuccess()).isTrue();
         assertThat(progress.getCorrectAnswers()).isEqualTo(1);

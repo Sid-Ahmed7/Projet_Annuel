@@ -68,6 +68,10 @@ public class UserProgress {
     @Column(name = "best_exam_score")
     private Double bestExamScore;
 
+    @Builder.Default
+    @Column(name = "exam_attempts", nullable = false, columnDefinition = "int default 0")
+    private Integer examAttempts = 0;
+
     @Column(name = "last_studied_at")
     private LocalDateTime lastStudiedAt;
 

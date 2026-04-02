@@ -47,14 +47,15 @@ public class LessonBuilder {
             Integer newLevel) {
 
         String message = leveledUp ? "Congratulations! You leveled up!" : (xpEarned > 0 ? "Great effort! You finished the lesson!" : "Lesson completed again! Keep it up!");
+        int currentLevel = LevelUtils.calculateLevel(topicProgress.getTotalXP());
         return CompleteLessonResponse.builder()
                 .success(true)
                 .message(message)
                 .xpEarned(xpEarned)
                 .totalXP(topicProgress.getTotalXP())
-                .currentLevel(LevelUtils.calculateLevel(topicProgress.getTotalXP()))
+                .currentLevel(leveledUp ? currentLevel - 1 : currentLevel)
                 .leveledUp(leveledUp)
-                .newLevel(leveledUp ? newLevel : null)
+                .newLevel(leveledUp ? currentLevel : null)
                 .progress(progressResponse)
                 .build();
     }
