@@ -11,11 +11,11 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Stage 2: Run
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Meilleure gestion de la sécurité : exécution en tant qu'utilisateur non-root
-RUN addgroup --system spring && adduser --system spring --ingroup spring
+RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
 COPY --from=build /app/target/*.jar app.jar
