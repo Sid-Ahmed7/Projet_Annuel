@@ -25,3 +25,26 @@ Pour générer la Javadoc du projet :
 ./mvnw javadoc:javadoc
 ```
 La documentation sera générée dans `target/site/apidocs/`.
+
+## 🚢 Déploiement
+
+### Docker
+
+#### Build l'image
+```bash
+docker build -t glotrush-back:latest .
+```
+
+#### Tag et Push
+```bash
+docker tag glotrush-back:latest arthurbrd/glotrush-back:latest
+docker push arthurbrd/glotrush-back:latest
+```
+
+```bash
+# Lancer tous les services (DB + Back)
+docker-compose up -d
+
+# Voir les logs
+docker-compose logs -f back
+```

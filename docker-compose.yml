@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: glotrush
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    networks:
+      - glotrush-net
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d glotrush"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  back:
+    image: arthurbrd/glotrush-back:latest
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # Database
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/glotrush
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      
+      # JWT
+      - JWT_SECRET=${JWT_SECRET}
+      
+      # Security / TOTP
+      - TOTP_ENCRYPTION=${TOTP_ENCRYPTION}
+      
+      # Mail
+      - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD}
+      - SPRING_MAIL_USERNAME=${MAIL_USERNAME}
+      
+      # Stripe
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      
+      # Flyway
+      - SPRING_FLYWAY_PLACEHOLDERS_PASSWORD=${FLYWAY_ADMIN_PASS}
+      
+      # App
+      - APP_FRONTEND_URL=http://${SERVER_IP}:5173
+    networks:
+      - glotrush-net
+    volumes:
+      - ./uploads:/app/uploads
+    deploy:
+      replicas: 1
+
+networks:
+  glotrush-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
