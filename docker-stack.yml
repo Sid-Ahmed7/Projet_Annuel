@@ -3,7 +3,6 @@ version: '3.8'
 services:
   db:
     image: postgres:17-alpine
-    restart: always
     environment:
       POSTGRES_DB: glotrush
       POSTGRES_USER: postgres
@@ -12,18 +11,14 @@ services:
       - glotrush-net
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d glotrush"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    deploy:
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [node.role == manager] # Garde la BDD sur le manager pour les données
 
   back:
     image: arthurbrd/glotrush-back:latest
-    restart: always
-    depends_on:
-      db:
-        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
@@ -55,13 +50,16 @@ services:
     networks:
       - glotrush-net
     volumes:
-      - ./uploads:/app/uploads
+      - back_uploads:/app/uploads
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
 
 networks:
   glotrush-net:
-    driver: bridge
+    driver: overlay # Indispensable pour Swarm
 
 volumes:
   postgres_data:
+  back_uploads: # Volume nommé pour les images
