@@ -1,6 +1,42 @@
 version: '3.8'
 
 services:
+  # --- FRONTEND (Ajouté ici pour Swarm) ---
+  front:
+    image: arthurbrd/glotrush-front:latest
+    ports:
+      - "80:80"
+    networks:
+      - glotrush-net
+    deploy:
+      replicas: 1
+
+  # --- BACKEND ---
+  back:
+    image: arthurbrd/glotrush-back:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/glotrush
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - TOTP_ENCRYPTION=${TOTP_ENCRYPTION}
+      - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD}
+      - SPRING_MAIL_USERNAME=${MAIL_USERNAME}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - SPRING_FLYWAY_PLACEHOLDERS_PASSWORD=${FLYWAY_ADMIN_PASS}
+      - APP_FRONTEND_URL=http://${SERVER_IP} # Le front est sur le port 80
+    networks:
+      - glotrush-net
+    volumes:
+      - back_uploads:/app/uploads
+    deploy:
+      replicas: 1
+
+  # --- DATABASE ---
   db:
     image: postgres:17-alpine
     environment:
@@ -12,54 +48,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     deploy:
-      restart_policy:
-        condition: on-failure
       placement:
-        constraints: [node.role == manager] # Garde la BDD sur le manager pour les données
-
-  back:
-    image: arthurbrd/glotrush-back:latest
-    ports:
-      - "8080:8080"
-    environment:
-      # Database
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/glotrush
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      
-      # JWT
-      - JWT_SECRET=${JWT_SECRET}
-      
-      # Security / TOTP
-      - TOTP_ENCRYPTION=${TOTP_ENCRYPTION}
-      
-      # Mail
-      - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD}
-      - SPRING_MAIL_USERNAME=${MAIL_USERNAME}
-      
-      # Stripe
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
-      
-      # Flyway
-      - SPRING_FLYWAY_PLACEHOLDERS_PASSWORD=${FLYWAY_ADMIN_PASS}
-      
-      # App
-      - APP_FRONTEND_URL=http://${SERVER_IP}:5173
-    networks:
-      - glotrush-net
-    volumes:
-      - back_uploads:/app/uploads
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
+        constraints: [node.role == manager]
 
 networks:
   glotrush-net:
-    driver: overlay # Indispensable pour Swarm
+    driver: overlay
 
 volumes:
   postgres_data:
-  back_uploads: # Volume nommé pour les images
+  back_uploads:
