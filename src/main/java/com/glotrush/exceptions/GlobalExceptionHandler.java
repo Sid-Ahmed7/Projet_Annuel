@@ -31,7 +31,8 @@ public class GlobalExceptionHandler {
             TwoFactorNotEnabledException.class,
             SubscriptionOperationException.class,
             InvalidUploadException.class,
-            InvalidPasswordException.class
+            InvalidPasswordException.class,
+            LanguageException.class,
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -61,7 +62,8 @@ public class GlobalExceptionHandler {
             SubscriptionNotFoundException.class,
             PlanNotFoundException.class,
             LessonNotFoundException.class,
-            TopicNotFoundException.class
+            TopicNotFoundException.class,
+            UserLanguageException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);

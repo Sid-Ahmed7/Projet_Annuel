@@ -23,8 +23,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 
+import com.glotrush.builder.LessonBuilder;
 import com.glotrush.builder.TopicBuilder;
 import com.glotrush.dto.response.TopicResponse;
+import com.glotrush.dto.response.TopicWithProgressResponse;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
@@ -32,7 +34,9 @@ import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.mapping.TopicMapper;
 import com.glotrush.repositories.LanguageRepository;
+import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
+import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.services.topic.TopicService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +65,16 @@ class TopicServiceTest {
     @Mock
     private TopicMapper topicMapper;
 
+    @Mock
+    private LessonRepository lessonRepository;
+
+    @Mock
+    private UserLessonProgressRepository userLessonProgressRepository;
+
+    @Mock
+    private LessonBuilder lessonBuilder;
+        
+
     private TopicService topicService;
 
     private UUID accountId;
@@ -72,7 +86,7 @@ class TopicServiceTest {
 
     @BeforeEach
     void setUp() {
-        topicService = new TopicService(messageSource, topicRepository, userProgressRepository, languageRepository, topicBuilder, topicMapper);
+        topicService = new TopicService(messageSource, topicRepository, userProgressRepository, languageRepository, lessonRepository, userLessonProgressRepository, lessonBuilder, topicBuilder, topicMapper);
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
         languageId = UUID.randomUUID();
@@ -184,7 +198,7 @@ class TopicServiceTest {
                 .thenReturn(Optional.of(userProgress));
         when(topicBuilder.mapToTopicResponse(eq(topic), any())).thenReturn(expectedResponse);
 
-        List<TopicResponse> result = topicService.getTopicsByLanguage(languageId, accountId);
+        List<TopicWithProgressResponse> result = topicService.getTopicsByLanguage(languageId, accountId);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getLanguageId()).isEqualTo(languageId);
@@ -198,7 +212,7 @@ class TopicServiceTest {
         when(topicRepository.findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(languageId))
                 .thenReturn(Collections.emptyList());
 
-        List<TopicResponse> result = topicService.getTopicsByLanguage(languageId, accountId);
+        List<TopicWithProgressResponse> result = topicService.getTopicsByLanguage(languageId, accountId);
 
         assertThat(result).isEmpty();
     }

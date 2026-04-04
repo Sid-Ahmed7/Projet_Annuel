@@ -48,7 +48,7 @@ public class UserProfileService implements IUserProfileService {
             .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
 
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId)
-            .orElseGet(() -> userProfileBuilder.createDefaultProfile(account));
+            .orElseGet(() -> userProfileBuilder.createDefaultProfile(account, true));
 
         List<UserLanguageResponse> languages = userLanguageRepository.findByAccount_Id(accountId)
             .stream()
@@ -65,7 +65,7 @@ public class UserProfileService implements IUserProfileService {
             .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
 
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId)
-            .orElseGet(() -> userProfileBuilder.createDefaultProfile(account));
+            .orElseGet(() -> userProfileBuilder.createDefaultProfile(account, true));
 
         if (request.getUsername() != null) {
             if (accountsRepository.existsByUsername(request.getUsername()) && !account.getUsername().equals(request.getUsername())) {
@@ -151,7 +151,7 @@ public class UserProfileService implements IUserProfileService {
             throw new UserLanguageException(messageSource.getMessage("error.user_language.not_learning", null, LocaleUtils.getCurrentLocale()));
         }
 
-        UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElseGet(() -> userProfileBuilder.createDefaultProfile(account));
+        UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElseGet(() -> userProfileBuilder.createDefaultProfile(account, true));
         profile.setActiveLanguage(userLanguage.getLanguage());
         userProfileRepository.save(profile);
 

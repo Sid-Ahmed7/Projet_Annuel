@@ -28,8 +28,10 @@ import com.glotrush.dto.response.RefreshTokenResponse;
 import com.glotrush.dto.response.RegisterResponse;
 import com.glotrush.dto.response.UserInfoResponse;
 import com.glotrush.entities.Accounts;
+import com.glotrush.entities.UserProfile;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
+import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.services.auth.IAuthService;
 import com.glotrush.services.auth.ITwoFactorAuthService;
 import com.glotrush.utils.LocaleUtils;
@@ -49,6 +51,7 @@ public class AuthController {
     private final ITwoFactorAuthService twoFactorAuthService;
     private final AccountsRepository accountsRepository;
     private final TwoFactorAuthRepository twoFactorAuthRepository;
+    private final UserProfileRepository userProfileRepository;
     
 
     @PostMapping("/register")
@@ -129,7 +132,7 @@ public class AuthController {
                 .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
         
         boolean has2FA = twoFactorAuthRepository.existsByAccount_IdAndActiveTrue(accountId);
-        
+        boolean hasCompletedOnboarding = userProfileRepository.findByAccount_Id(accountId).map(UserProfile::getHasCompletedOnboarding).orElse(false);
         return ResponseEntity.ok(UserInfoResponse.builder()
                 .id(account.getId())
                 .email(account.getEmail())
@@ -138,6 +141,7 @@ public class AuthController {
                 .lastName(account.getLastName())
                 .role(account.getRole().name())
                 .has2FAEnabled(has2FA)
+                .hasCompletedOnboarding(hasCompletedOnboarding)
                 .build());
     }
 

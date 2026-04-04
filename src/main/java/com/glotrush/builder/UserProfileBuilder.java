@@ -21,10 +21,11 @@ public class UserProfileBuilder {
 
     private final UserProfileRepository userProfileRepository;
 
-    public UserProfile createDefaultProfile(Accounts account) {
+    public UserProfile createDefaultProfile(Accounts account, boolean hasCompletedOnboarding) {
         UserProfile profile = UserProfile.builder()
                 .account(account)
                 .isPublic(true)
+                .hasCompletedOnboarding(hasCompletedOnboarding)
                 .build();
         return userProfileRepository.save(profile);
     }
@@ -56,6 +57,7 @@ public class UserProfileBuilder {
                 .timezone(profile.getTimezone())
                 .isPublic(profile.getIsPublic())
                 .languages(languages)
+                .hasCompletedOnboarding(profile.getHasCompletedOnboarding())
                 .createdAt(profile.getCreatedAt())
                 .updatedAt(profile.getUpdatedAt())
                 .build();

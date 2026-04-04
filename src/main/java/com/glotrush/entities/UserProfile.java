@@ -60,7 +60,12 @@ public class UserProfile {
     private TimeZone timezone;
 
     @Column(name = "is_public", nullable = false)
+    @Builder.Default
     private Boolean isPublic = true;
+
+    @Column(name = "has_completed_onboarding", nullable = false)
+    @Builder.Default
+    private Boolean hasCompletedOnboarding = false;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

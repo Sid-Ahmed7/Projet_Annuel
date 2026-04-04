@@ -31,6 +31,7 @@ public class UserProfileResponse {
     private Boolean isPublic;
     private LanguageResponse activeLanguage;
     private List<UserLanguageResponse> languages;
+    private boolean hasCompletedOnboarding;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -60,7 +60,7 @@
             if(request.getLanguageType() == LanguageType.LEARNING) {
                 Long countLanguages = userLanguageRepository.countByAccount_IdAndLanguageType(accountId, LanguageType.LEARNING);
                 if(countLanguages == 1) {
-                    UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElseGet(() -> userProfileBuilder.createDefaultProfile(account));
+                    UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElseGet(() -> userProfileBuilder.createDefaultProfile(account, true));
                     profile.setActiveLanguage(userLanguage.getLanguage());
                     userProfileRepository.save(profile);
                 }   
