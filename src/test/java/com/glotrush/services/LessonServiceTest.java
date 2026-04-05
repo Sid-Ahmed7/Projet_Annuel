@@ -389,7 +389,7 @@ class LessonServiceTest {
         when(progressService.incrementLessonCompletion(accountId, topicId)).thenReturn(topicProgress);
         when(progressService.updateLastStudiedAt(accountId, topicId)).thenReturn(topicProgress);
         when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(progressResponse);
-        when(lessonBuilder.buildCompleteLessonResponse(eq(false), eq(50), any(), any(), eq(1)))
+        when(lessonBuilder.buildCompleteLessonResponse(eq(false), eq(50), any(), any()))
                 .thenReturn(expectedResponse);
 
         CompleteLessonResponse result = lessonService.completeLesson(accountId, lessonId, request);
@@ -468,7 +468,7 @@ class LessonServiceTest {
         when(progressService.addXP(accountId, topicId, 50)).thenReturn(topicProgressAfter);
         when(progressService.incrementLessonCompletion(accountId, topicId)).thenReturn(topicProgressAfter);
         when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(progressResponse);
-        when(lessonBuilder.buildCompleteLessonResponse(eq(true), eq(50), any(), any(), eq(2)))
+        when(lessonBuilder.buildCompleteLessonResponse(eq(true), eq(50), any(), any()))
                 .thenReturn(expectedResponse);
 
         CompleteLessonResponse result = lessonService.completeLesson(accountId, lessonId, request);
@@ -501,7 +501,7 @@ class LessonServiceTest {
                 .thenReturn(Optional.of(userLessonProgress));
         when(progressService.getOrCreateProgress(accountId, topicId)).thenReturn(topicProgress);
         when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(progressResponse);
-        when(lessonBuilder.buildCompleteLessonResponse(eq(false), eq(0), eq(topicProgress), eq(progressResponse), isNull()))
+        when(lessonBuilder.buildCompleteLessonResponse(eq(false), eq(0), eq(topicProgress), eq(progressResponse)))
                 .thenReturn(expectedResponse);
 
         CompleteLessonResponse result = lessonService.completeLesson(accountId, lessonId, request);

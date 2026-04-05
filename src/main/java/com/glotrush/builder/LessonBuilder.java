@@ -3,6 +3,9 @@ package com.glotrush.builder;
 import java.util.Optional;
 
 import com.glotrush.utils.LevelUtils;
+import com.glotrush.utils.LocaleUtils;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
 import com.glotrush.dto.response.CompleteLessonResponse;
@@ -16,7 +19,10 @@ import com.glotrush.entities.UserProgress;
 import com.glotrush.enumerations.LessonStatus;
 
 @Component
+@RequiredArgsConstructor
 public class LessonBuilder {
+
+    private final MessageSource messageSource;
 
     public UserLessonProgressSummary mapToUserLessonProgressSummary(UserLessonProgress progress) {
         return UserLessonProgressSummary.builder()
@@ -43,10 +49,16 @@ public class LessonBuilder {
             boolean leveledUp,
             Integer xpEarned,
             UserProgress topicProgress,
-            UserProgressResponse progressResponse,
-            Integer newLevel) {
+            UserProgressResponse progressResponse) {
 
-        String message = leveledUp ? "Congratulations! You leveled up!" : (xpEarned > 0 ? "Great effort! You finished the lesson!" : "Lesson completed again! Keep it up!");
+        String message;
+        if (leveledUp) {
+            message = messageSource.getMessage("success.lesson.leveled_up", null, LocaleUtils.getCurrentLocale());
+        } else if (xpEarned > 0) {
+            message = messageSource.getMessage("success.lesson.finished", null, LocaleUtils.getCurrentLocale());
+        } else {
+            message = messageSource.getMessage("success.lesson.completed_again", null, LocaleUtils.getCurrentLocale());
+        }
         int currentLevel = LevelUtils.calculateLevel(topicProgress.getTotalXP());
         return CompleteLessonResponse.builder()
                 .success(true)

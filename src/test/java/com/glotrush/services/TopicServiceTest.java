@@ -117,7 +117,6 @@ class TopicServiceTest {
                 topicMapper,
                 lessonMapper,
                 userLessonProgressRepository,
-                progressService,
                 flashcardRepository,
                 qcmQuestionRepository,
                 matchingPairRepository,

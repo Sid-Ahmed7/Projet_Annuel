@@ -174,13 +174,13 @@ public class LessonService implements ILessonService {
 
         UserProgressResponse progressResponse = progressService.getProgressByTopic(accountId, lesson.getTopic().getId());
 
-        return lessonBuilder.buildCompleteLessonResponse(leveledUp, xpEarned, topicProgress, progressResponse, newLevel);
+        return lessonBuilder.buildCompleteLessonResponse(leveledUp, xpEarned, topicProgress, progressResponse);
     }
 
     private CompleteLessonResponse handleRecompletion(UUID accountId, Lesson lesson) {
         UserProgress topicProgress = progressService.getOrCreateProgress(accountId, lesson.getTopic().getId());
         UserProgressResponse progressResponse = progressService.getProgressByTopic(accountId, lesson.getTopic().getId());
-        return lessonBuilder.buildCompleteLessonResponse(false, 0, topicProgress, progressResponse, null);
+        return lessonBuilder.buildCompleteLessonResponse(false, 0, topicProgress, progressResponse);
     }
 
     @Override
