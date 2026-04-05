@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CompleteLessonResponse {
+public class CompleteExamResponse {
     private Boolean success;
     private String message;
     private Integer xpEarned;
@@ -17,5 +17,7 @@ public class CompleteLessonResponse {
     private Integer currentLevel;
     private Boolean leveledUp;
     private Integer newLevel;
-    private UserProgressResponse progress;
+    private Integer totalAnswers;
+    private Integer correctAnswers;
+    private Double accuracy;
 }

@@ -3,9 +3,13 @@ package com.glotrush.controllers;
 import java.util.List;
 import java.util.UUID;
 
+import com.glotrush.dto.request.ExamResultRequest;
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.dto.response.ApiResponse;
 import com.glotrush.dto.response.TopicWithProgressResponse;
+import com.glotrush.dto.response.CompleteExamResponse;
+import com.glotrush.dto.response.CompleteLessonResponse;
+import com.glotrush.dto.response.ExamResponse;
 import com.glotrush.enumerations.ProficiencyLevel;
 import jakarta.validation.Valid;
 import org.springframework.context.MessageSource;
@@ -30,12 +34,14 @@ public class TopicController {
     private final MessageSource messageSource;
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<TopicResponse>> getAllTopics() {
         List<TopicResponse> topics = topicService.getAllTopics();
         return ResponseEntity.ok(topics);
     }
 
     @GetMapping("/active")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<TopicResponse>> getAllTopicsByActive(Authentication authentication) {
         UUID accountId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         List<TopicResponse> topics = topicService.getAllTopics(accountId);
@@ -43,6 +49,7 @@ public class TopicController {
     }
 
     @GetMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<TopicResponse>> searchTopics(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) ProficiencyLevel difficulty,
@@ -51,7 +58,18 @@ public class TopicController {
         return ResponseEntity.ok(topics);
     }
 
+    @GetMapping("/search/active")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<List<TopicResponse>> searchActiveTopics(
+            @RequestParam UUID languageId,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) ProficiencyLevel difficulty) {
+        List<TopicResponse> topics = topicService.searchActiveTopics(languageId, name, difficulty);
+        return ResponseEntity.ok(topics);
+    }
+
     @GetMapping("/language/{languageId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<TopicWithProgressResponse>> getTopicsByLanguage(Authentication authentication, @PathVariable UUID languageId) {
         UUID accountId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         List<TopicWithProgressResponse> topics = topicService.getTopicsByLanguage(languageId, accountId);
@@ -59,10 +77,27 @@ public class TopicController {
     }
 
     @GetMapping("/{topicId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<TopicResponse> getTopicById(Authentication authentication, @PathVariable UUID topicId) {
         UUID accountId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         TopicResponse topic = topicService.getTopicById(topicId, accountId);
         return ResponseEntity.ok(topic);
+    }
+
+    @GetMapping("/{topicId}/exam")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ExamResponse> getTopicExam(Authentication authentication, @PathVariable UUID topicId) {
+        UUID accountId = UUID.fromString(authentication.getName());
+        ExamResponse exam = topicService.generateTopicExam(accountId, topicId);
+        return ResponseEntity.ok(exam);
+    }
+
+    @PostMapping("/{topicId}/exam/submit")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<CompleteExamResponse> submitTopicExam(Authentication authentication, @PathVariable UUID topicId, @Valid @RequestBody ExamResultRequest examRequest) {
+        UUID accountId = UUID.fromString(authentication.getName());
+        CompleteExamResponse response = topicService.completeTopicExam(accountId, topicId, examRequest);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping

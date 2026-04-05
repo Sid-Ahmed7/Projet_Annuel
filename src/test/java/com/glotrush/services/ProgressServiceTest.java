@@ -241,6 +241,7 @@ class ProgressServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getTotalXP()).isEqualTo(0L);
+        assertThat(result.getExamPassed()).isFalse();
         assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(1);
 
         verify(userProgressRepository).save(any(UserProgress.class));

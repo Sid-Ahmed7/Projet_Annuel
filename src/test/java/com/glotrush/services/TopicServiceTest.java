@@ -35,14 +35,28 @@ import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.mapping.TopicMapper;
 import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.LessonRepository;
+import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.repositories.UserProgressRepository;
+import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.services.topic.TopicService;
+import com.glotrush.services.progress.IProgressService;
+import com.glotrush.mapping.LessonEntityToLessonResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import com.glotrush.entities.Accounts;
+import com.glotrush.repositories.exercice.FlashcardRepository;
+import com.glotrush.repositories.exercice.MatchingPairRepository;
+import com.glotrush.repositories.exercice.QcmQuestionRepository;
+import com.glotrush.repositories.exercice.SortingExerciseRepository;
+import com.glotrush.dto.request.*;
+import com.glotrush.dto.response.CompleteExamResponse;
+import com.glotrush.dto.response.CompleteLessonResponse;
+import com.glotrush.entities.exercice.*;
 
 @ExtendWith({MockitoExtension.class, SpringExtension.class})
 @ContextConfiguration(classes = TestMessageSourceConfig.class)
@@ -69,6 +83,27 @@ class TopicServiceTest {
     private LessonRepository lessonRepository;
 
     @Mock
+    private LessonEntityToLessonResponse lessonMapper;
+
+    @Mock
+    private UserLessonProgressRepository userLessonProgressRepository;
+
+    @Mock
+    private IProgressService progressService;
+
+    @Mock
+    private FlashcardRepository flashcardRepository;
+    @Mock
+    private QcmQuestionRepository qcmQuestionRepository;
+    @Mock
+    private MatchingPairRepository matchingPairRepository;
+    @Mock
+    private SortingExerciseRepository sortingExerciseRepository;
+
+    @Mock
+    private LessonRepository lessonRepository;
+
+    @Mock
     private UserLessonProgressRepository userLessonProgressRepository;
 
     @Mock
@@ -86,6 +121,22 @@ class TopicServiceTest {
 
     @BeforeEach
     void setUp() {
+        topicService = new TopicService(
+                messageSource,
+                topicRepository,
+                userProgressRepository,
+                languageRepository,
+                lessonRepository,
+                topicBuilder,
+                topicMapper,
+                lessonMapper,
+                userLessonProgressRepository,
+                progressService,
+                flashcardRepository,
+                qcmQuestionRepository,
+                matchingPairRepository,
+                sortingExerciseRepository
+        );
         topicService = new TopicService(messageSource, topicRepository, userProgressRepository, languageRepository, lessonRepository, userLessonProgressRepository, lessonBuilder, topicBuilder, topicMapper);
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
@@ -343,6 +394,20 @@ class TopicServiceTest {
     }
 
     @Test
+    @DisplayName("Should search active topics with language filter")
+    void shouldSearchActiveTopicsWithLanguageFilter() {
+        TopicResponse response = TopicResponse.builder().id(topicId).name("Basics").build();
+        when(topicRepository.findAll(any(Specification.class))).thenReturn(List.of(topic));
+        when(topicMapper.mapTopicEntitiesToTopicResponse(topic)).thenReturn(response);
+
+        List<TopicResponse> result = topicService.searchActiveTopics(languageId, "Basics", ProficiencyLevel.A1);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Basics");
+        verify(topicRepository).findAll(any(Specification.class));
+    }
+
+    @Test
     @DisplayName("Should search topics with name filter only")
     void shouldSearchTopicsWithNameFilterOnly() {
         TopicResponse response = TopicResponse.builder().id(topicId).name("Basics").build();
@@ -353,5 +418,141 @@ class TopicServiceTest {
 
         assertThat(result).hasSize(1);
         verify(topicRepository).findAll(any(Specification.class));
+    }
+    @Test
+    @DisplayName("Should complete exam successfully with valid answers")
+    void shouldCompleteExamSuccessfully() {
+        UserProgress progress = UserProgress.builder()
+                .account(Accounts.builder().id(accountId).build())
+                .topic(Topic.builder().id(topicId).build())
+                .correctAnswers(0)
+                .totalAnswers(0)
+                .totalXP(100L)
+                .build();
+
+        FlashcardEntity flashcard = new FlashcardEntity();
+        flashcard.setId(UUID.randomUUID());
+        flashcard.setBack("Apple");
+
+        QcmQuestionEntity qcm = new QcmQuestionEntity();
+        qcm.setId(UUID.randomUUID());
+        qcm.setCorrectOptionIndex(1);
+
+        ExamResultRequest request = ExamResultRequest.builder()
+                .flashcardAnswers(List.of(new FlashcardAnswerRequest(flashcard.getId(), "Apple")))
+                .qcmAnswers(List.of(new QcmAnswerRequest(qcm.getId(), 1)))
+                .build();
+
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(any(UUID.class), any(UUID.class))).thenReturn(Optional.of(progress));
+        when(flashcardRepository.findById(flashcard.getId())).thenReturn(Optional.of(flashcard));
+        when(qcmQuestionRepository.findById(qcm.getId())).thenReturn(Optional.of(qcm));
+        when(userProgressRepository.save(any())).thenReturn(progress);
+
+        CompleteExamResponse result = topicService.completeTopicExam(accountId, topicId, request);
+
+        assertThat(result.getSuccess()).isTrue();
+        assertThat(result.getXpEarned()).isEqualTo(50);
+        assertThat(result.getTotalXP()).isEqualTo(150L);
+        assertThat(result.getCurrentLevel()).isEqualTo(1);
+        assertThat(result.getLeveledUp()).isFalse();
+        assertThat(result.getNewLevel()).isEqualTo(1);
+        assertThat(result.getTotalAnswers()).isEqualTo(2);
+        assertThat(result.getCorrectAnswers()).isEqualTo(2);
+        assertThat(result.getAccuracy()).isEqualTo(1.0);
+        assertThat(progress.getExamPassed()).isTrue();
+        assertThat(progress.getTotalXP()).isEqualTo(150L);
+        assertThat(progress.getCorrectAnswers()).isEqualTo(2);
+        assertThat(progress.getTotalAnswers()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Should complete exam and level up")
+    void shouldCompleteExamAndLevelUp() {
+        UserProgress progress = UserProgress.builder()
+                .account(Accounts.builder().id(accountId).build())
+                .topic(Topic.builder().id(topicId).build())
+                .correctAnswers(0)
+                .totalAnswers(0)
+                .totalXP(980L)
+                .build();
+
+        FlashcardEntity flashcard = new FlashcardEntity();
+        flashcard.setId(UUID.randomUUID());
+        flashcard.setBack("Apple");
+
+        ExamResultRequest request = ExamResultRequest.builder()
+                .flashcardAnswers(List.of(new FlashcardAnswerRequest(flashcard.getId(), "Apple")))
+                .build();
+
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(any(UUID.class), any(UUID.class))).thenReturn(Optional.of(progress));
+        when(flashcardRepository.findById(flashcard.getId())).thenReturn(Optional.of(flashcard));
+        when(userProgressRepository.save(any())).thenReturn(progress);
+
+        CompleteExamResponse result = topicService.completeTopicExam(accountId, topicId, request);
+
+        assertThat(result.getSuccess()).isTrue();
+        assertThat(result.getXpEarned()).isEqualTo(50);
+        assertThat(result.getTotalXP()).isEqualTo(1030L);
+        assertThat(result.getCurrentLevel()).isEqualTo(1);
+        assertThat(result.getLeveledUp()).isTrue();
+        assertThat(result.getNewLevel()).isEqualTo(2);
+        assertThat(progress.getTotalXP()).isEqualTo(1030L);
+    }
+
+    @Test
+    @DisplayName("Should fail exam when answers are incorrect")
+    void shouldFailExamWithIncorrectAnswers() {
+        UserProgress progress = UserProgress.builder()
+                .correctAnswers(0)
+                .totalAnswers(0)
+                .totalXP(0L)
+                .examPassed(false)
+                .build();
+
+        FlashcardEntity flashcard = new FlashcardEntity();
+        flashcard.setId(UUID.randomUUID());
+        flashcard.setBack("Apple");
+
+        ExamResultRequest request = ExamResultRequest.builder()
+                .flashcardAnswers(List.of(new FlashcardAnswerRequest(flashcard.getId(), "Banana")))
+                .build();
+
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)).thenReturn(Optional.of(progress));
+        when(flashcardRepository.findById(flashcard.getId())).thenReturn(Optional.of(flashcard));
+        when(userProgressRepository.save(any())).thenReturn(progress);
+
+        CompleteExamResponse result = topicService.completeTopicExam(accountId, topicId, request);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getSuccess()).isNotNull();
+        assertThat(result.getSuccess()).isFalse();
+        assertThat(result.getXpEarned()).isEqualTo(0);
+        assertThat(progress.getExamPassed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should validate flashcard with level 2 (numbers matching)")
+    void shouldValidateFlashcardWithNumbers() {
+        UserProgress progress = new UserProgress();
+        progress.setCorrectAnswers(0);
+        progress.setTotalAnswers(0);
+        progress.setTotalXP(0L);
+        
+        FlashcardEntity flashcard = new FlashcardEntity();
+        flashcard.setId(UUID.randomUUID());
+        flashcard.setBack("100 kilometers");
+
+        ExamResultRequest request = ExamResultRequest.builder()
+                .flashcardAnswers(List.of(new FlashcardAnswerRequest(flashcard.getId(), "100 kilomete")))
+                .build();
+
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)).thenReturn(Optional.of(progress));
+        when(flashcardRepository.findById(flashcard.getId())).thenReturn(Optional.of(flashcard));
+        when(userProgressRepository.save(any())).thenReturn(progress);
+
+        CompleteExamResponse result = topicService.completeTopicExam(accountId, topicId, request);
+
+        assertThat(result.getSuccess()).isTrue();
+        assertThat(progress.getCorrectAnswers()).isEqualTo(1);
     }
 }
