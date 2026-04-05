@@ -1,11 +1,13 @@
 name: CD Back
 
 on:
-  workflow_run:
-    workflows: [ "CI" ]
+  workflow_dispatch:
+  #workflow_run:
+    #workflows: [ "CI" ]
+    #branches: [ feat/PROJ-8 ]
+    #types: [ completed ]
+  push:
     branches: [ feat/PROJ-8 ]
-    types: [ completed ]
-
 jobs:
   deploy:
     name: Build & Deploy Back
