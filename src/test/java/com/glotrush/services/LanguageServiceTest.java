@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -102,8 +102,13 @@ class LanguageServiceTest {
 
         when(languageRepository.findByIsActiveTrueOrderByOrderIndexAsc())
                 .thenReturn(Arrays.asList(japanese, french));
-        when(languageBuilder.mapToLanguageResponse(japanese)).thenReturn(japaneseResponse);
-        when(languageBuilder.mapToLanguageResponse(french)).thenReturn(frenchResponse);
+        when(userLanguageRepository.findMostPopularLanguageIdsByLearnerCount(any(), any())).thenReturn(Collections.emptyList());
+        when(topicRepository.findByLanguage_Id(japanese.getId())).thenReturn(Collections.emptyList());
+        when(topicRepository.findByLanguage_Id(french.getId())).thenReturn(Collections.emptyList());
+        when(lessonRepository.countByTopic_Language_Id(japanese.getId())).thenReturn(0);
+        when(lessonRepository.countByTopic_Language_Id(french.getId())).thenReturn(0);
+        when(languageBuilder.mapToLanguageResponse(japanese, null, 0, 0, false)).thenReturn(japaneseResponse);
+        when(languageBuilder.mapToLanguageResponse(french, null, 0, 0, false)).thenReturn(frenchResponse);
 
         List<LanguageResponse> result = languageService.getAllActiveLanguages();
 
@@ -125,7 +130,10 @@ class LanguageServiceTest {
                 .build();
 
         when(languageRepository.findById(languageId)).thenReturn(Optional.of(japanese));
-        when(languageBuilder.mapToLanguageResponse(japanese)).thenReturn(japaneseResponse);
+        when(userLanguageRepository.findMostPopularLanguageIdsByLearnerCount(any(), any())).thenReturn(Collections.emptyList());
+        when(topicRepository.findByLanguage_Id(japanese.getId())).thenReturn(Collections.emptyList());
+        when(lessonRepository.countByTopic_Language_Id(japanese.getId())).thenReturn(0);
+        when(languageBuilder.mapToLanguageResponse(japanese, null, 0, 0, false)).thenReturn(japaneseResponse);
 
         LanguageResponse result = languageService.getLanguageById(languageId);
 
@@ -156,7 +164,10 @@ class LanguageServiceTest {
                 .build();
 
         when(languageRepository.findByCode("ja")).thenReturn(Optional.of(japanese));
-        when(languageBuilder.mapToLanguageResponse(japanese)).thenReturn(japaneseResponse);
+        when(userLanguageRepository.findMostPopularLanguageIdsByLearnerCount(any(), any())).thenReturn(Collections.emptyList());
+        when(topicRepository.findByLanguage_Id(japanese.getId())).thenReturn(Collections.emptyList());
+        when(lessonRepository.countByTopic_Language_Id(japanese.getId())).thenReturn(0);
+        when(languageBuilder.mapToLanguageResponse(japanese, null, 0, 0, false)).thenReturn(japaneseResponse);
 
         LanguageResponse result = languageService.getLanguageByCode("ja");
 
@@ -188,7 +199,7 @@ class LanguageServiceTest {
     @DisplayName("Should update language")
     void shouldUpdateLanguage() {
         UUID languageId = japanese.getId();
-        com.glotrush.dto.request.LanguageRequest request = new com.glotrush.dto.request.LanguageRequest();
+        LanguageRequest request = new com.glotrush.dto.request.LanguageRequest();
         request.setCode("ja-updated");
         request.setName("Japanese Updated");
 

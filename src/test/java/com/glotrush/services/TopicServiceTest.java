@@ -3,6 +3,8 @@ package com.glotrush.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
@@ -53,7 +55,6 @@ import com.glotrush.repositories.exercice.QcmQuestionRepository;
 import com.glotrush.repositories.exercice.SortingExerciseRepository;
 import com.glotrush.dto.request.*;
 import com.glotrush.dto.response.CompleteExamResponse;
-import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.entities.exercice.*;
 
 @ExtendWith({MockitoExtension.class, SpringExtension.class})
@@ -229,7 +230,7 @@ class TopicServiceTest {
     @Test
     @DisplayName("Should return topics for specific language")
     void shouldGetTopicsByLanguage() {
-        TopicResponse expectedResponse = TopicResponse.builder()
+        TopicWithProgressResponse expectedResponse = TopicWithProgressResponse.builder()
                 .id(topicId)
                 .name("Basics Course")
                 .languageId(languageId)
@@ -237,9 +238,12 @@ class TopicServiceTest {
 
         when(topicRepository.findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(languageId))
                 .thenReturn(List.of(topic));
+        when(lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId))
+                .thenReturn(Collections.emptyList());
         when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId))
                 .thenReturn(Optional.of(userProgress));
-        when(topicBuilder.mapToTopicResponse(eq(topic), any())).thenReturn(expectedResponse);
+        when(topicBuilder.mapToTopicWithProgressResponse(eq(topic), any(), anyInt(), anyBoolean(), anyBoolean()))
+                .thenReturn(expectedResponse);
 
         List<TopicWithProgressResponse> result = topicService.getTopicsByLanguage(languageId, accountId);
 
@@ -420,6 +424,7 @@ class TopicServiceTest {
                 .correctAnswers(0)
                 .totalAnswers(0)
                 .totalXP(100L)
+                .examPassed(false)
                 .build();
 
         FlashcardEntity flashcard = new FlashcardEntity();
@@ -466,6 +471,7 @@ class TopicServiceTest {
                 .correctAnswers(0)
                 .totalAnswers(0)
                 .totalXP(980L)
+                .examPassed(false)
                 .build();
 
         FlashcardEntity flashcard = new FlashcardEntity();

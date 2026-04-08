@@ -3,7 +3,6 @@ package com.glotrush.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -210,12 +208,12 @@ class UserLanguageServiceTest {
     @DisplayName("Should remove language successfully")
     void shouldRemoveLanguageSuccessfully() {
         
-        when(userLanguageRepository.existsByAccount_IdAndLanguage_Id(accountId, languageId)).thenReturn(true);
-        doNothing().when(userLanguageRepository).deleteByAccount_IdAndLanguage_Id(accountId, languageId);
-        
+        when(userLanguageRepository.findByIdAndAccount_Id(languageId, accountId)).thenReturn(Optional.of(userLanguage));
+        when(userProfileRepository.findByAccount_Id(accountId)).thenReturn(Optional.empty());
+
         userLanguageService.removeLanguage(accountId, languageId);
-        
-        verify(userLanguageRepository).deleteByAccount_IdAndLanguage_Id(accountId, languageId);
+
+        verify(userLanguageRepository).delete(userLanguage);
     }
 
     @Test

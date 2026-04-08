@@ -457,7 +457,7 @@ class LessonServiceTest {
                 .success(true)
                 .xpEarned(50)
                 .leveledUp(true)
-                .newLevel(2)
+                .newLevel(5)
                 .build();
 
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
@@ -468,14 +468,14 @@ class LessonServiceTest {
         when(progressService.addXP(accountId, topicId, 50)).thenReturn(topicProgressAfter);
         when(progressService.incrementLessonCompletion(accountId, topicId)).thenReturn(topicProgressAfter);
         when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(progressResponse);
-        when(lessonBuilder.buildCompleteLessonResponse(eq(true), eq(50), any(), any(), eq(2)))
+        when(lessonBuilder.buildCompleteLessonResponse(eq(true), eq(50), any(), any(), eq(5)))
                 .thenReturn(expectedResponse);
 
         CompleteLessonResponse result = lessonService.completeLesson(accountId, lessonId, request);
 
         verify(progressService).updateLastStudiedAt(accountId, topicId);
         assertThat(result.getLeveledUp()).isTrue();
-        assertThat(result.getNewLevel()).isEqualTo(2);
+        assertThat(result.getNewLevel()).isEqualTo(5);
     }
 
     @Test

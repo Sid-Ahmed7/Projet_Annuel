@@ -4,6 +4,7 @@ package com.glotrush.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -145,7 +146,7 @@ class ProgressServiceTest {
         assertThat(result.getTotalTopicsStarted()).isEqualTo(1);
         assertThat(result.getTotalLessonsCompleted()).isEqualTo(5);
 
-        verify(userProgressRepository).findByAccount_Id(accountId);
+        verify(userProgressRepository, times(2)).findByAccount_Id(accountId);
     }
 
     @Test
@@ -292,7 +293,7 @@ class ProgressServiceTest {
         UserProgress result = progressService.addXP(accountId, topicId, 50);
 
         assertThat(result.getTotalXP()).isEqualTo(550L);
-        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(1);
+        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(3);
 
         verify(userProgressRepository).save(any(UserProgress.class));
     }
@@ -309,7 +310,7 @@ class ProgressServiceTest {
         UserProgress result = progressService.addXP(accountId, topicId, 100);
 
         assertThat(result.getTotalXP()).isEqualTo(1050L);
-        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(2);
+        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(5);
         assertThat(LevelUtils.calculateCurrentLevelXP(result.getTotalXP())).isEqualTo(50L);
     }
 
