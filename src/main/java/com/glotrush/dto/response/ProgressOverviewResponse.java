@@ -18,5 +18,9 @@ public class ProgressOverviewResponse {
     private Integer totalLessonsCompleted;
     private Double overallAccuracy;
     private Integer currentStreak;
+    private Long currentLevelXP;
+    private Long nextLevelXP;
+    private Double levelProgressPercentage;
     private List<UserProgressResponse> progressByTopic;
+    private List<LanguageLevelResponse> progressByLanguage;
 }

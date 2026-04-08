@@ -5,6 +5,7 @@ import java.util.List;
 import com.glotrush.utils.LevelUtils;
 import org.springframework.stereotype.Component;
 
+import com.glotrush.dto.response.LanguageLevelResponse;
 import com.glotrush.dto.response.ProgressOverviewResponse;
 import com.glotrush.dto.response.UserProgressResponse;
 import com.glotrush.entities.UserProgress;
@@ -19,7 +20,11 @@ public class ProgressBuilder {
             Integer totalLessonsCompleted,
             Double overallAccuracy,
             Integer currentStreak,
-            List<UserProgressResponse> progressByTopic) {
+            Long currentLevelXP,
+            Long nextLevelXP,
+            Double levelProgressPercentage,
+            List<UserProgressResponse> progressByTopic,
+            List<LanguageLevelResponse> progressByLanguage) {
 
         return ProgressOverviewResponse.builder()
                 .totalXP(totalXP)
@@ -28,7 +33,11 @@ public class ProgressBuilder {
                 .totalLessonsCompleted(totalLessonsCompleted)
                 .overallAccuracy(overallAccuracy)
                 .currentStreak(currentStreak)
+                .currentLevelXP(currentLevelXP)
+                .nextLevelXP(nextLevelXP)
+                .levelProgressPercentage(levelProgressPercentage)
                 .progressByTopic(progressByTopic)
+                .progressByLanguage(progressByLanguage)
                 .build();
     }
 
@@ -36,7 +45,7 @@ public class ProgressBuilder {
         Long totalXP = progress.getTotalXP();
         Integer level = LevelUtils.calculateLevel(totalXP);
         Long currentLevelXP = LevelUtils.calculateCurrentLevelXP(totalXP);
-        Long nextLevelXP = LevelUtils.calculateNextLevelXP(level);
+        Long nextLevelXP = LevelUtils.calculateNextLevelXP((long) level);
         Double levelProgressPercentage = LevelUtils.calculateLevelProgressPercentage(totalXP);
 
         return UserProgressResponse.builder()

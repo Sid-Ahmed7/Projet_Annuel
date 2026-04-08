@@ -27,7 +27,7 @@ public class TopicBuilder {
                 .build();
     }
 
-    public TopicWithProgressResponse mapToTopicWithProgressResponse(Topic topic, List<LessonResponse> lessons, int completedLessons) {
+    public TopicWithProgressResponse mapToTopicWithProgressResponse(Topic topic, List<LessonResponse> lessons, int completedLessons, boolean examUnlocked, boolean examPassed) {
         int totalLessons = lessons.size();
         int progressPercent = totalLessons > 0 ? (completedLessons * 100 / totalLessons) : 0;
 
@@ -43,6 +43,8 @@ public class TopicBuilder {
                 .totalLessons(totalLessons)
                 .progressPercent(progressPercent)
                 .lessons(lessons)
+                .examUnlocked(examUnlocked)
+                .examCompleted(examPassed)
                 .build();
     }
 }

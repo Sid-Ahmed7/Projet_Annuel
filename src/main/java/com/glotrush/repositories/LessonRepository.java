@@ -11,6 +11,9 @@ import com.glotrush.entities.Lesson;
 
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 @Repository
 public interface LessonRepository extends JpaRepository<Lesson, UUID> {
 
@@ -25,5 +28,14 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
 
     Integer countByTopic_Id(UUID topicId);
     Integer countByTopic_Language_Id(UUID languageId);
-    boolean existsById(UUID LessonId);
+    boolean existsById(UUID lessonId);
+    Optional<Lesson> findFirstByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(UUID topicId);
+
+    @Query("SELECT l FROM Lesson l " +
+           "LEFT JOIN UserLessonProgress ulp ON ulp.lesson.id = l.id AND ulp.account.id = :accountId " +
+           "WHERE l.topic.id = :topicId AND l.isActive = true " +
+           "AND (ulp.id IS NULL OR ulp.status != 'COMPLETED') " +
+           "ORDER BY l.orderIndex ASC")
+    Optional<Lesson> findFirstUncompletedLessonInTopic(@Param("accountId") UUID accountId, @Param("topicId") UUID topicId);
+
 }

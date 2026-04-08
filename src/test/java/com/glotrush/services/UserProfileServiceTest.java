@@ -3,6 +3,7 @@ package com.glotrush.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -133,14 +134,14 @@ class UserProfileServiceTest {
 
         when(accountsRepository.findById(accountId)).thenReturn(Optional.of(testAccount));
         when(userProfileRepository.findByAccount_Id(accountId)).thenReturn(Optional.empty());
-        when(userProfileBuilder.createDefaultProfile(any(Accounts.class))).thenReturn(testProfile);
+        when(userProfileBuilder.createDefaultProfile(any(Accounts.class), anyBoolean())).thenReturn(testProfile);
         when(userLanguageRepository.findByAccount_Id(accountId)).thenReturn(new ArrayList<>());
         when(userProfileBuilder.mapToUserProfileResponse(any(), any(), any())).thenReturn(expectedResponse);
 
         UserProfileResponse result = profileService.getProfile(accountId);
 
         assertThat(result).isNotNull();
-        verify(userProfileBuilder).createDefaultProfile(any(Accounts.class));
+        verify(userProfileBuilder).createDefaultProfile(any(Accounts.class), anyBoolean());
     }
 
     @Test

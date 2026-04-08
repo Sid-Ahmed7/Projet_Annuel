@@ -74,7 +74,7 @@ public class LessonBuilder {
                 .message(message)
                 .xpEarned(xpEarned)
                 .totalXP(topicProgress.getTotalXP())
-                .currentLevel(leveledUp ? currentLevel - 1 : currentLevel)
+                .currentLevel(currentLevel)
                 .leveledUp(leveledUp)
                 .newLevel(leveledUp ? currentLevel : null)
                 .progress(progressResponse)

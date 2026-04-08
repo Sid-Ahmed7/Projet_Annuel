@@ -35,11 +35,9 @@ import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.mapping.TopicMapper;
 import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.LessonRepository;
-import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.repositories.UserProgressRepository;
-import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.services.topic.TopicService;
 import com.glotrush.services.progress.IProgressService;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
@@ -101,12 +99,6 @@ class TopicServiceTest {
     private SortingExerciseRepository sortingExerciseRepository;
 
     @Mock
-    private LessonRepository lessonRepository;
-
-    @Mock
-    private UserLessonProgressRepository userLessonProgressRepository;
-
-    @Mock
     private LessonBuilder lessonBuilder;
         
 
@@ -127,17 +119,17 @@ class TopicServiceTest {
                 userProgressRepository,
                 languageRepository,
                 lessonRepository,
+                userLessonProgressRepository,
+                lessonBuilder,
                 topicBuilder,
                 topicMapper,
                 lessonMapper,
-                userLessonProgressRepository,
                 progressService,
                 flashcardRepository,
                 qcmQuestionRepository,
                 matchingPairRepository,
                 sortingExerciseRepository
         );
-        topicService = new TopicService(messageSource, topicRepository, userProgressRepository, languageRepository, lessonRepository, userLessonProgressRepository, lessonBuilder, topicBuilder, topicMapper);
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
         languageId = UUID.randomUUID();

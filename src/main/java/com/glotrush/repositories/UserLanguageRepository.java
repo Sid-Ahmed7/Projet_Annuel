@@ -26,6 +26,10 @@ public interface UserLanguageRepository extends JpaRepository<UserLanguage, UUID
 
     boolean existsByAccount_IdAndLanguage_Id(UUID accountId, UUID languageId);
 
+    boolean existsByAccount_IdAndLanguage_IdAndLanguageType(UUID accountId, UUID languageId, LanguageType languageType);
+
+    boolean existsByAccount_IdAndLanguageType(UUID accountId, LanguageType languageType);
+
     void deleteByAccount_IdAndLanguage_Id(UUID accountId, UUID languageId);
 
     Long countByAccount_IdAndLanguageType(UUID accountId, LanguageType languageType);

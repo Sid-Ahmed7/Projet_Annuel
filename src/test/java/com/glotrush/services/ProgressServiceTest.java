@@ -19,7 +19,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -34,6 +33,8 @@ import com.glotrush.exceptions.ResourceNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
+import com.glotrush.repositories.UserLanguageRepository;
+import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.services.progress.ProgressService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +66,13 @@ class ProgressServiceTest {
     @Mock
     private LessonRepository lessonRepository;
 
+    @Mock    
+    private UserLanguageRepository userLanguageRepository;
+
+
+    @Mock
+    private UserLessonProgressRepository userLessonProgressRepository;
+
     private UUID accountId;
     private UUID topicId;
     private UUID languageId;
@@ -75,7 +83,7 @@ class ProgressServiceTest {
 
      @BeforeEach
     void setUp() {
-        progressService = new ProgressService(messageSource, userProgressRepository, topicRepository, accountsRepository, progressBuilder, lessonRepository );
+        progressService = new ProgressService(messageSource, userProgressRepository, topicRepository, accountsRepository, progressBuilder, lessonRepository, userLessonProgressRepository, userLanguageRepository);
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
         languageId = UUID.randomUUID();
@@ -127,7 +135,7 @@ class ProgressServiceTest {
 
         when(userProgressRepository.findByAccount_Id(accountId)).thenReturn(List.of(testProgress));
         when(progressBuilder.mapToUserProgressResponse(testProgress)).thenReturn(progressResponse);
-        when(progressBuilder.buildProgressOverview(any(), any(), any(), any(), any(), any(), any()))
+        when(progressBuilder.buildProgressOverview(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(expectedResponse);
 
         ProgressOverviewResponse result = progressService.getProgressOverview(accountId);
@@ -154,7 +162,7 @@ class ProgressServiceTest {
                 .build();
 
         when(userProgressRepository.findByAccount_Id(accountId)).thenReturn(Collections.emptyList());
-        when(progressBuilder.buildProgressOverview(0L, 1, 0, 0, 0.0, 0, Collections.emptyList()))
+        when(progressBuilder.buildProgressOverview(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(expectedResponse);
 
         ProgressOverviewResponse result = progressService.getProgressOverview(accountId);

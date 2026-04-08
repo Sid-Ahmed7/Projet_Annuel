@@ -11,7 +11,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FirstLanguageRequest {
-    private UUID languageId;
+public class OnBoardingRequest {
+    private UUID nativeLanguageId;
+    private UUID learningLanguageId;
     
 }

@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.glotrush.dto.request.FirstLanguageRequest;
-import com.glotrush.dto.response.ApiResponse;
+import com.glotrush.dto.request.OnBoardingRequest;
+import com.glotrush.dto.response.UserProfileResponse;
 import com.glotrush.services.onBoarding.IOnBoardingService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,10 +23,9 @@ public class OnBoardingController {
     private final IOnBoardingService onBoardingService;
 
     @PostMapping("/complete")
-    public ResponseEntity<ApiResponse> completeOnboarding(Authentication authentication, @RequestBody FirstLanguageRequest request) {
+    public ResponseEntity<UserProfileResponse> completeOnboarding(Authentication authentication, @RequestBody OnBoardingRequest request) {
         UUID accountId = UUID.fromString(authentication.getName());
-        onBoardingService.completeOnboarding(accountId, request);
-        return ResponseEntity.ok(new ApiResponse("Onboarding completed successfully"));
-
+        UserProfileResponse userProfileResponse = onBoardingService.completeOnboarding(accountId, request);
+        return ResponseEntity.ok(userProfileResponse);
     }
 }

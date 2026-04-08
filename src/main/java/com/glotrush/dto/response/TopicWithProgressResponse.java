@@ -28,4 +28,7 @@ public class TopicWithProgressResponse {
     private int totalLessons;
     private int progressPercent;
     private List<LessonResponse> lessons;
+
+    private boolean examUnlocked;
+    private boolean examCompleted;
 }

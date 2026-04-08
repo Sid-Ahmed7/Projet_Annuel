@@ -1,4 +1,4 @@
-    package com.glotrush.services.languages;
+package com.glotrush.services.languages;
 
     import java.util.List;
     import java.util.UUID;
@@ -53,6 +53,11 @@
                 throw new LanguageException(messageSource.getMessage("error.language.already_added", null, LocaleUtils.getCurrentLocale()));
             }
 
+            if (request.getLanguageType() == LanguageType.NATIVE
+                    && userLanguageRepository.existsByAccount_IdAndLanguageType(accountId, LanguageType.NATIVE)) {
+                throw new LanguageException(messageSource.getMessage("error.language.already_added", null, LocaleUtils.getCurrentLocale()));
+            }
+
             UserLanguage userLanguage = userLanguageBuilder.buildUserLanguage(account, language, request);
 
             userLanguage = userLanguageRepository.save(userLanguage);
@@ -75,9 +80,9 @@
             UserLanguage userLanguage = userLanguageRepository.findByAccount_IdAndLanguage_Id(accountId, languageId)
                     .orElseThrow(() -> new UserLanguageException(messageSource.getMessage("error.language.user_language_not_found", null, LocaleUtils.getCurrentLocale())));
 
-            if (request.getLanguageType() != null) {
-                userLanguage.setLanguageType(request.getLanguageType());
-            }
+        if (request.getLanguageType() != null && !request.getLanguageType().equals(userLanguage.getLanguageType())) {
+            throw new UserLanguageException(messageSource.getMessage("error.language.cannot_change_type", null, LocaleUtils.getCurrentLocale()));
+        }
             if (request.getProficiencyLevel() != null) {
                 userLanguage.setProficiencyLevel(request.getProficiencyLevel());
             }
@@ -95,7 +100,13 @@
 
             UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElse(null);
             if(profile != null && profile.getActiveLanguage() != null && profile.getActiveLanguage().getId().equals(userLanguage.getLanguage().getId())) {
-                profile.setActiveLanguage(null);
+                userLanguageRepository.findByAccount_IdAndLanguageType(accountId, LanguageType.LEARNING)
+                        .stream()
+                        .filter(ul -> !ul.getLanguage().getId().equals(userLanguage.getLanguage().getId()))
+                        .findFirst()
+                        .ifPresentOrElse(language -> profile.setActiveLanguage(language.getLanguage()),
+                                () -> profile.setActiveLanguage(null)
+                        );
                 userProfileRepository.save(profile);
             }
             userLanguageRepository.delete(userLanguage);

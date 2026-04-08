@@ -7,7 +7,8 @@ import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.UserProfileBuilder;
 import com.glotrush.dto.request.AddUserLanguageRequest;
-import com.glotrush.dto.request.FirstLanguageRequest;
+import com.glotrush.dto.request.OnBoardingRequest;
+import com.glotrush.dto.response.UserProfileResponse;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.enumerations.LanguageType;
@@ -16,11 +17,9 @@ import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.services.languages.IUserLanguageService;
 import com.glotrush.services.userprofile.IUserProfileService;
-import com.glotrush.services.userprofile.UserProfileService;
 import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -36,21 +35,29 @@ public class OnBoardingService implements IOnBoardingService {
 
     @Override
     @Transactional
-    public void completeOnboarding(UUID accountId, FirstLanguageRequest request) {
+    public UserProfileResponse completeOnboarding(UUID accountId, OnBoardingRequest request) {
     
         Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user_not_found",null, LocaleUtils.getCurrentLocale())));
 
-        if(request.getLanguageId() != null) {
-            AddUserLanguageRequest addLanguageRequest = new AddUserLanguageRequest().builder()
-                .languageId(request.getLanguageId())
+        if(request.getNativeLanguageId() != null) {
+            AddUserLanguageRequest nativeLanguageRequest = AddUserLanguageRequest.builder()
+                .languageId(request.getNativeLanguageId())
+                .languageType(LanguageType.NATIVE)
+                .build();
+                userLanguageService.addLanguage(accountId, nativeLanguageRequest);
+        }
+
+        if(request.getLearningLanguageId() != null) {
+            AddUserLanguageRequest learningLanguageRequest = AddUserLanguageRequest.builder()
+                .languageId(request.getLearningLanguageId())
                 .languageType(LanguageType.LEARNING)
                 .build();
-                userLanguageService.addLanguage(accountId, addLanguageRequest);
-                userProfileService.addActiveLanguage(accountId, request.getLanguageId());
+                userLanguageService.addLanguage(accountId, learningLanguageRequest);
         }
 
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElseGet(() -> userProfileBuilder.createDefaultProfile(account, false));
         profile.setHasCompletedOnboarding(true);
         userProfileRepository.save(profile);    
+        return userProfileService.getProfile(accountId);
     }
 }

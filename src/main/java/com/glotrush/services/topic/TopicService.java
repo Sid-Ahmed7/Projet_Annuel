@@ -5,10 +5,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.builder.LessonBuilder;
-import com.glotrush.dto.request.ExamResultRequest;
-import com.glotrush.dto.request.TopicRequest;
-import com.glotrush.dto.response.LessonResponse;
-import com.glotrush.dto.response.TopicWithProgressResponse;
 import com.glotrush.dto.response.*;
 import com.glotrush.dto.response.exercice.*;
 import com.glotrush.dto.response.lesson.*;
@@ -17,14 +13,12 @@ import com.glotrush.entities.UserLessonProgress;
 import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.entities.Lesson;
 import com.glotrush.entities.lesson.*;
-import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.enumerations.ProficiencyLevel;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.mapping.TopicMapper;
 import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
-import com.glotrush.repositories.LessonRepository;
 import com.glotrush.services.progress.IProgressService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.context.MessageSource;
@@ -45,8 +39,6 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 
@@ -76,7 +68,6 @@ public class TopicService implements ITopicService {
     private final TopicBuilder topicBuilder;
     private final TopicMapper topicMapper;
     private final LessonEntityToLessonResponse lessonMapper;
-    private final com.glotrush.repositories.UserLessonProgressRepository userLessonProgressRepositoryLegacy;
     private final IProgressService progressService;
 
     private final FlashcardRepository flashcardRepository;
@@ -119,7 +110,10 @@ public class TopicService implements ITopicService {
                     .filter(l -> l.getUserProgress() != null && LessonStatus.COMPLETED.equals(l.getUserProgress().getStatus()))
                     .count();
 
-            return topicBuilder.mapToTopicWithProgressResponse(topic, lessons, completedLessons);
+            boolean exammUnlocked = lessons.size() > 0 && completedLessons == lessons.size();
+            boolean examPassed = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topic.getId()).map(UserProgress::getExamPassed).orElse(false);
+                    
+            return topicBuilder.mapToTopicWithProgressResponse(topic, lessons, completedLessons, exammUnlocked, examPassed);
         }).toList();
     }
 
@@ -216,7 +210,7 @@ public class TopicService implements ITopicService {
 
         // Vérifier si toutes les leçons sont terminées
         List<Lesson> lessons = lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId);
-        long completedCount = userLessonProgressRepositoryLegacy.findByAccount_Id(accountId).stream()
+        long completedCount = userLessonProgressRepository.findByAccount_Id(accountId).stream()
                 .filter(p -> p.getLesson().getTopic().getId().equals(topicId) && p.getStatus() == LessonStatus.COMPLETED)
                 .count();
 
@@ -228,7 +222,6 @@ public class TopicService implements ITopicService {
         List<FlashcardExamResponse> flashcards = new ArrayList<>();
         List<MatchingPairResponse> matchingPairs = new ArrayList<>();
         List<SortingExerciseExamResponse> sortingExercises = new ArrayList<>();
-
         for (Lesson lesson : lessons) {
             if (Boolean.FALSE.equals(lesson.getIsIncludedInExam())) continue;
 
@@ -324,11 +317,14 @@ public class TopicService implements ITopicService {
         Integer oldLevel = LevelUtils.calculateLevel(oldXP);
 
         if (isSuccessful) {
+            boolean isFirstTimePassing = !progress.getExamPassed();
             progress.setExamPassed(true);
             if (progress.getBestExamScore() == null || finalScore > progress.getBestExamScore()) {
                 progress.setBestExamScore(finalScore);
             }
-            progress.setTotalXP(oldXP + xpEarned);
+            if (isFirstTimePassing) {
+                progress.setTotalXP(oldXP + xpEarned);
+            }
         }
 
         progress.setExamAttempts(progress.getExamAttempts() + 1);
@@ -344,11 +340,10 @@ public class TopicService implements ITopicService {
 
         return CompleteExamResponse.builder()
                 .success(isSuccessful)
-                .message(isSuccessful ? messageSource.getMessage("info.topic.exam.success", null, LocaleUtils.getCurrentLocale())
-                                    : messageSource.getMessage("error.topic.exam.failed", null, LocaleUtils.getCurrentLocale()))
+                .message(isSuccessful ? messageSource.getMessage("info.topic.exam.success", null, LocaleUtils.getCurrentLocale()) : messageSource.getMessage("error.topic.exam.failed", null, LocaleUtils.getCurrentLocale()))
                 .xpEarned(xpEarned)
                 .totalXP(newXP)
-                .currentLevel(oldLevel)
+                .currentLevel(newLevel)
                 .leveledUp(leveledUp)
                 .newLevel(newLevel)
                 .totalAnswers(totalQuestions)
@@ -414,13 +409,13 @@ public class TopicService implements ITopicService {
         MatchingPairEntity entity = matchingPairRepository.findById(request.getId()).orElse(null);
         if (entity == null) return false;
         // Vérification exacte
-        return entity.getItem1().equals(request.getItem1()) && entity.getItem2().equals(request.getItem2());
+        return entity.getItem1() != null && entity.getItem2() != null && entity.getItem1().equals(request.getItem1()) && entity.getItem2().equals(request.getItem2());
     }
 
     private boolean validateSortingExercise(SortingExerciseAnswerRequest request) {
         SortingExerciseEntity entity = sortingExerciseRepository.findById(request.getId()).orElse(null);
         if (entity == null || request.getUserOrder() == null) return false;
         // Vérification exacte de l'ordre
-        return entity.getCorrectOrder().equals(request.getUserOrder());
+        return entity.getCorrectOrder() != null && entity.getCorrectOrder().equals(request.getUserOrder());
     }
 }
