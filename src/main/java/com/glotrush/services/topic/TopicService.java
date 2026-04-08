@@ -343,7 +343,7 @@ public class TopicService implements ITopicService {
                 .message(isSuccessful ? messageSource.getMessage("info.topic.exam.success", null, LocaleUtils.getCurrentLocale()) : messageSource.getMessage("error.topic.exam.failed", null, LocaleUtils.getCurrentLocale()))
                 .xpEarned(xpEarned)
                 .totalXP(newXP)
-                .currentLevel(newLevel)
+                .currentLevel(oldLevel)
                 .leveledUp(leveledUp)
                 .newLevel(newLevel)
                 .totalAnswers(totalQuestions)

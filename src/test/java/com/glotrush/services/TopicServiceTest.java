@@ -450,9 +450,9 @@ class TopicServiceTest {
         assertThat(result.getSuccess()).isTrue();
         assertThat(result.getXpEarned()).isEqualTo(50);
         assertThat(result.getTotalXP()).isEqualTo(150L);
-        assertThat(result.getCurrentLevel()).isEqualTo(1);
+        assertThat(result.getCurrentLevel()).isEqualTo(2);
         assertThat(result.getLeveledUp()).isFalse();
-        assertThat(result.getNewLevel()).isEqualTo(1);
+        assertThat(result.getNewLevel()).isEqualTo(2);
         assertThat(result.getTotalAnswers()).isEqualTo(2);
         assertThat(result.getCorrectAnswers()).isEqualTo(2);
         assertThat(result.getAccuracy()).isEqualTo(1.0);
@@ -491,9 +491,9 @@ class TopicServiceTest {
         assertThat(result.getSuccess()).isTrue();
         assertThat(result.getXpEarned()).isEqualTo(50);
         assertThat(result.getTotalXP()).isEqualTo(1030L);
-        assertThat(result.getCurrentLevel()).isEqualTo(1);
+        assertThat(result.getCurrentLevel()).isEqualTo(4);
         assertThat(result.getLeveledUp()).isTrue();
-        assertThat(result.getNewLevel()).isEqualTo(2);
+        assertThat(result.getNewLevel()).isEqualTo(5);
         assertThat(progress.getTotalXP()).isEqualTo(1030L);
     }
 
