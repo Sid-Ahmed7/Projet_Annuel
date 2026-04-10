@@ -55,16 +55,19 @@ public class Accounts {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private AccountStatus status = AccountStatus.ACTIVE;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private UserRole role = UserRole.USER;
 
     @Column(nullable = true)
     private LocalDateTime lastPasswordChange;
     
     @Column(nullable = false)
+    @Builder.Default
     private Integer failedLoginAttempts = 0;
     
     @Column(nullable = true)

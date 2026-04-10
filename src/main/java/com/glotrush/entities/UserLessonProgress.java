@@ -49,9 +49,11 @@ public class UserLessonProgress {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @Builder.Default
     private LessonStatus status = LessonStatus.NOT_STARTED;
 
     @Column(name = "total_attempts", nullable = false)
+    @Builder.Default
     private Integer totalAttempts = 0;
 
     @Enumerated(EnumType.STRING)
@@ -59,6 +61,7 @@ public class UserLessonProgress {
     private DifficultyFeedback userFeedback;
 
     @Column(name = "time_spent_seconds")
+    @Builder.Default
     private Integer timeSpentSeconds = 0;
 
     @Column(name = "last_attempt_at")
