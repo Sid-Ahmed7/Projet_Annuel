@@ -76,6 +76,8 @@ public class TopicService implements ITopicService {
     private final SortingExerciseRepository sortingExerciseRepository;
 
     private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
+    private static final double MIN_SUCCESS_SCORE = 80.0;
+    private static final int EXAM_QUESTION_LIMIT = 5;
 
     @Override
     public List<TopicResponse> getAllTopics(UUID accountId) {
@@ -254,10 +256,10 @@ public class TopicService implements ITopicService {
         return ExamResponse.builder()
                 .topicId(topicId)
                 .topicName(topic.getName())
-                .qcmQuestions(qcmQuestions.stream().limit(5).collect(Collectors.toList()))
-                .flashcards(flashcards.stream().limit(5).collect(Collectors.toList()))
-                .matchingPairs(matchingPairs.stream().limit(5).collect(Collectors.toList()))
-                .sortingExercises(sortingExercises.stream().limit(5).collect(Collectors.toList()))
+                .qcmQuestions(qcmQuestions.stream().limit(EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
+                .flashcards(flashcards.stream().limit(EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
+                .matchingPairs(matchingPairs.stream().limit(EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
+                .sortingExercises(sortingExercises.stream().limit(EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
                 .build();
     }
 
@@ -310,7 +312,7 @@ public class TopicService implements ITopicService {
         }
 
         double finalScore = totalQuestions > 0 ? (double) calculatedCorrectAnswers / totalQuestions * 100 : 0;
-        boolean isSuccessful = finalScore >= 80;
+        boolean isSuccessful = finalScore >= MIN_SUCCESS_SCORE;
 
         int xpEarned = isSuccessful ? 50 : 0;
         Long oldXP = progress.getTotalXP();
