@@ -15,10 +15,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Verify2FASetupRequest {
-    @NotNull(message = "2FA auth ID is required")
+    @NotNull(message = "{error.twoFactorAuthId.required}")
     private UUID twoFactorAuthId;
 
-    @NotBlank(message = "Verification code is required")
-    @Size(min = 6, max = 6, message = "Code must be 6 digits")
+    @NotBlank(message = "{error.verificationCode.required}")
+    @Size(min = 6, max = 6, message = "{error.verificationCode.length}")
     private String code;
 }

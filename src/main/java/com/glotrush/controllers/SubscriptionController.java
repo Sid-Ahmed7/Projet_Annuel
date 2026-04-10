@@ -11,8 +11,9 @@ import com.glotrush.dto.response.PaymentHistoryResponse;
 import com.glotrush.dto.response.SubscriptionDetailResponse;
 import com.glotrush.dto.response.SubscriptionResponse;
 import com.glotrush.dto.response.SubscriptionStatsResponse;
+import com.glotrush.services.subscription.ISubscriptionManagementService;
 import com.glotrush.services.subscription.ISubscriptionService;
-import com.glotrush.services.subscription.SubscriptionManagementService;
+import com.glotrush.utils.SecurityUtils;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class SubscriptionController {
 
     private final ISubscriptionService subscriptionService;
-    private final SubscriptionManagementService subscriptionManagementService;
+    private final ISubscriptionManagementService subscriptionManagementService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all-subscriptions")
@@ -67,7 +68,7 @@ public class SubscriptionController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/my-subscription")
     public ResponseEntity<SubscriptionResponse> getMySubscription(Authentication authentication) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         SubscriptionResponse subscription = subscriptionService.getSubscription(accountId);
         return ResponseEntity.ok(subscription);
     }
@@ -75,7 +76,7 @@ public class SubscriptionController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/detail")
     public ResponseEntity<SubscriptionDetailResponse> getMySubscriptionDetail(Authentication authentication) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         SubscriptionDetailResponse subscriptionDetail = subscriptionManagementService.getSubscriptionDetail(accountId);
         return ResponseEntity.ok(subscriptionDetail);
     }
@@ -83,7 +84,7 @@ public class SubscriptionController {
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/subscribe")
     public ResponseEntity<CheckoutStripeResponse> subscribeToPlan(Authentication authentication, @Valid @RequestBody SubscribeToPlanRequest request) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         CheckoutStripeResponse response = subscriptionManagementService.subscribeToPlan(accountId, request);
         return ResponseEntity.ok(response);
     }
@@ -91,28 +92,28 @@ public class SubscriptionController {
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/change-plan")
     public ResponseEntity<CheckoutStripeResponse> changeSubscriptionPlan(Authentication authentication, @Valid @RequestBody ChangePlanRequest request) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         return ResponseEntity.ok(subscriptionManagementService.changeSubscriptionPlan(accountId, request));
     }
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/cancel")
     public ResponseEntity<SubscriptionDetailResponse> cancelSubscription(Authentication authentication, @Valid @RequestBody CancelSubscriptionRequest request) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         return ResponseEntity.ok(subscriptionManagementService.cancelSubscription(accountId, request));
     }
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/reactivate")
     public ResponseEntity<SubscriptionDetailResponse> reactivateSubscription(Authentication authentication) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         return ResponseEntity.ok(subscriptionManagementService.reactivateSubscription(accountId));
     }
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/payments")
     public ResponseEntity<List<PaymentHistoryResponse>> getPaymentHistory(Authentication authentication) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         return ResponseEntity.ok(subscriptionManagementService.getPaymentHistory(accountId));
     }
 

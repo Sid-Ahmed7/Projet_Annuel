@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Disable2FARequest {
-    @NotBlank(message = "Verification code is required")
-    @Size(min = 6, max = 6, message = "Code must be 6 digits")
+    @NotBlank(message = "{error.code.required}")
+    @Size(min = 6, max = 6, message = "{error.code.invalid}")
     private String code;
 }

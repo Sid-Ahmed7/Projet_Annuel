@@ -50,8 +50,7 @@ public class StripeController {
         }
           switch (event.getType()) {
             case "checkout.session.completed" -> {
-                Session session = (Session) event.getDataObjectDeserializer()
-                        .getObject().orElse(null);
+                Session session = (Session) event.getDataObjectDeserializer().getObject().orElse(null);
                 if (session != null) {
                     stripeWebhookService.finalizeCheckout(session);
                 }

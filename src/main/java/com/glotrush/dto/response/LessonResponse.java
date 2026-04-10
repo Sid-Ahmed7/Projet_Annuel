@@ -10,7 +10,6 @@ import com.glotrush.dto.response.lesson.QcmLessonResponse;
 import com.glotrush.dto.response.lesson.SortingExerciseLessonResponse;
 import com.glotrush.enumerations.LessonType;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;

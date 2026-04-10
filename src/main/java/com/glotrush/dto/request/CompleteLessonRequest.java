@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CompleteLessonRequest {
-    @NotNull(message = "Time spent is required")
-    @Min(value = 0, message = "Time spent must be positive")
+    @NotNull(message = "{error.timeSpent.required}")
+    @Min(value = 0, message = "{error.timeSpent.positive}")
     private Integer timeSpentSeconds;
 
     private DifficultyFeedback feedback;

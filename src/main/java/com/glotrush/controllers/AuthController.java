@@ -35,6 +35,7 @@ import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.services.auth.IAuthService;
 import com.glotrush.services.auth.ITwoFactorAuthService;
 import com.glotrush.utils.LocaleUtils;
+import com.glotrush.utils.SecurityUtils;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -106,28 +107,28 @@ public class AuthController {
 
     @PostMapping("/2fa/enable")
     public ResponseEntity<Enable2FAResponse> enable2FA(Authentication authentication) {
-        UUID accountId = extractUserIdFromAuth(authentication);
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         Enable2FAResponse response = twoFactorAuthService.enable2FA(accountId);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/2fa/verify-setup")
     public ResponseEntity<ApiResponse> verify2FASetup(@Valid @RequestBody Verify2FASetupRequest request,Authentication authentication) {
-        UUID accountId = extractUserIdFromAuth(authentication);
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         twoFactorAuthService.verify2FASetup(request, accountId);
         return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("success.2fa.enabled", null, LocaleUtils.getCurrentLocale())));
     }
 
     @PostMapping("/2fa/disable")
     public ResponseEntity<ApiResponse> disable2FA(@Valid @RequestBody Disable2FARequest request, Authentication authentication) {
-        UUID accountId = extractUserIdFromAuth(authentication);
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         twoFactorAuthService.disable2FA(accountId, request.getCode());
         return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("success.2fa.disabled", null, LocaleUtils.getCurrentLocale())));
     }
 
     @GetMapping("/me")
     public ResponseEntity<UserInfoResponse> getCurrentUser(Authentication authentication) {
-        UUID accountId = extractUserIdFromAuth(authentication);
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         Accounts account = accountsRepository.findById(accountId)
                 .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
         
@@ -157,8 +158,5 @@ public class AuthController {
         throw new RuntimeException(messageSource.getMessage("error.auth.no_cookies_found", null, LocaleUtils.getCurrentLocale()));
     }
 
-    private UUID extractUserIdFromAuth(Authentication authentication) {
-        String userId = (String) authentication.getPrincipal();
-        return UUID.fromString(userId);
-    }
+   
 }

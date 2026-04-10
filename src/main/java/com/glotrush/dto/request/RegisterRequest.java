@@ -15,22 +15,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RegisterRequest {
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "{error.email.required}")
+    @Email(message = "{error.email.invalid}")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 12, message = "Password must be at least 12 characters")
+    @NotBlank(message = "{error.password.required}")
+    @Size(min = 12, message = "{error.password.minLength}")
     @Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{12,}$",
-            message = "Password must be strong")
+            message = "{error.password.strong}")
     private String password;
 
-    @NotBlank(message = "First name is required")
+    @NotBlank(message = "{error.firstName.required}")
     private String firstName;
     
-    @NotBlank(message = "Last name is required")
+    @NotBlank(message = "{error.lastName.required}")
     private String lastName;
 
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Size(min = 3, max = 50, message = "{error.username.length}")
     private String username;
 }

@@ -8,7 +8,6 @@ import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.dto.response.ApiResponse;
 import com.glotrush.dto.response.TopicWithProgressResponse;
 import com.glotrush.dto.response.CompleteExamResponse;
-import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.ExamResponse;
 import com.glotrush.enumerations.ProficiencyLevel;
 import jakarta.validation.Valid;

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.glotrush.dto.request.OnBoardingRequest;
 import com.glotrush.dto.response.UserProfileResponse;
 import com.glotrush.services.onBoarding.IOnBoardingService;
+import com.glotrush.utils.SecurityUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,7 +25,7 @@ public class OnBoardingController {
 
     @PostMapping("/complete")
     public ResponseEntity<UserProfileResponse> completeOnboarding(Authentication authentication, @RequestBody OnBoardingRequest request) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         UserProfileResponse userProfileResponse = onBoardingService.completeOnboarding(accountId, request);
         return ResponseEntity.ok(userProfileResponse);
     }

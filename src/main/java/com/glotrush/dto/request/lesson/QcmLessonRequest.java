@@ -1,7 +1,6 @@
 package com.glotrush.dto.request.lesson;
 
 import com.glotrush.dto.request.LessonRequest;
-import com.glotrush.dto.request.exercice.MatchingPairRequest;
 import com.glotrush.dto.request.exercice.QcmQuestionRequest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
