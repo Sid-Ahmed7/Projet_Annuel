@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.glotrush.constants.SecurityConstants;
 import com.glotrush.entities.Accounts;
 import com.glotrush.repositories.AccountsRepository;
 
@@ -16,18 +17,15 @@ public class LoginAttemptService {
 
     private final AccountsRepository accountsRepository;
 
-    private static final int MAX_LOGIN_ATTEMPTS = 5;
-    private static final int ACCOUNT_LOCK_DURATION_MINUTES = 1;
-
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean handleFailedLogin(Accounts account) {
         Accounts freshAccount = accountsRepository.findById(account.getId()).orElse(account);
         int attempts = freshAccount.getFailedLoginAttempts() + 1;
         freshAccount.setFailedLoginAttempts(attempts);
 
-        boolean locked = attempts >= MAX_LOGIN_ATTEMPTS;
+        boolean locked = attempts >= SecurityConstants.MAX_LOGIN_ATTEMPTS;
         if (locked) {
-            LocalDateTime lockUntil = LocalDateTime.now().plusMinutes(ACCOUNT_LOCK_DURATION_MINUTES);
+            LocalDateTime lockUntil = LocalDateTime.now().plusMinutes(SecurityConstants.ACCOUNT_LOCK_DURATION_MINUTES);
             freshAccount.setAccountLockedUntil(lockUntil);
         }
 

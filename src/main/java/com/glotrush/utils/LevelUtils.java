@@ -1,6 +1,7 @@
 package com.glotrush.utils;
 
 public class LevelUtils {
+    private LevelUtils() {}
 
     private static final int BASE_XP_PER_LEVEL = 100;
 

@@ -2,7 +2,6 @@ package com.glotrush.services.lesson;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.dto.request.LessonRequest;
@@ -27,7 +26,10 @@ import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
-import com.glotrush.repositories.*;
+import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.LessonRepository;
+import com.glotrush.repositories.TopicRepository;
+import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.entities.Topic;
 import com.glotrush.exceptions.TopicNotFoundException;
 

@@ -5,21 +5,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.builder.LessonBuilder;
-import com.glotrush.dto.response.*;
-import com.glotrush.dto.response.exercice.*;
-import com.glotrush.dto.response.lesson.*;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.UserLessonProgress;
 import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.entities.Lesson;
-import com.glotrush.entities.lesson.*;
 import com.glotrush.enumerations.ProficiencyLevel;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.mapping.TopicMapper;
 import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
-import com.glotrush.services.progress.IProgressService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.context.MessageSource;
 import org.springframework.data.jpa.domain.Specification;
@@ -29,6 +24,23 @@ import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
 import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.builder.TopicBuilder;
+import com.glotrush.constants.TopicConstants;
+import com.glotrush.dto.request.ExamResultRequest;
+import com.glotrush.dto.request.FlashcardAnswerRequest;
+import com.glotrush.dto.request.MatchingPairAnswerRequest;
+import com.glotrush.dto.request.QcmAnswerRequest;
+import com.glotrush.dto.request.SortingExerciseAnswerRequest;
+import com.glotrush.dto.request.TopicRequest;
+import com.glotrush.dto.response.CompleteExamResponse;
+import com.glotrush.dto.response.ExamResponse;
+import com.glotrush.dto.response.LessonResponse;
+import com.glotrush.dto.response.TopicResponse;
+import com.glotrush.dto.response.TopicWithProgressResponse;
+import com.glotrush.dto.response.exercice.FlashcardExamResponse;
+import com.glotrush.dto.response.exercice.MatchingPairResponse;
+import com.glotrush.dto.response.exercice.QcmQuestionExamResponse;
+import com.glotrush.dto.response.exercice.SortingExerciseExamResponse;
+import com.glotrush.dto.response.lesson.MatchingPairLessonResponse;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.utils.LevelUtils;
@@ -42,11 +54,14 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 
-import com.glotrush.dto.request.*;
 import com.glotrush.entities.exercice.FlashcardEntity;
 import com.glotrush.entities.exercice.MatchingPairEntity;
 import com.glotrush.entities.exercice.QcmQuestionEntity;
 import com.glotrush.entities.exercice.SortingExerciseEntity;
+import com.glotrush.entities.lesson.FlashcardLesson;
+import com.glotrush.entities.lesson.MatchingPairLesson;
+import com.glotrush.entities.lesson.QcmLesson;
+import com.glotrush.entities.lesson.SortingExerciseLesson;
 import com.glotrush.repositories.exercice.FlashcardRepository;
 import com.glotrush.repositories.exercice.MatchingPairRepository;
 import com.glotrush.repositories.exercice.QcmQuestionRepository;
@@ -68,17 +83,14 @@ public class TopicService implements ITopicService {
     private final TopicBuilder topicBuilder;
     private final TopicMapper topicMapper;
     private final LessonEntityToLessonResponse lessonMapper;
-    private final IProgressService progressService;
 
     private final FlashcardRepository flashcardRepository;
     private final QcmQuestionRepository qcmQuestionRepository;
     private final MatchingPairRepository matchingPairRepository;
     private final SortingExerciseRepository sortingExerciseRepository;
 
-    private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
-    private static final double MIN_SUCCESS_SCORE = 80.0;
-    private static final int EXAM_QUESTION_LIMIT = 5;
-
+    private static final Pattern NUMBER_PATTERN = Pattern.compile(TopicConstants.REGEX_PATTERN);
+  
     @Override
     public List<TopicResponse> getAllTopics(UUID accountId) {
         return topicRepository.findByIsActiveTrueOrderByOrderIndexAsc().stream()
@@ -210,7 +222,6 @@ public class TopicService implements ITopicService {
         Topic topic = topicRepository.findById(topicId)
                 .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
 
-        // Vérifier si toutes les leçons sont terminées
         List<Lesson> lessons = lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId);
         long completedCount = userLessonProgressRepository.findByAccount_Id(accountId).stream()
                 .filter(p -> p.getLesson().getTopic().getId().equals(topicId) && p.getStatus() == LessonStatus.COMPLETED)
@@ -256,10 +267,10 @@ public class TopicService implements ITopicService {
         return ExamResponse.builder()
                 .topicId(topicId)
                 .topicName(topic.getName())
-                .qcmQuestions(qcmQuestions.stream().limit(EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
-                .flashcards(flashcards.stream().limit(EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
-                .matchingPairs(matchingPairs.stream().limit(EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
-                .sortingExercises(sortingExercises.stream().limit(EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
+                .qcmQuestions(qcmQuestions.stream().limit(TopicConstants.EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
+                .flashcards(flashcards.stream().limit(TopicConstants.EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
+                .matchingPairs(matchingPairs.stream().limit(TopicConstants.EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
+                .sortingExercises(sortingExercises.stream().limit(TopicConstants.EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
                 .build();
     }
 
@@ -312,7 +323,7 @@ public class TopicService implements ITopicService {
         }
 
         double finalScore = totalQuestions > 0 ? (double) calculatedCorrectAnswers / totalQuestions * 100 : 0;
-        boolean isSuccessful = finalScore >= MIN_SUCCESS_SCORE;
+        boolean isSuccessful = finalScore >= TopicConstants.MIN_SUCCESS_SCORE;
 
         int xpEarned = isSuccessful ? 50 : 0;
         Long oldXP = progress.getTotalXP();

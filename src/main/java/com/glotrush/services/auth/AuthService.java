@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.AccountBuilder;
 import com.glotrush.builder.RefreshTokenBuilder;
+import com.glotrush.constants.SecurityConstants;
 import com.glotrush.dto.request.AdminLoginRequest;
 import com.glotrush.dto.request.ForgotPasswordRequest;
 import com.glotrush.dto.request.LoginRequest;
@@ -79,7 +80,6 @@ public class AuthService implements IAuthService {
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
-    private static final int PASSWORD_EXPIRY_DAYS = 60;
 
 
     @Transactional
@@ -337,7 +337,7 @@ public class AuthService implements IAuthService {
     }
 
     private void checkPasswordExpiry(Accounts account) {
-        LocalDateTime expiryDate = account.getLastPasswordChange().plusDays(PASSWORD_EXPIRY_DAYS);
+        LocalDateTime expiryDate = account.getLastPasswordChange().plusDays(SecurityConstants.PASSWORD_EXPIRY_DAYS);
         if (LocalDateTime.now().isAfter(expiryDate)) {
             throw new PasswordExpiredException(messageSource.getMessage("error.auth.password_expired", null, LocaleUtils.getCurrentLocale()));
         }
@@ -348,10 +348,10 @@ public class AuthService implements IAuthService {
             throw new WeakPasswordException(messageSource.getMessage("error.password.too_short", null, LocaleUtils.getCurrentLocale()));
         }
 
-        boolean hasUpper = password.matches(".*[A-Z].*");
-        boolean hasLower = password.matches(".*[a-z].*");
-        boolean hasDigit = password.matches(".*\\d.*");
-        boolean hasSpecial = password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
+        boolean hasUpper = password.matches(SecurityConstants.REGEX_UPPER);
+        boolean hasLower = password.matches(SecurityConstants.REGEX_LOWER);
+        boolean hasDigit = password.matches(SecurityConstants.REGEX_DIGIT);
+        boolean hasSpecial = password.matches(SecurityConstants.REGEX_SPECIAL);
 
         if (!hasUpper || !hasLower || !hasDigit || !hasSpecial) {
             throw new WeakPasswordException(

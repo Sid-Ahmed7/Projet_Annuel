@@ -21,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.LanguageBuilder;
+import com.glotrush.constants.LanguagesConstants;
 import com.glotrush.dto.response.LanguageResponse;
 import com.glotrush.entities.Language;
 import com.glotrush.exceptions.LanguageException;
@@ -41,14 +42,10 @@ public class LanguageService implements ILanguageService {
     private final LessonRepository lessonRepository;
     private final UserLanguageRepository userLanguageRepository;
 
-    private static final int POPULAR_LANGUAGES_LIMIT = 5;
-
-    
-
     private LanguageResponse getLanguageDetails(Language language) {
         
         Set<UUID> popularLanguages = new HashSet<>(
-            userLanguageRepository.findMostPopularLanguageIdsByLearnerCount(LanguageType.LEARNING, PageRequest.of(0, POPULAR_LANGUAGES_LIMIT))
+            userLanguageRepository.findMostPopularLanguageIdsByLearnerCount(LanguageType.LEARNING, PageRequest.of(0, LanguagesConstants.POPULAR_LANGUAGES_LIMIT))
         );
         
         List<Topic> topics = topicRepository.findByLanguage_Id(language.getId());

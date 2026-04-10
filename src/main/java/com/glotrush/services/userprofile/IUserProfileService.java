@@ -2,10 +2,8 @@ package com.glotrush.services.userprofile;
 
 import java.util.UUID;
 
-import com.glotrush.dto.request.AddUserLanguageRequest;
 import com.glotrush.dto.request.PasswordRequest;
 import com.glotrush.dto.request.UpdateProfileRequest;
-import com.glotrush.dto.response.UserLanguageResponse;
 import com.glotrush.dto.response.UserProfileResponse;
 
 public interface IUserProfileService {

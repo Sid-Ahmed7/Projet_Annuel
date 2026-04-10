@@ -32,7 +32,12 @@ import com.glotrush.dto.response.TopicWithProgressResponse;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
+import com.glotrush.entities.exercice.FlashcardEntity;
+import com.glotrush.entities.exercice.QcmQuestionEntity;
 import com.glotrush.exceptions.TopicNotFoundException;
+import com.glotrush.dto.request.ExamResultRequest;
+import com.glotrush.dto.request.FlashcardAnswerRequest;
+import com.glotrush.dto.request.QcmAnswerRequest;
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.mapping.TopicMapper;
 import com.glotrush.repositories.LanguageRepository;
@@ -53,9 +58,7 @@ import com.glotrush.repositories.exercice.FlashcardRepository;
 import com.glotrush.repositories.exercice.MatchingPairRepository;
 import com.glotrush.repositories.exercice.QcmQuestionRepository;
 import com.glotrush.repositories.exercice.SortingExerciseRepository;
-import com.glotrush.dto.request.*;
 import com.glotrush.dto.response.CompleteExamResponse;
-import com.glotrush.entities.exercice.*;
 
 @ExtendWith({MockitoExtension.class, SpringExtension.class})
 @ContextConfiguration(classes = TestMessageSourceConfig.class)
@@ -125,7 +128,6 @@ class TopicServiceTest {
                 topicBuilder,
                 topicMapper,
                 lessonMapper,
-                progressService,
                 flashcardRepository,
                 qcmQuestionRepository,
                 matchingPairRepository,

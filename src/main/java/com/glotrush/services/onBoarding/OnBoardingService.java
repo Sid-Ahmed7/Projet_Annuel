@@ -37,7 +37,7 @@ public class OnBoardingService implements IOnBoardingService {
     @Transactional
     public UserProfileResponse completeOnboarding(UUID accountId, OnBoardingRequest request) {
     
-        Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user_not_found",null, LocaleUtils.getCurrentLocale())));
+        Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found",null, LocaleUtils.getCurrentLocale())));
 
         if(request.getNativeLanguageId() != null) {
             AddUserLanguageRequest nativeLanguageRequest = AddUserLanguageRequest.builder()

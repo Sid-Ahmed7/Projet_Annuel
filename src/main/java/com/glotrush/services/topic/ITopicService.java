@@ -6,7 +6,6 @@ import java.util.UUID;
 import com.glotrush.dto.request.ExamResultRequest;
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.dto.response.CompleteExamResponse;
-import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.ExamResponse;
 import com.glotrush.dto.response.TopicResponse;
 import com.glotrush.dto.response.TopicWithProgressResponse;
