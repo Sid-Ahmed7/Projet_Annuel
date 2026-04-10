@@ -8,11 +8,13 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import com.glotrush.entities.Subscription;
 import com.glotrush.enumerations.SubscriptionStatus;
 import com.glotrush.enumerations.SubscriptionType;
 
+@Repository
 public interface SubscriptionRepository extends JpaRepository<Subscription, UUID> {
 
     Optional<Subscription> findByAccount_Id(UUID accountId);
