@@ -16,5 +16,6 @@ public interface IUserProfileService {
 
     void changePassword(UUID accountId, PasswordRequest request);
 
+    UserProfileResponse addActiveLanguage(UUID accountId, UUID languageId);
     
 }

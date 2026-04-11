@@ -3,7 +3,6 @@ package com.glotrush.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +25,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.glotrush.builder.UserLanguageBuilder;
+import com.glotrush.builder.UserProfileBuilder;
 import com.glotrush.config.TestMessageSourceConfig;
 import com.glotrush.dto.request.AddUserLanguageRequest;
 import com.glotrush.dto.request.UpdateUserLanguageRequest;
@@ -39,6 +38,7 @@ import com.glotrush.enumerations.ProficiencyLevel;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.UserLanguageRepository;
+import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.services.languages.UserLanguageService;
 
 @ExtendWith({MockitoExtension.class, SpringExtension.class})
@@ -60,6 +60,11 @@ class UserLanguageServiceTest {
     @Autowired
     private MessageSource messageSource;
     
+    @Mock
+    UserProfileRepository userProfileRepository;
+    @Mock
+    private UserProfileBuilder userProfileBuilder;
+
     private UserLanguageService userLanguageService;
 
     private UUID accountId;
@@ -70,13 +75,14 @@ class UserLanguageServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Initialiser le service manuellement avec toutes les dépendances
         userLanguageService = new UserLanguageService(
             messageSource,
             userLanguageRepository,
             accountsRepository,
             languageRepository,
-            userLanguageBuilder
+            userLanguageBuilder,
+            userProfileRepository,
+            userProfileBuilder
         );
 
         accountId = UUID.randomUUID();
@@ -101,7 +107,7 @@ class UserLanguageServiceTest {
                 .language(japanese)
                 .languageType(LanguageType.LEARNING)
                 .proficiencyLevel(ProficiencyLevel.A2)
-                .isPrimary(true)
+                
                 .startedAt(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -115,7 +121,7 @@ class UserLanguageServiceTest {
                 .languageId(languageId)
                 .languageType(LanguageType.LEARNING)
                 .proficiencyLevel(ProficiencyLevel.A1)
-                .isPrimary(true)
+                
                 .build();
 
         UserLanguageResponse expectedResponse = UserLanguageResponse.builder()
@@ -125,7 +131,7 @@ class UserLanguageServiceTest {
                 .languageName("Japanese")
                 .languageType(LanguageType.LEARNING)
                 .proficiencyLevel(ProficiencyLevel.A2)
-                .isPrimary(true)
+                
                 .startedAt(userLanguage.getStartedAt())
                 .build();
 
@@ -173,7 +179,6 @@ class UserLanguageServiceTest {
 
         UpdateUserLanguageRequest request = UpdateUserLanguageRequest.builder()
                 .proficiencyLevel(ProficiencyLevel.B1)
-                .isPrimary(false)
                 .build();
 
         UserLanguageResponse expectedResponse = UserLanguageResponse.builder()
@@ -183,7 +188,6 @@ class UserLanguageServiceTest {
                 .languageName("Japanese")
                 .languageType(LanguageType.LEARNING)
                 .proficiencyLevel(ProficiencyLevel.B1)
-                .isPrimary(false)
                 .startedAt(userLanguage.getStartedAt())
                 .build();
 
@@ -197,7 +201,6 @@ class UserLanguageServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getProficiencyLevel()).isEqualTo(ProficiencyLevel.B1);
-        assertThat(result.getIsPrimary()).isFalse();
         verify(userLanguageRepository).save(any(UserLanguage.class));
     }
 
@@ -205,12 +208,12 @@ class UserLanguageServiceTest {
     @DisplayName("Should remove language successfully")
     void shouldRemoveLanguageSuccessfully() {
         
-        when(userLanguageRepository.existsByAccount_IdAndLanguage_Id(accountId, languageId)).thenReturn(true);
-        doNothing().when(userLanguageRepository).deleteByAccount_IdAndLanguage_Id(accountId, languageId);
-        
+        when(userLanguageRepository.findByIdAndAccount_Id(languageId, accountId)).thenReturn(Optional.of(userLanguage));
+        when(userProfileRepository.findByAccount_Id(accountId)).thenReturn(Optional.empty());
+
         userLanguageService.removeLanguage(accountId, languageId);
-        
-        verify(userLanguageRepository).deleteByAccount_IdAndLanguage_Id(accountId, languageId);
+
+        verify(userLanguageRepository).delete(userLanguage);
     }
 
     @Test
@@ -223,7 +226,6 @@ class UserLanguageServiceTest {
                 .languageName("Japanese")
                 .languageType(LanguageType.LEARNING)
                 .proficiencyLevel(ProficiencyLevel.A2)
-                .isPrimary(true)
                 .startedAt(userLanguage.getStartedAt())
                 .build();
 

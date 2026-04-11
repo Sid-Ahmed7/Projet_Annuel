@@ -127,11 +127,11 @@ public class SubscriptionService implements ISubscriptionService {
         long dayRemaining = ChronoUnit.DAYS.between(LocalDate.now(), subscription.getEndDate().toLocalDate());
         emailService.sendSubscriptionExpiredSoonEmail(account.getEmail(), account.getUsername(), dayRemaining);
     }
-    private void sendEmailWhenSubscriptionTypeChangedInPremium(Subscription subscription) {
-        Accounts account = subscription.getAccount();
-        emailService.sendPremiumUpgratedEmail(account.getEmail(), account.getUsername(), subscription.getEndDate());
+    // private void sendEmailWhenSubscriptionTypeChangedInPremium(Subscription subscription) {
+    //     Accounts account = subscription.getAccount();
+    //     emailService.sendPremiumUpgratedEmail(account.getEmail(), account.getUsername(), subscription.getEndDate());
         
-    }
+    // }
         private void sendEmailWhenSubscriptionChangedToFree(Subscription subscription) {
         Accounts account = subscription.getAccount();
         emailService.sendSubscriptionExpiredEmail(account.getEmail(), account.getUsername());

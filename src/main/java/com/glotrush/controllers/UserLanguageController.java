@@ -23,6 +23,7 @@ import com.glotrush.dto.response.UserLanguageResponse;
 import com.glotrush.enumerations.LanguageType;
 import com.glotrush.services.languages.IUserLanguageService;
 import com.glotrush.utils.LocaleUtils;
+import com.glotrush.utils.SecurityUtils;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,35 +38,35 @@ public class UserLanguageController {
 
     @GetMapping
     public ResponseEntity<List<UserLanguageResponse>> getMyLanguages(Authentication authentication) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         List<UserLanguageResponse> languages = userLanguageService.getUserLanguages(accountId);
         return ResponseEntity.ok(languages);
     }
 
     @GetMapping("/type/{type}")
     public ResponseEntity<List<UserLanguageResponse>> getMyLanguagesByType(Authentication authentication,@PathVariable LanguageType type) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         List<UserLanguageResponse> languages = userLanguageService.getUserLanguagesByType(accountId, type);
         return ResponseEntity.ok(languages);
     }
 
     @PostMapping
     public ResponseEntity<UserLanguageResponse> addLanguage(Authentication authentication,@Valid @RequestBody AddUserLanguageRequest request) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         UserLanguageResponse language = userLanguageService.addLanguage(accountId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(language);
     }
 
     @PutMapping("/{languageId}")
     public ResponseEntity<UserLanguageResponse> updateLanguage(Authentication authentication,@PathVariable UUID languageId,@Valid @RequestBody UpdateUserLanguageRequest request) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         UserLanguageResponse language = userLanguageService.updateLanguage(accountId, languageId, request);
         return ResponseEntity.ok(language);
     }
 
     @DeleteMapping("/{languageId}")
     public ResponseEntity<ApiResponse> removeLanguage(Authentication authentication,@PathVariable UUID languageId) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         userLanguageService.removeLanguage(accountId, languageId);
         return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.language.deleted_successfully", null, LocaleUtils.getCurrentLocale())));
     }

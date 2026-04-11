@@ -15,6 +15,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -40,6 +41,10 @@ public class UserProfile {
     @JoinColumn(name = "account_id", nullable = false, unique = true)
     private Accounts account;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "language_id")
+    private Language activeLanguage;
+
     @Column(name = "photo_url")
     private String photoUrl;
 
@@ -55,7 +60,12 @@ public class UserProfile {
     private TimeZone timezone;
 
     @Column(name = "is_public", nullable = false)
+    @Builder.Default
     private Boolean isPublic = true;
+
+    @Column(name = "has_completed_onboarding", nullable = false)
+    @Builder.Default
+    private Boolean hasCompletedOnboarding = false;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

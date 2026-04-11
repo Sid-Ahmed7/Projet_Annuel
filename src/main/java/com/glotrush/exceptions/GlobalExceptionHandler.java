@@ -26,12 +26,18 @@ import java.util.Map;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    /* =========================
+       400 - BAD REQUEST
+       ========================= */
     @ExceptionHandler({
             WeakPasswordException.class,
             TwoFactorNotEnabledException.class,
             SubscriptionOperationException.class,
             InvalidUploadException.class,
-            InvalidPasswordException.class
+            InvalidPasswordException.class,
+            InvalidPathException.class,
+            LanguageException.class,
+            UserLanguageException.class,
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -53,6 +59,22 @@ public class GlobalExceptionHandler {
     }
 
     /* =========================
+       403 - FORBIDDEN
+       ========================= */
+    @ExceptionHandler({
+            PasswordExpiredException.class,
+            ProfilePrivateException.class,
+    })
+    public ResponseEntity<ErrorResponse> handleForbidden(RuntimeException ex) {
+        return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+        return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    /* =========================
        404 - NOT FOUND
        ========================= */
     @ExceptionHandler({
@@ -61,7 +83,7 @@ public class GlobalExceptionHandler {
             SubscriptionNotFoundException.class,
             PlanNotFoundException.class,
             LessonNotFoundException.class,
-            TopicNotFoundException.class
+            TopicNotFoundException.class,
     })
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
@@ -88,9 +110,32 @@ public class GlobalExceptionHandler {
         return buildError(ex.getMessage(), HttpStatus.LOCKED);
     }
 
-    @ExceptionHandler(StripeException.class)
-    public ResponseEntity<ErrorResponse> handleStripeException(StripeException ex) {
-        return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    /* =========================
+       500 - INTERNAL SERVER ERROR
+       ========================= */
+    @ExceptionHandler({
+            EmailSendException.class,
+            DecryptException.class,
+            EncryptException.class,
+            QrCodeGenerationException.class,
+            SchedulerQuartzException.class,
+            DirectoryCreationException.class,
+    })
+    public ResponseEntity<ErrorResponse> handleInternalError(RuntimeException ex) {
+        log.error("Internal server error: {}", ex.getMessage(), ex);
+        return buildError(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /* =========================
+       502 - BAD GATEWAY (Stripe)
+       ========================= */
+    @ExceptionHandler({
+            StripeMessageException.class,
+            StripeException.class,
+    })
+    public ResponseEntity<ErrorResponse> handleStripeException(Exception ex) {
+        log.error("Stripe error: {}", ex.getMessage(), ex);
+        return buildError(ex.getMessage(), HttpStatus.BAD_GATEWAY);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -101,19 +146,6 @@ public class GlobalExceptionHandler {
             message = "Invalid or missing lessonType";
         }
         return buildError(message, HttpStatus.BAD_REQUEST);
-    }
-
-    /* =========================
-       403 - FORBIDDEN
-       ========================= */
-    @ExceptionHandler(PasswordExpiredException.class)
-    public ResponseEntity<ErrorResponse> handleForbidden(PasswordExpiredException ex) {
-        return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
-        return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -135,6 +167,7 @@ public class GlobalExceptionHandler {
         log.error("Unexpected error occurred", ex);
         return buildError("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
 
     private ResponseEntity<ErrorResponse> buildError(String message, HttpStatus status) {
         ErrorResponse response = ErrorResponse.builder()

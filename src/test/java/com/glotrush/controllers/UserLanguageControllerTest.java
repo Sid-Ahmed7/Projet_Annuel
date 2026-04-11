@@ -87,7 +87,6 @@ class UserLanguageControllerTest {
                 .languageId(UUID.randomUUID())
                 .languageType(LanguageType.LEARNING)
                 .proficiencyLevel(ProficiencyLevel.A1)
-                .isPrimary(false)
                 .build();
 
         UserLanguageResponse response = UserLanguageResponse.builder()
@@ -112,7 +111,6 @@ class UserLanguageControllerTest {
         UpdateUserLanguageRequest request = UpdateUserLanguageRequest.builder()
                 .languageType(LanguageType.NATIVE)
                 .proficiencyLevel(ProficiencyLevel.B2)
-                .isPrimary(true)
                 .build();
 
         UserLanguageResponse response = UserLanguageResponse.builder()

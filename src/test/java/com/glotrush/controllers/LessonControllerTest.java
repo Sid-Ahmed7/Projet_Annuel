@@ -16,6 +16,8 @@ import com.glotrush.dto.request.lesson.SortingExerciseLessonRequest;
 import com.glotrush.dto.request.CompleteLessonRequest;
 import com.glotrush.dto.response.ApiResponse;
 import com.glotrush.dto.response.CompleteLessonResponse;
+import com.glotrush.dto.response.LessonSummaryResponse;
+import com.glotrush.dto.response.TopicLessonsResponse;
 import com.glotrush.dto.response.UserLessonProgressSummary;
 import com.glotrush.dto.response.lesson.FlashcardLessonResponse;
 import com.glotrush.dto.response.lesson.MatchingPairLessonResponse;
@@ -218,11 +220,37 @@ class LessonControllerTest {
     @WithMockUser(username = "00000000-0000-0000-0000-000000000000", roles = "USER")
     void testGetLessonsByTopic() throws Exception {
         UUID topicId = UUID.randomUUID();
-        when(lessonService.getLessonsByTopic(eq(topicId), any())).thenReturn(java.util.List.of());
+        LessonSummaryResponse summary = LessonSummaryResponse.builder()
+                .id(UUID.randomUUID())
+                .title("Lesson Title")
+                .isAlreadyFinish(true)
+                .build();
+        when(lessonService.getLessonsByTopic(eq(topicId), any())).thenReturn(java.util.List.of(summary));
 
         mockMvc.perform(get("/api/v1/lessons/topic/{topicId}", topicId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].title").value("Lesson Title"))
+                .andExpect(jsonPath("$[0].isAlreadyFinish").value(true));
+    }
+
+    @Test
+    @DisplayName("Should return topic lessons details")
+    @WithMockUser(username = "00000000-0000-0000-0000-000000000000", roles = "USER")
+    void testGetTopicLessonsDetails() throws Exception {
+        UUID topicId = UUID.randomUUID();
+        TopicLessonsResponse response = TopicLessonsResponse.builder()
+                .topicTitle("Topic Title")
+                .lessons(java.util.List.of())
+                .examPassed(false)
+                .examAttempts(0)
+                .build();
+        when(lessonService.getTopicLessonsDetails(eq(topicId), any())).thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/lessons/topic/{topicId}/details", topicId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.topicTitle").value("Topic Title"))
+                .andExpect(jsonPath("$.lessons").isArray());
     }
 
     @Test
@@ -259,7 +287,6 @@ class LessonControllerTest {
     void testCompleteLesson() throws Exception {
         UUID lessonId = UUID.randomUUID();
         CompleteLessonRequest request = CompleteLessonRequest.builder()
-                .score(85.0)
                 .timeSpentSeconds(300)
                 .build();
         CompleteLessonResponse response = CompleteLessonResponse.builder()

@@ -47,6 +47,7 @@ public class RefreshToken {
     private String ipAddress;
     
     @Column(nullable = false)
+    @Builder.Default
     private Boolean isRevoked = false;
     
     @Column(nullable = false)

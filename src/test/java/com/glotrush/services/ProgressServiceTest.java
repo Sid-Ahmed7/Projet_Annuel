@@ -4,6 +4,7 @@ package com.glotrush.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -19,7 +20,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -34,6 +34,8 @@ import com.glotrush.exceptions.ResourceNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
+import com.glotrush.repositories.UserLanguageRepository;
+import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.services.progress.ProgressService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +67,13 @@ class ProgressServiceTest {
     @Mock
     private LessonRepository lessonRepository;
 
+    @Mock    
+    private UserLanguageRepository userLanguageRepository;
+
+
+    @Mock
+    private UserLessonProgressRepository userLessonProgressRepository;
+
     private UUID accountId;
     private UUID topicId;
     private UUID languageId;
@@ -75,7 +84,7 @@ class ProgressServiceTest {
 
      @BeforeEach
     void setUp() {
-        progressService = new ProgressService(messageSource, userProgressRepository, topicRepository, accountsRepository, progressBuilder, lessonRepository );
+        progressService = new ProgressService(messageSource, userProgressRepository, topicRepository, accountsRepository, progressBuilder, lessonRepository, userLessonProgressRepository, userLanguageRepository);
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
         languageId = UUID.randomUUID();
@@ -127,7 +136,7 @@ class ProgressServiceTest {
 
         when(userProgressRepository.findByAccount_Id(accountId)).thenReturn(List.of(testProgress));
         when(progressBuilder.mapToUserProgressResponse(testProgress)).thenReturn(progressResponse);
-        when(progressBuilder.buildProgressOverview(any(), any(), any(), any(), any(), any(), any()))
+        when(progressBuilder.buildProgressOverview(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(expectedResponse);
 
         ProgressOverviewResponse result = progressService.getProgressOverview(accountId);
@@ -137,7 +146,7 @@ class ProgressServiceTest {
         assertThat(result.getTotalTopicsStarted()).isEqualTo(1);
         assertThat(result.getTotalLessonsCompleted()).isEqualTo(5);
 
-        verify(userProgressRepository).findByAccount_Id(accountId);
+        verify(userProgressRepository, times(2)).findByAccount_Id(accountId);
     }
 
     @Test
@@ -154,7 +163,7 @@ class ProgressServiceTest {
                 .build();
 
         when(userProgressRepository.findByAccount_Id(accountId)).thenReturn(Collections.emptyList());
-        when(progressBuilder.buildProgressOverview(0L, 1, 0, 0, 0.0, 0, Collections.emptyList()))
+        when(progressBuilder.buildProgressOverview(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(expectedResponse);
 
         ProgressOverviewResponse result = progressService.getProgressOverview(accountId);
@@ -241,6 +250,7 @@ class ProgressServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getTotalXP()).isEqualTo(0L);
+        assertThat(result.getExamPassed()).isFalse();
         assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(1);
 
         verify(userProgressRepository).save(any(UserProgress.class));
@@ -283,7 +293,7 @@ class ProgressServiceTest {
         UserProgress result = progressService.addXP(accountId, topicId, 50);
 
         assertThat(result.getTotalXP()).isEqualTo(550L);
-        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(1);
+        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(3);
 
         verify(userProgressRepository).save(any(UserProgress.class));
     }
@@ -300,7 +310,7 @@ class ProgressServiceTest {
         UserProgress result = progressService.addXP(accountId, topicId, 100);
 
         assertThat(result.getTotalXP()).isEqualTo(1050L);
-        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(2);
+        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(5);
         assertThat(LevelUtils.calculateCurrentLevelXP(result.getTotalXP())).isEqualTo(50L);
     }
 

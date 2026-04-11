@@ -42,25 +42,43 @@ public class UserProgress {
     private Topic topic;
 
     @Column(name = "total_xp", nullable = false)
+    @Builder.Default
     private Long totalXP = 0L;
 
     @Column(name = "completed_lessons", nullable = false)
+    @Builder.Default
     private Integer completedLessons = 0;
 
     @Column(name = "completion_percentage", nullable = false)
+    @Builder.Default
     private Double completionPercentage = 0.0;
 
     @Column(name = "correct_answers", nullable = false)
+    @Builder.Default
     private Integer correctAnswers = 0;
 
     @Column(name = "total_answers", nullable = false)
+    @Builder.Default
     private Integer totalAnswers = 0;
 
     @Column(name = "accuracy", nullable = false)
+    @Builder.Default
     private Double accuracy = 0.0; 
 
     @Column(name = "study_streak", nullable = false)
+    @Builder.Default
     private Integer studyStreak = 0; 
+
+    @Column(name = "exam_passed", nullable = false)
+    @Builder.Default
+    private Boolean examPassed = false;
+
+    @Column(name = "best_exam_score")
+    private Double bestExamScore;
+
+    @Builder.Default
+    @Column(name = "exam_attempts", nullable = false, columnDefinition = "int default 0")
+    private Integer examAttempts = 0;
 
     @Column(name = "last_studied_at")
     private LocalDateTime lastStudiedAt;

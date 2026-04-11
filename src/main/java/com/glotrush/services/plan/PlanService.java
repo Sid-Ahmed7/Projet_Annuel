@@ -1,11 +1,9 @@
 package com.glotrush.services.plan;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.PlanBuilder;
@@ -16,6 +14,7 @@ import com.glotrush.entities.Plan;
 import com.glotrush.enumerations.PaymentInterval;
 import com.glotrush.exceptions.PlanNotFoundException;
 import com.glotrush.repositories.PlanRepository;
+import com.glotrush.utils.LocaleUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,10 +25,6 @@ public class PlanService implements IPlanService {
     private final PlanRepository planRepository;
     private final PlanBuilder planBuilder;
     private final MessageSource messageSource;
-
-    protected Locale getCurrenLocale() {
-        return LocaleContextHolder.getLocale();
-    }
 
     @Override
     public PlanResponse createPlan(CreatePlanRequest request) {
@@ -102,7 +97,7 @@ public class PlanService implements IPlanService {
     public Plan getPlanById(UUID planId) {
         return planRepository.findById(planId)
         .orElseThrow(() -> new PlanNotFoundException(
-            messageSource.getMessage("error.plan.notfound",null, getCurrenLocale())
+            messageSource.getMessage("error.plan.notfound",null, LocaleUtils.getCurrentLocale())
         ));
     }
    

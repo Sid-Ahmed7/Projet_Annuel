@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.glotrush.config.FileStorageConfig;
+import com.glotrush.constants.ImageConstants;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.exceptions.InvalidPathException;
 import com.glotrush.exceptions.InvalidUploadException;
@@ -29,8 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class ProfileService implements IProfileService {
     
-    private static final Long MAX_FILE_SIZE = 2 * 1024 * 1024L; 
-    private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "webp");
+    private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(ImageConstants.EXTENSIONS.split(","));
 
     private final FileStorageConfig fileStorageConfig;
     private final MessageSource messageSource;
@@ -94,7 +94,7 @@ public class ProfileService implements IProfileService {
             throw new InvalidUploadException(messageSource.getMessage("image.empty", null, LocaleUtils.getCurrentLocale()));
         }
 
-        if(file.getSize() > MAX_FILE_SIZE) {
+        if(file.getSize() > ImageConstants.MAX_FILE_SIZE) {
             throw new InvalidUploadException(messageSource.getMessage("image.tooLarge", null, LocaleUtils.getCurrentLocale()));
         }
         

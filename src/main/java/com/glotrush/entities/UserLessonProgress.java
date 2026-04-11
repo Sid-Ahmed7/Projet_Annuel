@@ -3,6 +3,7 @@ package com.glotrush.entities;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.glotrush.enumerations.DifficultyFeedback;
 import com.glotrush.enumerations.LessonStatus;
 
 import jakarta.persistence.Column;
@@ -48,18 +49,19 @@ public class UserLessonProgress {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @Builder.Default
     private LessonStatus status = LessonStatus.NOT_STARTED;
 
     @Column(name = "total_attempts", nullable = false)
+    @Builder.Default
     private Integer totalAttempts = 0;
 
-    @Column(name = "failed_attempts", nullable = false)
-    private Integer failedAttempts = 0;
-
-    @Column(name = "score")
-    private Double score; 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_feedback")
+    private DifficultyFeedback userFeedback;
 
     @Column(name = "time_spent_seconds")
+    @Builder.Default
     private Integer timeSpentSeconds = 0;
 
     @Column(name = "last_attempt_at")

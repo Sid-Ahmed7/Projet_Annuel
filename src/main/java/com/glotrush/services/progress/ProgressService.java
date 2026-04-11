@@ -2,21 +2,32 @@ package com.glotrush.services.progress;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.ProgressBuilder;
+import com.glotrush.dto.response.LanguageLevelResponse;
+import com.glotrush.dto.response.LastLessonResponse;
 import com.glotrush.dto.response.ProgressOverviewResponse;
 import com.glotrush.dto.response.UserProgressResponse;
 import com.glotrush.entities.Accounts;
+import com.glotrush.entities.Lesson;
 import com.glotrush.entities.Topic;
+import com.glotrush.entities.UserLanguage;
+import com.glotrush.entities.UserLessonProgress;
 import com.glotrush.entities.UserProgress;
+import com.glotrush.enumerations.LanguageType;
 import com.glotrush.exceptions.ResourceNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
+import com.glotrush.repositories.UserLanguageRepository;
+import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.repositories.UserProgressRepository;
 
 import com.glotrush.utils.LevelUtils;
@@ -35,8 +46,10 @@ public class ProgressService implements IProgressService {
     private final AccountsRepository accountsRepository;
     private final ProgressBuilder progressBuilder;
     private final LessonRepository lessonRepository;
+    private final UserLessonProgressRepository userLessonProgressRepository;
+    private final UserLanguageRepository userLanguageRepository;
 
-    private static final int BASE_XP_PER_LEVEL = 1000;
+
 
     @Override
     public ProgressOverviewResponse getProgressOverview(UUID accountId) {
@@ -63,6 +76,12 @@ public class ProgressService implements IProgressService {
                 .map(progressBuilder::mapToUserProgressResponse)
                 .toList();
 
+        List<LanguageLevelResponse> progressByLanguage = getLanguageLevel(accountId);
+
+        long currentLevelXP = LevelUtils.calculateCurrentLevelXP(totalXP);
+        long nextLevelXP = LevelUtils.calculateNextLevelXP((long) overallLevel);
+        double levelProgressPercentage = LevelUtils.calculateLevelProgressPercentage(totalXP);
+
         return progressBuilder.buildProgressOverview(
                 totalXP,
                 overallLevel,
@@ -70,7 +89,12 @@ public class ProgressService implements IProgressService {
                 totalLessonsCompleted,
                 overallAccuracy,
                 currentStreak,
-                progressByTopic
+                currentLevelXP,
+                nextLevelXP,
+                levelProgressPercentage,
+                progressByTopic,
+                progressByLanguage
+
         );
     }
 
@@ -108,6 +132,8 @@ public class ProgressService implements IProgressService {
                             .totalAnswers(0)
                             .accuracy(0.0)
                             .studyStreak(0)
+                            .examPassed(false)
+                            .examAttempts(0)
                             .build();
 
                     return userProgressRepository.save(newProgress);
@@ -151,4 +177,85 @@ public class ProgressService implements IProgressService {
         progress.setLastStudiedAt(LocalDateTime.now());
         return userProgressRepository.save(progress);
     }
+
+    @Override
+    public List<LanguageLevelResponse> getLanguageLevel(UUID accountId) {
+        List<UserLanguage> userLanguages = userLanguageRepository
+                .findByAccount_IdAndLanguageType(accountId, LanguageType.LEARNING);
+
+        List<UserProgress> allProgress = userProgressRepository.findByAccount_Id(accountId);
+        Map<UUID, Long> xpByLanguage = allProgress.stream().collect(Collectors.groupingBy(
+                        p -> p.getTopic().getLanguage().getId(),
+                        Collectors.summingLong(UserProgress::getTotalXP)
+                ));
+
+        return userLanguages.stream().map(ul -> {
+            UUID languageId = ul.getLanguage().getId();
+            Long totalXP = xpByLanguage.getOrDefault(languageId, 0L);
+            Integer level = LevelUtils.calculateLevel(totalXP);
+
+            return LanguageLevelResponse.builder()
+                    .languageId(languageId)
+                    .languageName(ul.getLanguage().getName())
+                    .languageCode(ul.getLanguage().getCode())
+                    .level(level)
+                    .totalXP(totalXP)
+                    .currentLevelXP(LevelUtils.calculateCurrentLevelXP(totalXP))
+                    .nextLevelXP(LevelUtils.calculateNextLevelXP((long) level))
+                    .levelProgressPercentage(LevelUtils.calculateLevelProgressPercentage(totalXP))
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+
+    @Override
+    public Optional<LastLessonResponse> getLastStudiedLesson(UUID accountId) {
+      Optional<UserLessonProgress> lastAttempt = userLessonProgressRepository.findLastAttemptByAccountId(accountId);
+      if(lastAttempt.isEmpty()) {
+        return Optional.empty();
+      }
+      Topic lastTopic = lastAttempt.get().getLesson().getTopic();
+      UUID lanaguageId = lastTopic.getLanguage().getId();
+
+      Optional<Lesson> nextLessonUnCompleted = lessonRepository.findFirstUncompletedLessonInTopic(accountId, lastTopic.getId());
+      Lesson nextLesson = null;
+
+      if(nextLessonUnCompleted.isPresent()) {
+        nextLesson = nextLessonUnCompleted.get();
+      } else {
+        List<Topic> topicsInLanguage = topicRepository.findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(lanaguageId);
+
+        for(Topic topic : topicsInLanguage) {
+            if(topic.getOrderIndex() <= lastTopic.getOrderIndex()) {
+                continue;
+            }
+
+            Optional<Lesson> unCompletedLesson = lessonRepository.findFirstUncompletedLessonInTopic(accountId, topic.getId());
+            if(unCompletedLesson.isPresent()) {
+                nextLesson = unCompletedLesson.get();
+                break;
+            }
+        }
+      }
+      if(nextLesson == null) {
+        return Optional.empty();    
+      }
+      Topic topic = nextLesson.getTopic();
+      Integer completedCount = userLessonProgressRepository.countCompletedByAccountAndTopic(accountId, topic.getId());
+      Integer totalLessons = lessonRepository.countByTopic_Id(topic.getId());
+
+        return Optional.of(LastLessonResponse.builder()
+            .lessonId(nextLesson.getId())
+            .lessonName(nextLesson.getTitle())
+            .lessonType(nextLesson.getLessonType())
+            .xpReward(nextLesson.getXpReward())
+            .topicId(topic.getId())
+            .topicName(topic.getName())
+            .languageName(topic.getLanguage().getName())
+            .languageCode(topic.getLanguage().getCode())
+            .completionCount(completedCount)
+            .totalLessonsInTopic(totalLessons)
+            .build());
+
+        }
 }

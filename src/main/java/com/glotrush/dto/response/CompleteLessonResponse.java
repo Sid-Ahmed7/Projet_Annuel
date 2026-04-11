@@ -17,5 +17,5 @@ public class CompleteLessonResponse {
     private Integer currentLevel;
     private Boolean leveledUp;
     private Integer newLevel;
-    private UserProgressResponse progress; 
+    private UserProgressResponse progress;
 }

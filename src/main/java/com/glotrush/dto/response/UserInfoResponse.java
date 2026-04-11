@@ -19,4 +19,5 @@ public class UserInfoResponse {
     private String lastName;
     private String role;
     private Boolean has2FAEnabled;
+    private Boolean hasCompletedOnboarding;
 }

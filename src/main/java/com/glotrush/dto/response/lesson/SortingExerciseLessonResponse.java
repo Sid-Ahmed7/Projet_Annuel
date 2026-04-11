@@ -1,6 +1,5 @@
 package com.glotrush.dto.response.lesson;
 
-import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.dto.response.exercice.SortingExerciseResponse;
 import lombok.Data;

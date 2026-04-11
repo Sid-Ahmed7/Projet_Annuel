@@ -7,13 +7,13 @@ import lombok.Data;
 @Data
 public class AdminLoginRequest {
     
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "{error.email.required}")
+    @Email(message = "{error.email.invalid}")
     private String email;
 
-    @NotBlank(message = "Password is required")
+    @NotBlank(message = "{error.password.required}")
     private String password;
 
-    @NotBlank(message = "Auth key is required")
+    @NotBlank(message = "{error.authKey.required}")
     private String secretKey;
 }

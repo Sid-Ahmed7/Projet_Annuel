@@ -1,7 +1,6 @@
 package com.glotrush.entities.lesson;
 
 import com.glotrush.entities.Lesson;
-import com.glotrush.entities.exercice.QcmQuestionEntity;
 import com.glotrush.entities.exercice.SortingExerciseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;

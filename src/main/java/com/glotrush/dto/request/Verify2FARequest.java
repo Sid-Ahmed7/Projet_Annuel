@@ -12,10 +12,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Verify2FARequest {
-    @NotBlank(message = "Temporary user ID is required")
+    @NotBlank(message = "{error.tempUserId.required}")
     private String tempUserId;
 
-    @NotBlank(message = "2FA code is required")
-    @Size(min = 6, max = 6, message = "2FA code must be 6 digits")
+    @NotBlank(message = "{error.2faCode.required}")
+    @Size(min = 6, max = 6, message = "{error.2faCode.length}")
     private String code;
 }

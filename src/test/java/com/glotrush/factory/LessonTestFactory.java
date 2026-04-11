@@ -47,7 +47,6 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
-                .passScorePercentage(70)
                 .isActive(true)
                 .flashcards(new ArrayList<>())
                 .build();
@@ -61,7 +60,6 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
-                .passScorePercentage(70)
                 .isActive(true)
                 .flashcards(new ArrayList<>())
                 .lessonType(LessonType.FLASHCARD)
@@ -77,7 +75,6 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
-                .passScorePercentage(70)
                 .isActive(true)
                 .matchingPairs(new ArrayList<>())
                 .build();
@@ -91,7 +88,6 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
-                .passScorePercentage(70)
                 .isActive(true)
                 .matchingPairs(new ArrayList<>())
                 .lessonType(LessonType.MATCHING_PAIR)
@@ -107,7 +103,6 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
-                .passScorePercentage(70)
                 .isActive(true)
                 .questions(new ArrayList<>())
                 .build();
@@ -121,7 +116,6 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
-                .passScorePercentage(70)
                 .isActive(true)
                 .questions(new ArrayList<>())
                 .lessonType(LessonType.QCM)
@@ -137,7 +131,6 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
-                .passScorePercentage(70)
                 .isActive(true)
                 .sortingExercise(new ArrayList<>())
                 .build();
@@ -151,7 +144,6 @@ public class LessonTestFactory {
                 .xpReward(50)
                 .minLevelRequired(1)
                 .durationMinutes(15)
-                .passScorePercentage(70)
                 .isActive(true)
                 .sortingExercise(new ArrayList<>())
                 .lessonType(LessonType.SORTING_EXERCISE)

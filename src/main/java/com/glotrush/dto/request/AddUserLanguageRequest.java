@@ -16,13 +16,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AddUserLanguageRequest {
-    @NotNull(message = "Language ID is required")
+    @NotNull(message = "{error.languageId.required}")
     private UUID languageId;
 
-    @NotNull(message = "Language type is required")
+    @NotNull(message = "{error.languageType.required}")
     private LanguageType languageType;
 
     private ProficiencyLevel proficiencyLevel;
-
-    private Boolean isPrimary = false;
 }

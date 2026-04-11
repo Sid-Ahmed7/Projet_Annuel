@@ -42,6 +42,8 @@ import com.glotrush.factory.LessonTestFactory;
 import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.LessonResponse;
+import com.glotrush.dto.response.LessonSummaryResponse;
+import com.glotrush.dto.response.TopicLessonsResponse;
 import com.glotrush.dto.response.UserLessonProgressSummary;
 import com.glotrush.dto.response.UserProgressResponse;
 import com.glotrush.entities.Accounts;
@@ -126,8 +128,8 @@ class LessonServiceTest {
                 .orderIndex(1)
                 .isActive(true)
                 .minLevelRequired(1)
+                .minScoreRequired(70)
                 .durationMinutes(15)
-                .passScorePercentage(70)
                 .build();
 
         userLessonProgress = UserLessonProgress.builder()
@@ -136,8 +138,6 @@ class LessonServiceTest {
                 .lesson(lesson)
                 .status(LessonStatus.NOT_STARTED)
                 .totalAttempts(0)
-                .failedAttempts(0)
-                .score(20.00)
                 .timeSpentSeconds(0)
                 .build();
     }
@@ -146,22 +146,49 @@ class LessonServiceTest {
     @Test
     @DisplayName("Should return all active lessons for topic")
     void shouldGetLessonsByTopic() {
-        LessonResponse expectedResponse = LessonResponse.builder()
+        LessonSummaryResponse expectedResponse = LessonSummaryResponse.builder()
                 .id(lessonId)
                 .title("Introduction to Spring")
+                .isAlreadyFinish(false)
                 .build();
 
         when(lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId))
                 .thenReturn(List.of(lesson));
-        when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(eq(lesson), any()))
+        when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
+                .thenReturn(Optional.empty());
+        when(lessonEntityToLessonResponse.lessonToLessonSummaryResponse(eq(lesson), eq(false)))
                 .thenReturn(expectedResponse);
 
-        List<LessonResponse> result = lessonService.getLessonsByTopic(topicId, accountId);
+        List<LessonSummaryResponse> result = lessonService.getLessonsByTopic(topicId, accountId);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getTitle()).isEqualTo("Introduction to Spring");
+        assertThat(result.get(0).getIsAlreadyFinish()).isFalse();
 
         verify(lessonRepository).findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId);
+    }
+
+    @Test
+    @DisplayName("Should return lessons with isAlreadyFinish true when attempts > 0")
+    void shouldGetLessonsByTopicWithAlreadyFinished() {
+        userLessonProgress.setTotalAttempts(1);
+        LessonSummaryResponse expectedResponse = LessonSummaryResponse.builder()
+                .id(lessonId)
+                .title("Introduction to Spring")
+                .isAlreadyFinish(true)
+                .build();
+
+        when(lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId))
+                .thenReturn(List.of(lesson));
+        when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
+                .thenReturn(Optional.of(userLessonProgress));
+        when(lessonEntityToLessonResponse.lessonToLessonSummaryResponse(eq(lesson), eq(true)))
+                .thenReturn(expectedResponse);
+
+        List<LessonSummaryResponse> result = lessonService.getLessonsByTopic(topicId, accountId);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getIsAlreadyFinish()).isTrue();
     }
 
     @Test
@@ -170,9 +197,60 @@ class LessonServiceTest {
         when(lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId))
                 .thenReturn(Collections.emptyList());
 
-        List<LessonResponse> result = lessonService.getLessonsByTopic(topicId, accountId);
+        List<LessonSummaryResponse> result = lessonService.getLessonsByTopic(topicId, accountId);
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Should return topic lessons details")
+    void shouldGetTopicLessonsDetails() {
+        Topic topic = Topic.builder()
+                .id(topicId)
+                .name("Spring Basics")
+                .build();
+
+        LessonSummaryResponse lessonSummary = LessonSummaryResponse.builder()
+                .id(lessonId)
+                .title("Introduction to Spring")
+                .isAlreadyFinish(true)
+                .build();
+
+        UserProgress progress = UserProgress.builder()
+                .examPassed(true)
+                .examAttempts(3)
+                .bestExamScore(85.0)
+                .build();
+
+        when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
+        when(lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId)).thenReturn(List.of(lesson));
+        when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
+                .thenReturn(Optional.of(UserLessonProgress.builder().totalAttempts(1).build()));
+        when(lessonEntityToLessonResponse.lessonToLessonSummaryResponse(eq(lesson), eq(true)))
+                .thenReturn(lessonSummary);
+        when(progressService.getOrCreateProgress(accountId, topicId)).thenReturn(progress);
+
+        TopicLessonsResponse result = lessonService.getTopicLessonsDetails(topicId, accountId);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getTopicTitle()).isEqualTo("Spring Basics");
+        assertThat(result.getLessons()).hasSize(1);
+        assertThat(result.getExamPassed()).isTrue();
+        assertThat(result.getExamAttempts()).isEqualTo(3);
+        assertThat(result.getLastAccuracy()).isEqualTo(0.85);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when topic not found on topic lessons details")
+    void shouldThrowExceptionWhenTopicNotFoundOnTopicLessonsDetails() {
+        when(topicRepository.findById(topicId)).thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("error.topic.notfound"), isNull(), any(Locale.class))).thenReturn("Topic not found");
+
+        assertThatThrownBy(() -> lessonService.getTopicLessonsDetails(topicId, accountId))
+                .isInstanceOf(TopicNotFoundException.class)
+                .hasMessage("Topic not found");
+
+        verify(topicRepository).findById(topicId);
     }
 
     @Test
@@ -215,7 +293,6 @@ class LessonServiceTest {
         UserLessonProgressSummary expectedSummary = UserLessonProgressSummary.builder()
                 .status(LessonStatus.IN_PROGRESS)
                 .totalAttempts(0)
-                .failedAttempts(0)
                 .build();
 
         when(accountsRepository.findById(accountId)).thenReturn(Optional.of(account));
@@ -288,7 +365,6 @@ class LessonServiceTest {
     @DisplayName("Should complete lesson first time and award XP")
     void shouldCompleteLessonFirstTimeAndAwardXP() {
         CompleteLessonRequest request = new CompleteLessonRequest();
-        request.setScore(85.00);
         request.setTimeSpentSeconds(600);
 
         userLessonProgress.setStatus(LessonStatus.IN_PROGRESS);
@@ -313,7 +389,7 @@ class LessonServiceTest {
         when(progressService.incrementLessonCompletion(accountId, topicId)).thenReturn(topicProgress);
         when(progressService.updateLastStudiedAt(accountId, topicId)).thenReturn(topicProgress);
         when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(progressResponse);
-        when(lessonBuilder.buildCompleteLessonResponse(eq(false), eq(50), any(), any(), eq(1)))
+        when(lessonBuilder.buildCompleteLessonResponse(eq(false), eq(50), any(), any()))
                 .thenReturn(expectedResponse);
 
         CompleteLessonResponse result = lessonService.completeLesson(accountId, lessonId, request);
@@ -322,7 +398,6 @@ class LessonServiceTest {
         assertThat(result.getXpEarned()).isEqualTo(50);
         assertThat(userLessonProgress.getStatus()).isEqualTo(LessonStatus.COMPLETED);
         assertThat(userLessonProgress.getTotalAttempts()).isEqualTo(1);
-        assertThat(userLessonProgress.getFailedAttempts()).isEqualTo(0);
 
         verify(userLessonProgressRepository).save(any(UserLessonProgress.class));
         verify(progressService).addXP(accountId, topicId, 50);
@@ -334,8 +409,9 @@ class LessonServiceTest {
     @DisplayName("Should fail to complete lesson when score is too low")
     void shouldFailToCompleteLessonWhenScoreIsLow() {
         CompleteLessonRequest request = new CompleteLessonRequest();
-        request.setScore(50.00); // 50 < 70 (passScorePercentage)
         request.setTimeSpentSeconds(600);
+        request.setCorrectAnswers(5);
+        request.setTotalAnswers(10); // 50% score, below default 70%
 
         userLessonProgress.setStatus(LessonStatus.IN_PROGRESS);
 
@@ -343,6 +419,8 @@ class LessonServiceTest {
         when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
                 .thenReturn(Optional.of(userLessonProgress));
         when(messageSource.getMessage(eq("error.lesson.failed"), isNull(), any(Locale.class))).thenReturn("Lesson failed");
+        when(progressService.getOrCreateProgress(accountId, topicId)).thenReturn(UserProgress.builder().totalXP(0L).build());
+        when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(new UserProgressResponse());
 
         CompleteLessonResponse result = lessonService.completeLesson(accountId, lessonId, request);
 
@@ -351,9 +429,9 @@ class LessonServiceTest {
         assertThat(result.getXpEarned()).isEqualTo(0);
         assertThat(userLessonProgress.getStatus()).isEqualTo(LessonStatus.IN_PROGRESS);
         assertThat(userLessonProgress.getTotalAttempts()).isEqualTo(1);
-        assertThat(userLessonProgress.getFailedAttempts()).isEqualTo(1);
 
         verify(userLessonProgressRepository).save(any(UserLessonProgress.class));
+        verify(progressService).updateAnswerStats(accountId, topicId, 5, 10);
         verify(progressService, never()).addXP(any(), any(), any());
     }
 
@@ -361,7 +439,6 @@ class LessonServiceTest {
     @DisplayName("Should complete lesson with level up")
     void shouldCompleteLessonWithLevelUp() {
         CompleteLessonRequest request = new CompleteLessonRequest();
-        request.setScore(100.00);
         request.setTimeSpentSeconds(600);
 
         userLessonProgress.setStatus(LessonStatus.IN_PROGRESS);
@@ -380,7 +457,7 @@ class LessonServiceTest {
                 .success(true)
                 .xpEarned(50)
                 .leveledUp(true)
-                .newLevel(2)
+                .newLevel(5)
                 .build();
 
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
@@ -391,29 +468,27 @@ class LessonServiceTest {
         when(progressService.addXP(accountId, topicId, 50)).thenReturn(topicProgressAfter);
         when(progressService.incrementLessonCompletion(accountId, topicId)).thenReturn(topicProgressAfter);
         when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(progressResponse);
-        when(lessonBuilder.buildCompleteLessonResponse(eq(true), eq(50), any(), any(), eq(2)))
+        when(lessonBuilder.buildCompleteLessonResponse(eq(true), eq(50), any(), any()))
                 .thenReturn(expectedResponse);
 
         CompleteLessonResponse result = lessonService.completeLesson(accountId, lessonId, request);
 
         verify(progressService).updateLastStudiedAt(accountId, topicId);
         assertThat(result.getLeveledUp()).isTrue();
-        assertThat(result.getNewLevel()).isEqualTo(2);
+        assertThat(result.getNewLevel()).isEqualTo(5);
     }
 
     @Test
     @DisplayName("Should handle lesson recompletion without XP")
     void shouldHandleLessonRecompletionWithoutXP() {
         CompleteLessonRequest request = new CompleteLessonRequest();
-        request.setScore(90.00);
         request.setTimeSpentSeconds(500);
 
         userLessonProgress.setStatus(LessonStatus.COMPLETED);
         userLessonProgress.setTotalAttempts(1);
-        userLessonProgress.setFailedAttempts(0);
-        userLessonProgress.setScore(80.0);
 
         UserProgressResponse progressResponse = new UserProgressResponse();
+        UserProgress topicProgress = new UserProgress();
 
         CompleteLessonResponse expectedResponse = CompleteLessonResponse.builder()
                 .success(true)
@@ -424,8 +499,10 @@ class LessonServiceTest {
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
         when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
                 .thenReturn(Optional.of(userLessonProgress));
+        when(progressService.getOrCreateProgress(accountId, topicId)).thenReturn(topicProgress);
         when(progressService.getProgressByTopic(accountId, topicId)).thenReturn(progressResponse);
-        when(lessonBuilder.buildRecompletedLessonResponse(any())).thenReturn(expectedResponse);
+        when(lessonBuilder.buildCompleteLessonResponse(eq(false), eq(0), eq(topicProgress), eq(progressResponse)))
+                .thenReturn(expectedResponse);
 
         CompleteLessonResponse result = lessonService.completeLesson(accountId, lessonId, request);
 

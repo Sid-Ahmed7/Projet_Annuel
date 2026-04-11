@@ -31,6 +31,7 @@ import com.glotrush.dto.response.UserProfileResponse;
 import com.glotrush.services.images.IProfileService;
 import com.glotrush.services.userprofile.IUserProfileService;
 import com.glotrush.utils.LocaleUtils;
+import com.glotrush.utils.SecurityUtils;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,14 +47,14 @@ public class ProfileController {
 
     @GetMapping
     public ResponseEntity<UserProfileResponse> getMyProfile(Authentication authentication) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         UserProfileResponse profile = profileService.getProfile(accountId);
         return ResponseEntity.ok(profile);
     }
 
     @PutMapping
     public ResponseEntity<UserProfileResponse> updateMyProfile(Authentication authentication,@Valid @RequestBody UpdateProfileRequest request) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         UserProfileResponse profile = profileService.updateProfile(accountId, request);
         return ResponseEntity.ok(profile);
     }
@@ -66,14 +67,14 @@ public class ProfileController {
 
     @PutMapping("/password")
     public ResponseEntity<ApiResponse> changePassword(Authentication authentication, @Valid @RequestBody PasswordRequest request) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         profileService.changePassword(accountId, request);
         return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("success.password.changed", null, LocaleUtils.getCurrentLocale())));
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UploadResponse> uploadProfileImage(Authentication authentication, @RequestParam("file") MultipartFile file) throws IOException {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         String imageUrl =  IMAGE_BASE_URL + profileImageService.uploadImage(accountId, file);
 
         return ResponseEntity.ok(UploadResponse.builder()
@@ -103,9 +104,17 @@ public class ProfileController {
             .body(resource);
     }
 
+
+    @PutMapping("/active-language/{languageId}")
+    public ResponseEntity<UserProfileResponse> setActiveLanguage(Authentication authentication, @PathVariable UUID languageId) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        UserProfileResponse profile = profileService.addActiveLanguage(accountId, languageId);
+        return ResponseEntity.ok(profile);
+    }
+
     @DeleteMapping("/delete/image")
     public ResponseEntity<ApiResponse> deleteProfileImage(Authentication authentication) {
-        UUID accountId = UUID.fromString(authentication.getName());
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         profileImageService.deleteImage(accountId);
         return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("success.image.deleted", null, LocaleUtils.getCurrentLocale())));
     }

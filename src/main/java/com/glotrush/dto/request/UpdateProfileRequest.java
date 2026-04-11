@@ -16,14 +16,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateProfileRequest {
 
-    @Size(max = 500, message = "Photo URL must not exceed 500 characters")
+    @Size(max = 500, message = "{error.photoUrl.maxLength}")
     private String photoUrl;
 
-    @Size(max = 500, message = "Bio must not exceed 500 characters")
+    @Size(max = 500, message = "{error.bio.maxLength}")
     private String bio;
 
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
-    @Pattern(regexp = "^[a-zA-Z0-9_.-]+$", message = "Username can only contain letters, numbers, underscores, dots and hyphens")
+    @Size(min = 3, max = 50, message = "{error.username.length}")
+    @Pattern(regexp = "^[a-zA-Z0-9_.-]+$", message = "{error.username.pattern}")
     private String username;
 
     private CountryCode countryCode;

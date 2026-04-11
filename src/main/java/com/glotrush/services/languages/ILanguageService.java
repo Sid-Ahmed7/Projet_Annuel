@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.glotrush.dto.request.LanguageRequest;
-import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.dto.response.LanguageResponse;
-import com.glotrush.dto.response.LessonResponse;
 
 public interface ILanguageService {
     List<LanguageResponse> getAllActiveLanguages();

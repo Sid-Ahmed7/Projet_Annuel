@@ -37,6 +37,7 @@ public class TwoFactorAuth {
     private String secret;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean active = false;
 
     @Column(nullable = true)
