@@ -222,4 +222,27 @@ public class LessonService implements ILessonService {
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
     }
 
+    @Override
+    public LessonResponse toggleLessonStatus(UUID lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
+
+        lesson.setIsActive(!lesson.getIsActive());
+        
+        lessonRepository.save(lesson);
+        return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
+    }
+
+    @Override
+    public List<LessonSummaryResponse> getLessonsByTopicForAdmin(UUID topicId, UUID accountId) {
+        return lessonRepository.findByTopic_IdOrderByOrderIndexAsc(topicId).stream()
+                .map(lesson -> {
+                    boolean isAlreadyFinish = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lesson.getId())
+                            .map(progress -> progress.getTotalAttempts() > 0)
+                            .orElse(false);
+                    return lessonEntityToLessonResponse.lessonToLessonSummaryResponse(lesson, isAlreadyFinish);
+                })
+                .toList();
+    }
+
 }

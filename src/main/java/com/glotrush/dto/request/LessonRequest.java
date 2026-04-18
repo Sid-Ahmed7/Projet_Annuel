@@ -44,10 +44,6 @@ public abstract class LessonRequest {
     @NotNull
     private Integer durationMinutes;
     @NotNull
-    @Min(1)
-    @Max(100)
-    private Integer passScorePercentage;
-    @NotNull
     private Boolean isActive;
     @NotNull
     private LessonType lessonType;

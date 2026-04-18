@@ -47,6 +47,7 @@ import com.glotrush.dto.response.TopicLessonsResponse;
 import com.glotrush.dto.response.UserLessonProgressSummary;
 import com.glotrush.dto.response.UserProgressResponse;
 import com.glotrush.entities.Accounts;
+import com.glotrush.entities.Lesson;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserLessonProgress;
 import com.glotrush.entities.UserProgress;
@@ -668,6 +669,64 @@ class LessonServiceTest {
         assertThatThrownBy(() -> lessonService.updateLesson(lessonId, request))
                 .isInstanceOf(LessonNotFoundException.class)
                 .hasMessage("Lesson not found");
+    }
+
+    @Test
+    @DisplayName("Should toggle lesson status successfully")
+    void shouldToggleLessonStatusSuccessfully() {
+        lesson.setIsActive(true);
+        LessonResponse expectedResponse = LessonResponse.builder().id(lessonId).isActive(false).build();
+
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
+        when(lessonRepository.save(any())).thenReturn(lesson);
+        when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
+
+        LessonResponse result = lessonService.toggleLessonStatus(lessonId);
+
+        assertThat(result.getIsActive()).isFalse();
+        assertThat(lesson.getIsActive()).isFalse();
+        verify(lessonRepository).save(lesson);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when lesson not found on toggle status")
+    void shouldThrowLessonNotFoundOnToggleStatus() {
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("error.lesson.notfound"), isNull(), any(Locale.class))).thenReturn("Lesson not found");
+
+        assertThatThrownBy(() -> lessonService.toggleLessonStatus(lessonId))
+                .isInstanceOf(LessonNotFoundException.class)
+                .hasMessage("Lesson not found");
+    }
+
+    @Test
+    @DisplayName("Should return all lessons (including inactive) for admin")
+    void shouldGetLessonsByTopicForAdmin() {
+        Lesson inactiveLesson = FlashcardLesson.builder()
+                .id(UUID.randomUUID())
+                .title("Inactive Lesson")
+                .isActive(false)
+                .build();
+
+        LessonSummaryResponse expectedActive = LessonSummaryResponse.builder().id(lessonId).title("Introduction to Spring").build();
+        LessonSummaryResponse expectedInactive = LessonSummaryResponse.builder().id(inactiveLesson.getId()).title("Inactive Lesson").build();
+
+        when(lessonRepository.findByTopic_IdOrderByOrderIndexAsc(topicId))
+                .thenReturn(List.of(lesson, inactiveLesson));
+        when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(eq(accountId), any(UUID.class)))
+                .thenReturn(Optional.empty());
+        when(lessonEntityToLessonResponse.lessonToLessonSummaryResponse(eq(lesson), eq(false)))
+                .thenReturn(expectedActive);
+        when(lessonEntityToLessonResponse.lessonToLessonSummaryResponse(eq(inactiveLesson), eq(false)))
+                .thenReturn(expectedInactive);
+
+        List<LessonSummaryResponse> result = lessonService.getLessonsByTopicForAdmin(topicId, accountId);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(LessonSummaryResponse::getTitle)
+                .containsExactly("Introduction to Spring", "Inactive Lesson");
+        
+        verify(lessonRepository).findByTopic_IdOrderByOrderIndexAsc(topicId);
     }
 }
 

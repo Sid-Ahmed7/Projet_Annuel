@@ -20,4 +20,6 @@ public interface ILessonService {
     void removeLesson(UUID lessonId);
     LessonResponse updateLesson(UUID lessonId, LessonRequest lesson);
     LessonResponse createLesson(LessonRequest lesson);
+    LessonResponse toggleLessonStatus(UUID lessonId);
+    List<LessonSummaryResponse> getLessonsByTopicForAdmin(UUID topicId, UUID accountId);
 }

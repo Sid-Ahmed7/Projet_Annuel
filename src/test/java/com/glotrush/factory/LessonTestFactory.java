@@ -31,7 +31,6 @@ public class LessonTestFactory {
         request.setXpReward(50);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(15);
-        request.setPassScorePercentage(70);
         request.setIsActive(true);
         request.setFlashcards(new ArrayList<>());
         request.setLessonType(LessonType.FLASHCARD);
@@ -158,7 +157,6 @@ public class LessonTestFactory {
         request.setXpReward(50);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(15);
-        request.setPassScorePercentage(70);
         request.setIsActive(true);
         request.setQuestions(new ArrayList<>());
         request.setLessonType(LessonType.QCM);
@@ -173,7 +171,6 @@ public class LessonTestFactory {
         request.setXpReward(50);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(15);
-        request.setPassScorePercentage(70);
         request.setIsActive(true);
         request.setMatchingPairs(new ArrayList<>());
         request.setLessonType(LessonType.MATCHING_PAIR);
@@ -188,7 +185,6 @@ public class LessonTestFactory {
         request.setXpReward(50);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(15);
-        request.setPassScorePercentage(70);
         request.setIsActive(true);
         request.setSortingExercise(new ArrayList<>());
         request.setLessonType(LessonType.SORTING_EXERCISE);

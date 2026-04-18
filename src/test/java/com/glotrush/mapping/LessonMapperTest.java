@@ -92,7 +92,6 @@ class LessonMapperTest {
         request.setIsActive(true);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(10);
-        request.setPassScorePercentage(80);
         request.setLessonType(LessonType.QCM);
 
         QcmQuestionRequest questionRequest = new QcmQuestionRequest();
