@@ -11,7 +11,7 @@ public interface ITopicReviewService {
 
     TopicReviewResponse addReview(UUID accountId, UUID topicId, TopicReviewRequest data);
     TopicReviewResponse updateReview(UUID accountId, UUID reviewId, TopicReviewRequest data);
-    void deleteReview(UUID reviewId);    
+    void deleteReview(UUID accountId, UUID reviewId);
     List<TopicReviewResponse> getAllReview();
     TopicReviewResponse getUserReview(UUID accountId, UUID topicId);
     TopicReviewsResponse getTopicReviews(UUID topicId);

@@ -61,6 +61,9 @@ public class TopicReview {
     @Builder.Default
     private ReviewStatus status = ReviewStatus.PUBLISHED;
 
+    @Column(name = "comment_score")
+    private Double commentScore;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

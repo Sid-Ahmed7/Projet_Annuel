@@ -7,6 +7,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.glotrush.constants.ApiConstants;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,10 +23,10 @@ public class ModerationService {
 
     private final RestTemplate restTemplate;
 
-    public boolean isContentToxic(String comment) {
+    public Double getToxicityScore(String comment) {
         if (comment == null || comment.isBlank()) {
             log.warn("Any comment");
-            return false;
+            return null;
         }
 
         log.info("Comment: '{}'", comment);
@@ -39,7 +41,7 @@ public class ModerationService {
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
             ResponseEntity<List> response = restTemplate.exchange(
-                "https://router.huggingface.co/hf-inference/models/unitary/multilingual-toxic-xlm-roberta",
+                ApiConstants.API_URL,
                 HttpMethod.POST,
                 request,
                 List.class
@@ -49,35 +51,22 @@ public class ModerationService {
 
             if (response.getBody() == null || response.getBody().isEmpty()) {
                 log.warn("Response is null");
-                return false;
+                return null;
             }
 
             List<Map<String, Object>> results = (List<Map<String, Object>>) response.getBody().get(0);
             if (results == null || results.isEmpty()) {
                 log.warn("No results in response");
-                return false;
+                return null;
             }
 
-            Map<String, Object> topResult = results.stream()
-                .max((a, b) -> Double.compare(
-                    ((Number) a.get("score")).doubleValue(),
-                    ((Number) b.get("score")).doubleValue()
-                ))
-                .orElse(null);
-
-            if (topResult == null) return false;
-
-            String label = (String) topResult.get("label");
-            double score = ((Number) topResult.get("score")).doubleValue();
-            log.info("Top label: {}, score: {}", label, score);
-
-            boolean flagged = "toxic".equals(label) && score > 0.7;
-            log.info("Content : {}", flagged);
-            return flagged;
+           return results.stream().filter(review -> "toxic".equals(review.get("label"))).findFirst()
+                    .map(review -> ((Number) review.get("score")).doubleValue())
+                    .orElse(null);
 
         } catch (Exception e) {
             log.error(" error: {}", e.getMessage());
-            return false;
+            return null;
         }
     }
 }

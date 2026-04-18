@@ -1,5 +1,6 @@
 package com.glotrush.repositories;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,5 +21,8 @@ public interface TopicReviewRepository extends JpaRepository<TopicReview, UUID> 
     
     Optional<TopicReview> findByIdAndAccount_Id(UUID reviewId, UUID accountId);
     Optional<TopicReview> findByAccount_IdAndTopic_Id(UUID accountId, UUID topicId);
+
+    List<TopicReview> findByStatusAndUpdatedAtBefore(ReviewStatus status, LocalDateTime lastDelay);
+
 }
     

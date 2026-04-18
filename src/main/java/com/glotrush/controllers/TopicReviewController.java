@@ -94,8 +94,9 @@ public class TopicReviewController {
 
     @DeleteMapping("/{reviewId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ApiResponse> deleteReview(@PathVariable UUID reviewId) {
-        topicReviewService.deleteReview(reviewId);
-        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info_review_delete_success", null, LocaleUtils.getCurrentLocale())));
+    public ResponseEntity<ApiResponse> deleteReview(Authentication authentication, @PathVariable UUID reviewId) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        topicReviewService.deleteReview(accountId, reviewId);
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.review.delete_success", null, LocaleUtils.getCurrentLocale())));
     }
 }

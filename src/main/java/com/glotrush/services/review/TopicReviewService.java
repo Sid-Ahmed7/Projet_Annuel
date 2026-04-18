@@ -7,6 +7,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.TopicReviewBuilder;
+import com.glotrush.constants.ApiConstants;
 import com.glotrush.constants.TopicConstants;
 import com.glotrush.dto.request.TopicReviewRequest;
 import com.glotrush.dto.response.TopicReviewResponse;
@@ -16,6 +17,7 @@ import com.glotrush.entities.Topic;
 import com.glotrush.entities.TopicReview;
 import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.enumerations.ReviewStatus;
+import com.glotrush.enumerations.UserRole;
 import com.glotrush.exceptions.ReviewAlreadyExistsException;
 import com.glotrush.exceptions.ReviewBannedException;
 import com.glotrush.exceptions.ReviewNotAllowedException;
@@ -27,11 +29,15 @@ import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.TopicReviewRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
+import com.glotrush.services.EmailService;
 import com.glotrush.services.moderation.ModerationService;
+import com.glotrush.services.notifications.NotificationService;
 import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +51,8 @@ public class TopicReviewService implements ITopicReviewService {
     private final UserLessonProgressRepository userLessonProgressRepository;
     private final TopicReviewBuilder topicReviewBuilder;
     private final ModerationService moderationService;
+    private final NotificationService notificationService;
+    private final EmailService emailService;
     private final MessageSource messageSource;
 
 
@@ -68,7 +76,9 @@ public class TopicReviewService implements ITopicReviewService {
             throw new ReviewNotAllowedException(messageSource.getMessage("error.review.not_allowed", null, LocaleUtils.getCurrentLocale()));
         }
 
-        boolean flagged = moderationService.isContentToxic(data.getComment());
+        Double scoreComment = moderationService.getToxicityScore(data.getComment());
+        boolean flagged = scoreComment != null && scoreComment > ApiConstants.MAX_SCORE;
+        
         ReviewStatus status = flagged ? ReviewStatus.PENDING : ReviewStatus.PUBLISHED;
         
         TopicReview review = TopicReview.builder()
@@ -77,13 +87,22 @@ public class TopicReviewService implements ITopicReviewService {
                 .rating(data.getRating())
                 .comment(data.getComment())
                 .status(status)
+                .commentScore(scoreComment)
                 .build();
 
-        // if(flagged) {
-        //     String warningMessage = messageSource.getMessage("warning.review.flagged", null, LocaleUtils.getCurrentLocale());
-        // }
+        topicReviewRepository.save(review);
+        
+        if(flagged) {
+            String warningMessage = messageSource.getMessage("warning.review.flagged", null, LocaleUtils.getCurrentLocale());
+            String message = messageSource.getMessage("info.review.flagged", null, LocaleUtils.getCurrentLocale());
+            notificationService.sendNotification(accountId, "REVIEW_PENDING", warningMessage);
+            List<Accounts> admins = accountsRepository.findByRole(UserRole.ADMIN);
+            admins.forEach(admin -> 
+                notificationService.sendNotification(admin.getId(),"NEW_PENDING_REVIEW", message));
+        
+        }
 
-        return topicReviewBuilder.buildTopicReviewResponse(topicReviewRepository.save(review));
+        return topicReviewBuilder.buildTopicReviewResponse(review);
     }
 
 
@@ -91,23 +110,34 @@ public class TopicReviewService implements ITopicReviewService {
     public TopicReviewResponse updateReview(UUID accountId, UUID reviewId, TopicReviewRequest data) {
         TopicReview review = topicReviewRepository.findByIdAndAccount_Id(reviewId, accountId).orElseThrow(() -> new ReviewNotFoundException(messageSource.getMessage("error.review.not_found", null, LocaleUtils.getCurrentLocale())));
         
-        boolean flagged = moderationService.isContentToxic(data.getComment());
+        Double scoreComment = moderationService.getToxicityScore(data.getComment());
+
+        boolean flagged = scoreComment != null && scoreComment > ApiConstants.MAX_SCORE;
         ReviewStatus status = flagged ? ReviewStatus.PENDING : ReviewStatus.PUBLISHED;
 
         review.setRating(data.getRating());
         review.setComment(data.getComment());
         review.setStatus(status);
+        review.setCommentScore(scoreComment);
+        topicReviewRepository.save(review);
 
-        return topicReviewBuilder.buildTopicReviewResponse(topicReviewRepository.save(review));
+        if(flagged) {
+            String warningMessage = messageSource.getMessage("warning.review.flagged", null, LocaleUtils.getCurrentLocale());
+            String message = messageSource.getMessage("info.review.flagged", null, LocaleUtils.getCurrentLocale());
+            notificationService.sendNotification(accountId, "REVIEW_PENDING", warningMessage);
+            List<Accounts> admins = accountsRepository.findByRole(UserRole.ADMIN);
+            admins.forEach(admin -> 
+                notificationService.sendNotification(admin.getId(),"NEW_PENDING_REVIEW", message)); 
+        }   
+        return topicReviewBuilder.buildTopicReviewResponse(review);
     }
 
 
     @Override
-    public void deleteReview(UUID reviewId) {
-        if(!topicReviewRepository.existsById(reviewId)) {
-            throw new ReviewNotFoundException(messageSource.getMessage("error.review.not_found", null, LocaleUtils.getCurrentLocale()));
-        }
-        topicReviewRepository.deleteById(reviewId);
+    public void deleteReview(UUID accountId, UUID reviewId) {
+        TopicReview review = topicReviewRepository.findByIdAndAccount_Id(reviewId, accountId)
+                .orElseThrow(() -> new ReviewNotFoundException(messageSource.getMessage("error.review.not_found", null, LocaleUtils.getCurrentLocale())));
+        topicReviewRepository.delete(review);
     }
 
 
@@ -140,6 +170,17 @@ public class TopicReviewService implements ITopicReviewService {
         review.setStatus(ReviewStatus.PUBLISHED);
         topicReviewRepository.save(review);
 
+        UUID accountId = review.getAccount().getId();
+        String msg = messageSource.getMessage("info.review.approved", null, LocaleUtils.getCurrentLocale());
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                notificationService.sendNotification(accountId, "REVIEW_APPROVED", msg);
+            }
+        });
+        emailService.sendReviewApprovedEmail(
+                review.getAccount().getEmail(), review.getAccount().getUsername(),
+                review.getTopic().getName());
         return topicReviewBuilder.buildTopicReviewResponse(review);
     }
 
@@ -153,12 +194,28 @@ public class TopicReviewService implements ITopicReviewService {
         int nbRejectedCount = account.getRejectedReviewCount() + 1;
         account.setRejectedReviewCount(nbRejectedCount);
 
+        UUID rejectedAccountId = account.getId();
+        String notifType;
+        String notifMsg;
+
         if(nbRejectedCount >= TopicConstants.LIMIT_REJECTED_REVIEWS) {
             account.setIsBannedOfReview(true);
             accountsRepository.save(account);
+            notifType = "REVIEW_BANNED";
+            notifMsg = messageSource.getMessage("error.review.banned", null, LocaleUtils.getCurrentLocale());
+            emailService.sendReviewBannedEmail(account.getEmail(), account.getUsername());
         } else {
             accountsRepository.save(account);
+            notifType = "REVIEW_REJECTED";
+            notifMsg = messageSource.getMessage("info.review.rejected", null, LocaleUtils.getCurrentLocale());
+            emailService.sendReviewRejectedEmail(account.getEmail(), account.getUsername(), review.getTopic().getName(), nbRejectedCount);
         }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                notificationService.sendNotification(rejectedAccountId, notifType, notifMsg);
+            }
+        });
     }
 
 
