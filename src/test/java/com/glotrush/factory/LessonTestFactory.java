@@ -27,7 +27,6 @@ public class LessonTestFactory {
         request.setTopicId(topicId);
         request.setTitle(title);
         request.setDescription("Description");
-        request.setOrderIndex(1);
         request.setXpReward(50);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(15);
@@ -153,7 +152,6 @@ public class LessonTestFactory {
         request.setTopicId(topicId);
         request.setTitle(title);
         request.setDescription("Description");
-        request.setOrderIndex(1);
         request.setXpReward(50);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(15);
@@ -167,7 +165,6 @@ public class LessonTestFactory {
         request.setTopicId(topicId);
         request.setTitle(title);
         request.setDescription("Description");
-        request.setOrderIndex(1);
         request.setXpReward(50);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(15);
@@ -181,7 +178,6 @@ public class LessonTestFactory {
         request.setTopicId(topicId);
         request.setTitle(title);
         request.setDescription("Description");
-        request.setOrderIndex(1);
         request.setXpReward(50);
         request.setMinLevelRequired(1);
         request.setDurationMinutes(15);

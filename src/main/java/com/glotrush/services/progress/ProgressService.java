@@ -215,7 +215,7 @@ public class ProgressService implements IProgressService {
         return Optional.empty();
       }
       Topic lastTopic = lastAttempt.get().getLesson().getTopic();
-      UUID lanaguageId = lastTopic.getLanguage().getId();
+      UUID languageId = lastTopic.getLanguage().getId();
 
       Optional<Lesson> nextLessonUnCompleted = lessonRepository.findFirstUncompletedLessonInTopic(accountId, lastTopic.getId());
       Lesson nextLesson = null;
@@ -223,17 +223,24 @@ public class ProgressService implements IProgressService {
       if(nextLessonUnCompleted.isPresent()) {
         nextLesson = nextLessonUnCompleted.get();
       } else {
-        List<Topic> topicsInLanguage = topicRepository.findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(lanaguageId);
+        List<Topic> topicsInLanguage = topicRepository.findByLanguage_IdAndIsActiveTrueOrderByDifficultyAscNameAsc(languageId);
 
-        for(Topic topic : topicsInLanguage) {
-            if(topic.getOrderIndex() <= lastTopic.getOrderIndex()) {
-                continue;
-            }
-
-            Optional<Lesson> unCompletedLesson = lessonRepository.findFirstUncompletedLessonInTopic(accountId, topic.getId());
-            if(unCompletedLesson.isPresent()) {
-                nextLesson = unCompletedLesson.get();
+        int currentTopicIndex = -1;
+        for (int i = 0; i < topicsInLanguage.size(); i++) {
+            if (topicsInLanguage.get(i).getId().equals(lastTopic.getId())) {
+                currentTopicIndex = i;
                 break;
+            }
+        }
+
+        if (currentTopicIndex != -1) {
+            for (int i = currentTopicIndex + 1; i < topicsInLanguage.size(); i++) {
+                Topic nextTopic = topicsInLanguage.get(i);
+                Optional<Lesson> unCompletedLesson = lessonRepository.findFirstUncompletedLessonInTopic(accountId, nextTopic.getId());
+                if (unCompletedLesson.isPresent()) {
+                    nextLesson = unCompletedLesson.get();
+                    break;
+                }
             }
         }
       }

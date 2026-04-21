@@ -208,7 +208,7 @@ class TopicServiceTest {
                 .name("Basics Course")
                 .build();
 
-        when(topicRepository.findByIsActiveTrueOrderByOrderIndexAsc()).thenReturn(List.of(topic));
+        when(topicRepository.findByIsActiveTrueOrderByDifficultyAscNameAsc()).thenReturn(List.of(topic));
         when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId))
                 .thenReturn(Optional.empty());
         when(topicBuilder.mapToTopicResponse(eq(topic), eq(Optional.empty()))).thenReturn(expectedResponse);

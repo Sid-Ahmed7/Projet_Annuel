@@ -87,7 +87,6 @@ class LessonMapperTest {
         request.setTopicId(topicId);
         request.setTitle("QCM Title");
         request.setDescription("QCM Description");
-        request.setOrderIndex(1);
         request.setXpReward(15);
         request.setIsActive(true);
         request.setMinLevelRequired(1);
