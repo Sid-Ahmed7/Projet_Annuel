@@ -69,7 +69,7 @@ public class LanguageService implements ILanguageService {
     @Override
     @Transactional
     public List<LanguageResponse> getAllActiveLanguages() {
-        return languageRepository.findByIsActiveTrueOrderByOrderIndexAsc().stream()
+        return languageRepository.findByIsActiveTrueOrderByNameAsc().stream()
                 .map(this::getLanguageDetails)
                 .toList();
     }
@@ -116,36 +116,9 @@ public class LanguageService implements ILanguageService {
 
     @Override
     public LanguageResponse createLanguage(LanguageRequest languageRequest) {
-        Integer maxOrderIndex = languageRepository.findMaxOrderIndex();
-        
         Language language = languageMapper.mapLanguageRequestToMapLanguageEntities(languageRequest);
-        language.setOrderIndex(maxOrderIndex + 1);
         
         languageRepository.save(language);
         return languageMapper.mapLanguageEntitiesToLanguageResponse(language);
-    }
-
-    @Override
-    @Transactional
-    public void reorderLanguages(List<LessonReorderRequest> requests) {
-        List<Language> allLanguages = languageRepository.findAll();
-        Map<UUID, Language> languageMap = allLanguages.stream()
-                .collect(Collectors.toMap(Language::getId, lang -> lang));
-
-        for (LessonReorderRequest request : requests) {
-            Language language = languageMap.get(request.id());
-            if (language != null) {
-                language.setOrderIndex(request.newOrderIndex());
-            }
-        }
-
-        allLanguages.sort(Comparator.comparing(Language::getOrderIndex)
-                .thenComparing(Language::getId));
-
-        for (int index = 0; index < allLanguages.size(); index++) {
-            allLanguages.get(index).setOrderIndex(index);
-        }
-
-        languageRepository.saveAll(allLanguages);
     }
 }

@@ -111,7 +111,7 @@ public class LessonController {
         return ResponseEntity.ok(lessons);
     }
 
-    @PatchMapping("/topic/{topicId}/reorder")
+    @PatchMapping("/admin/topic/{topicId}/reorder")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> reorderLessons(@PathVariable UUID topicId, @RequestBody List<LessonReorderRequest> requests) {
         lessonService.reorderLessons(topicId, requests);

@@ -16,10 +16,7 @@ public interface LanguageRepository extends JpaRepository<Language, UUID> {
 
     Optional<Language> findByCode(String code);
 
-    List<Language> findByIsActiveTrueOrderByOrderIndexAsc();
+    List<Language> findByIsActiveTrueOrderByNameAsc();
     
     boolean existsByCode(String code);
-
-    @Query("SELECT COALESCE(MAX(l.orderIndex), -1) FROM Language l")
-    Integer findMaxOrderIndex();
 }

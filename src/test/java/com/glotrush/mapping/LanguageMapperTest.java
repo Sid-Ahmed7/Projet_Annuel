@@ -44,7 +44,6 @@ class LanguageMapperTest {
                 .id(UUID.randomUUID())
                 .code("fr")
                 .name("French")
-                .orderIndex(2)
                 .isActive(true)
                 .build();
 
@@ -56,7 +55,7 @@ class LanguageMapperTest {
         assertThat(response.getId()).isEqualTo(language.getId());
         assertThat(response.getCode()).isEqualTo(language.getCode());
         assertThat(response.getName()).isEqualTo(language.getName());
-        assertThat(response.getOrderIndex()).isEqualTo(language.getOrderIndex());
+        assertThat(response.getName()).isEqualTo(language.getName());
         assertThat(response.getIsActive()).isEqualTo(language.getIsActive());
     }
 

@@ -44,9 +44,6 @@ public abstract class Lesson {
     @Column(name = "min_score_required")
     private Integer minScoreRequired = 70;
 
-    @Column(name = "pass_score_percentage", nullable = false)
-    private Integer passScorePercentage = 80;
-
     @Column(name = "min_level_required")
     private Integer minLevelRequired;
 

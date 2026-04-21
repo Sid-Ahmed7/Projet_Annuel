@@ -68,11 +68,4 @@ public class LanguageController {
         languageService.removeLanguage(languageId);
         return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.language.deleted_successfully", null, LocaleUtils.getCurrentLocale())));
     }
-
-    @PatchMapping("/reorder")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> reorderLanguages(@RequestBody List<LessonReorderRequest> requests) {
-        languageService.reorderLanguages(requests);
-        return ResponseEntity.noContent().build();
-    }
 }

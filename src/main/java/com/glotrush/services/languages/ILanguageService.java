@@ -18,5 +18,4 @@ public interface ILanguageService {
     void removeLanguage(UUID languageId);
     LanguageResponse updateLanguage(UUID languageId, LanguageRequest languageRequest);
     LanguageResponse createLanguage(LanguageRequest languageRequest);
-    void reorderLanguages(List<LessonReorderRequest> requests);
 }

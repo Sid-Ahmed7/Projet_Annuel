@@ -268,7 +268,7 @@ public class LessonService implements ILessonService {
         for (LessonReorderRequest request : requests) {
             Lesson lesson = lessonMap.get(request.id());
             if (lesson != null) {
-                lesson.setOrderIndex(request.newOrderIndex());
+                lesson.setOrderIndex(request.orderIndex());
             }
         }
 
