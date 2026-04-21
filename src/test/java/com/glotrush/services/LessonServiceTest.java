@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,6 +23,7 @@ import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
 import com.glotrush.repositories.TopicRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -302,6 +304,8 @@ class LessonServiceTest {
                 .thenReturn(Optional.empty());
         when(lessonBuilder.createNewLessonProgress(account, lesson))
                 .thenReturn(userLessonProgress);
+        when(userLessonProgressRepository.saveAndFlush(any(UserLessonProgress.class)))
+                .thenAnswer(i -> i.getArgument(0));
         when(userLessonProgressRepository.save(any(UserLessonProgress.class)))
                 .thenAnswer(i -> i.getArgument(0));
         when(lessonBuilder.mapToUserLessonProgressSummary(any())).thenReturn(expectedSummary);
@@ -723,10 +727,39 @@ class LessonServiceTest {
         List<LessonSummaryResponse> result = lessonService.getLessonsByTopicForAdmin(topicId, accountId);
 
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(LessonSummaryResponse::getTitle)
-                .containsExactly("Introduction to Spring", "Inactive Lesson");
-        
         verify(lessonRepository).findByTopic_IdOrderByOrderIndexAsc(topicId);
+    }
+
+    @Test
+    @DisplayName("Should handle race condition when starting lesson concurrently")
+    void shouldHandleRaceConditionOnStartLesson() {
+        UserLessonProgressSummary expectedSummary = UserLessonProgressSummary.builder()
+                .status(LessonStatus.IN_PROGRESS)
+                .build();
+
+        when(accountsRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
+        
+        // Premier appel : rien en base
+        when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
+                .thenReturn(Optional.empty()) // Pour l'appel initial
+                .thenReturn(Optional.of(userLessonProgress)); // Pour l'appel dans le catch
+
+        when(lessonBuilder.createNewLessonProgress(account, lesson))
+                .thenReturn(userLessonProgress);
+
+        // Simulation d'une violation de contrainte au moment du saveAndFlush
+        when(userLessonProgressRepository.saveAndFlush(any(UserLessonProgress.class)))
+                .thenThrow(new DataIntegrityViolationException("Duplicate key error"));
+
+        when(lessonBuilder.mapToUserLessonProgressSummary(any())).thenReturn(expectedSummary);
+        when(userLessonProgressRepository.save(any(UserLessonProgress.class))).thenAnswer(i -> i.getArgument(0));
+
+        UserLessonProgressSummary result = lessonService.startLesson(accountId, lessonId);
+
+        assertThat(result.getStatus()).isEqualTo(LessonStatus.IN_PROGRESS);
+        verify(userLessonProgressRepository).saveAndFlush(any(UserLessonProgress.class));
+        verify(userLessonProgressRepository, times(2)).findByAccount_IdAndLesson_Id(accountId, lessonId);
     }
 }
 

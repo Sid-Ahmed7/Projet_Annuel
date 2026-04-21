@@ -13,8 +13,5 @@ public class LanguageRequest {
     private String name;
 
     @NotNull
-    private Integer orderIndex = 0;
-
-    @NotNull
     private Boolean isActive = true;
 }

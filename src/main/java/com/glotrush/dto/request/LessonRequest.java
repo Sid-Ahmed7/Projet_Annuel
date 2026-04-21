@@ -36,8 +36,6 @@ public abstract class LessonRequest {
     @NotBlank
     private String description;
     @NotNull
-    private Integer orderIndex;
-    @NotNull
     private Integer xpReward;
     @NotNull
     private Integer minLevelRequired;

@@ -48,10 +48,6 @@ public class Topic {
     @Column(name = "difficulty", nullable = false)
     private ProficiencyLevel difficulty;
 
-    @Column(name = "order_index", nullable = false)
-    @Builder.Default
-    private Integer orderIndex = 0;
-
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;

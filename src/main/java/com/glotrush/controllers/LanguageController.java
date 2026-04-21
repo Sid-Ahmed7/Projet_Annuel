@@ -4,18 +4,18 @@ import java.util.List;
 import java.util.UUID;
 
 import com.glotrush.dto.request.LanguageRequest;
+import com.glotrush.dto.request.LessonReorderRequest;
 import com.glotrush.dto.response.ApiResponse;
-import jakarta.validation.Valid;
-import org.springframework.context.MessageSource;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
 import com.glotrush.dto.response.LanguageResponse;
 import com.glotrush.services.languages.ILanguageService;
 import com.glotrush.utils.LocaleUtils;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/languages")
@@ -23,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 public class LanguageController {
     private final MessageSource messageSource;
     private final ILanguageService languageService;
-
 
     @GetMapping
     public ResponseEntity<List<LanguageResponse>> getAllLanguages() {
@@ -68,5 +67,12 @@ public class LanguageController {
     public ResponseEntity<ApiResponse> deleteLanguage(@PathVariable UUID languageId){
         languageService.removeLanguage(languageId);
         return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.language.deleted_successfully", null, LocaleUtils.getCurrentLocale())));
+    }
+
+    @PatchMapping("/reorder")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> reorderLanguages(@RequestBody List<LessonReorderRequest> requests) {
+        languageService.reorderLanguages(requests);
+        return ResponseEntity.noContent().build();
     }
 }

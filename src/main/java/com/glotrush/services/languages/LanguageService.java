@@ -3,10 +3,13 @@ package com.glotrush.services.languages;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.glotrush.dto.request.LanguageRequest;
+import com.glotrush.dto.request.LessonReorderRequest;
 import com.glotrush.entities.Topic;
 import com.glotrush.enumerations.LanguageType;
 import com.glotrush.enumerations.ProficiencyLevel;
@@ -113,8 +116,36 @@ public class LanguageService implements ILanguageService {
 
     @Override
     public LanguageResponse createLanguage(LanguageRequest languageRequest) {
+        Integer maxOrderIndex = languageRepository.findMaxOrderIndex();
+        
         Language language = languageMapper.mapLanguageRequestToMapLanguageEntities(languageRequest);
+        language.setOrderIndex(maxOrderIndex + 1);
+        
         languageRepository.save(language);
         return languageMapper.mapLanguageEntitiesToLanguageResponse(language);
+    }
+
+    @Override
+    @Transactional
+    public void reorderLanguages(List<LessonReorderRequest> requests) {
+        List<Language> allLanguages = languageRepository.findAll();
+        Map<UUID, Language> languageMap = allLanguages.stream()
+                .collect(Collectors.toMap(Language::getId, lang -> lang));
+
+        for (LessonReorderRequest request : requests) {
+            Language language = languageMap.get(request.id());
+            if (language != null) {
+                language.setOrderIndex(request.newOrderIndex());
+            }
+        }
+
+        allLanguages.sort(Comparator.comparing(Language::getOrderIndex)
+                .thenComparing(Language::getId));
+
+        for (int index = 0; index < allLanguages.size(); index++) {
+            allLanguages.get(index).setOrderIndex(index);
+        }
+
+        languageRepository.saveAll(allLanguages);
     }
 }

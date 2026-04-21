@@ -93,7 +93,7 @@ public class TopicService implements ITopicService {
   
     @Override
     public List<TopicResponse> getAllTopics(UUID accountId) {
-        return topicRepository.findByIsActiveTrueOrderByOrderIndexAsc().stream()
+        return topicRepository.findByIsActiveTrueOrderByDifficultyAscNameAsc().stream()
                 .map(topic -> {
                     Optional<UserProgress> progressOpt = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topic.getId());
                     return topicBuilder.mapToTopicResponse(topic, progressOpt);
@@ -110,7 +110,7 @@ public class TopicService implements ITopicService {
 
     @Override
     public List<TopicWithProgressResponse> getTopicsByLanguage(UUID languageId, UUID accountId) {
-        return topicRepository.findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(languageId).stream().map(topic -> {
+        return topicRepository.findByLanguage_IdAndIsActiveTrueOrderByDifficultyAscNameAsc(languageId).stream().map(topic -> {
             List<LessonResponse> lessons = lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topic.getId()).stream()
                     .map(lesson -> {
                         Optional<UserLessonProgress> progressOpt = accountId != null

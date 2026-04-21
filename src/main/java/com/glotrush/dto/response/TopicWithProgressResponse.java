@@ -21,7 +21,6 @@ public class TopicWithProgressResponse {
     private String name;
     private String description;
     private ProficiencyLevel difficulty;
-    private Integer orderIndex;
     private Boolean isActive;
 
     private int completedLessons;

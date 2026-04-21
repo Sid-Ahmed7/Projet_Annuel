@@ -148,7 +148,6 @@ class TopicServiceTest {
                 .name("Basics")
                 .description("Basics Course")
                 .language(language)
-                .orderIndex(1)
                 .isActive(true)
                 .build();
 
@@ -188,7 +187,7 @@ class TopicServiceTest {
                 .name("Basics Course")
                 .build();
 
-        when(topicRepository.findByIsActiveTrueOrderByOrderIndexAsc()).thenReturn(List.of(topic));
+        when(topicRepository.findByIsActiveTrueOrderByDifficultyAscNameAsc()).thenReturn(List.of(topic));
         when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId))
                 .thenReturn(Optional.of(userProgress));
         when(topicBuilder.mapToTopicResponse(eq(topic), any())).thenReturn(expectedResponse);
@@ -198,7 +197,7 @@ class TopicServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("Basics Course");
 
-        verify(topicRepository).findByIsActiveTrueOrderByOrderIndexAsc();
+        verify(topicRepository).findByIsActiveTrueOrderByDifficultyAscNameAsc();
     }
 
     @Test
@@ -222,7 +221,7 @@ class TopicServiceTest {
     @Test
     @DisplayName("Should return empty list when no active topics")
     void shouldReturnEmptyListWhenNoActiveTopics() {
-        when(topicRepository.findByIsActiveTrueOrderByOrderIndexAsc()).thenReturn(Collections.emptyList());
+        when(topicRepository.findByIsActiveTrueOrderByDifficultyAscNameAsc()).thenReturn(Collections.emptyList());
 
         List<TopicResponse> result = topicService.getAllTopics(accountId);
 
@@ -238,7 +237,7 @@ class TopicServiceTest {
                 .languageId(languageId)
                 .build();
 
-        when(topicRepository.findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(languageId))
+        when(topicRepository.findByLanguage_IdAndIsActiveTrueOrderByDifficultyAscNameAsc(languageId))
                 .thenReturn(List.of(topic));
         when(lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId))
                 .thenReturn(Collections.emptyList());
@@ -252,13 +251,13 @@ class TopicServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getLanguageId()).isEqualTo(languageId);
 
-        verify(topicRepository).findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(languageId);
+        verify(topicRepository).findByLanguage_IdAndIsActiveTrueOrderByDifficultyAscNameAsc(languageId);
     }
 
     @Test
     @DisplayName("Should return empty list when no topics for language")
     void shouldReturnEmptyListWhenNoTopicsForLanguage() {
-        when(topicRepository.findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(languageId))
+        when(topicRepository.findByLanguage_IdAndIsActiveTrueOrderByDifficultyAscNameAsc(languageId))
                 .thenReturn(Collections.emptyList());
 
         List<TopicWithProgressResponse> result = topicService.getTopicsByLanguage(languageId, accountId);

@@ -6,6 +6,8 @@ import java.util.UUID;
 import com.glotrush.dto.request.LanguageRequest;
 import com.glotrush.dto.response.LanguageResponse;
 
+import com.glotrush.dto.request.LessonReorderRequest;
+
 public interface ILanguageService {
     List<LanguageResponse> getAllActiveLanguages();
     List<LanguageResponse> getAllLanguages();
@@ -16,4 +18,5 @@ public interface ILanguageService {
     void removeLanguage(UUID languageId);
     LanguageResponse updateLanguage(UUID languageId, LanguageRequest languageRequest);
     LanguageResponse createLanguage(LanguageRequest languageRequest);
+    void reorderLanguages(List<LessonReorderRequest> requests);
 }

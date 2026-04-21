@@ -71,7 +71,6 @@ class TopicControllerTest {
                 .name("Basics")
                 .description("Description")
                 .difficulty(ProficiencyLevel.A1)
-                .orderIndex(1)
                 .isActive(true)
                 .build();
 

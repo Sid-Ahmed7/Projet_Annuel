@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -43,7 +44,7 @@ public class PlanController {
     @PutMapping("/update/{planId}")
     public ResponseEntity<PlanResponse> updatePlan(@PathVariable UUID planId, @Valid @RequestBody UpdatePlanRequest request) {
         return ResponseEntity.ok(planService.updatePlan(planId, request));
-    }   
+    }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete/{planId}")
@@ -66,6 +67,18 @@ public class PlanController {
     @GetMapping("/{planId}")
     public ResponseEntity<PlanResponse> getPlanById(@PathVariable UUID planId) {
         return ResponseEntity.ok(planBuilder.mapToResponse(planService.getPlanById(planId)));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{planId}/toggle-status")
+    public ResponseEntity<PlanResponse> togglePlanStatus(@PathVariable UUID planId) {
+        return ResponseEntity.ok(planService.togglePlanStatus(planId));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin")
+    public ResponseEntity<List<PlanResponse>> getAllPlansForAdmin() {
+        return ResponseEntity.ok(planService.getAllPlansForAdmin());
     }
 
 }

@@ -1,13 +1,18 @@
 package com.glotrush.services.lesson;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import com.glotrush.dto.request.LessonReorderRequest;
 import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.services.progress.IProgressService;
 import org.springframework.context.MessageSource;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.LessonBuilder;
@@ -91,15 +96,21 @@ public class LessonService implements ILessonService {
 
     @Override
     public UserLessonProgressSummary startLesson(UUID accountId, UUID lessonId) {
-       
         Accounts account = accountsRepository.findById(accountId)
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
 
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
-                
-        UserLessonProgress progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
-                .orElseGet(() -> lessonBuilder.createNewLessonProgress(account, lesson));
+
+        UserLessonProgress progress;
+        try {
+            progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
+                    .orElseGet(() -> userLessonProgressRepository.saveAndFlush(lessonBuilder.createNewLessonProgress(account, lesson)));
+        } catch (DataIntegrityViolationException e) {
+            // En cas de concurrence (ex: React StrictMode), on retente de récupérer l'objet créé par l'autre thread
+            progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
+                    .orElseThrow(() -> e); // Si toujours rien, on relance l'erreur d'origine
+        }
 
         if (progress.getStatus() == LessonStatus.NOT_STARTED) {
             progress.setStatus(LessonStatus.IN_PROGRESS);
@@ -215,8 +226,11 @@ public class LessonService implements ILessonService {
         Topic topic = topicRepository.findById(lessonRequest.getTopicId())
                 .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
 
+        Integer maxOrderIndex = lessonRepository.findMaxOrderIndexByTopicId(lessonRequest.getTopicId());
+
         Lesson lesson = lessonRequestToLessonEntity.lessonRequestToLessonEntity(lessonRequest, messageSource);
         lesson.setTopic(topic);
+        lesson.setOrderIndex(maxOrderIndex + 1);
 
         lessonRepository.save(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
@@ -243,6 +257,29 @@ public class LessonService implements ILessonService {
                     return lessonEntityToLessonResponse.lessonToLessonSummaryResponse(lesson, isAlreadyFinish);
                 })
                 .toList();
+    }
+
+    @Override
+    public void reorderLessons(UUID topicId, List<LessonReorderRequest> requests) {
+        List<Lesson> allLessons = lessonRepository.findByTopic_Id(topicId);
+        Map<UUID, Lesson> lessonMap = allLessons.stream()
+                .collect(Collectors.toMap(Lesson::getId, lesson -> lesson));
+
+        for (LessonReorderRequest request : requests) {
+            Lesson lesson = lessonMap.get(request.id());
+            if (lesson != null) {
+                lesson.setOrderIndex(request.newOrderIndex());
+            }
+        }
+
+        allLessons.sort(Comparator.comparing(Lesson::getOrderIndex)
+                .thenComparing(Lesson::getId));
+
+        for (int index = 0; index < allLessons.size(); index++) {
+            allLessons.get(index).setOrderIndex(index);
+        }
+
+        lessonRepository.saveAll(allLessons);
     }
 
 }

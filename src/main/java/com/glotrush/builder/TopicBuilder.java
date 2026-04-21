@@ -22,7 +22,6 @@ public class TopicBuilder {
                 .name(topic.getName())
                 .description(topic.getDescription())
                 .difficulty(topic.getDifficulty())
-                .orderIndex(topic.getOrderIndex())
                 .isActive(topic.getIsActive())
                 .build();
     }
@@ -37,7 +36,6 @@ public class TopicBuilder {
                 .name(topic.getName())
                 .description(topic.getDescription())
                 .difficulty(topic.getDifficulty())
-                .orderIndex(topic.getOrderIndex())
                 .isActive(topic.getIsActive())
                 .completedLessons(completedLessons)
                 .totalLessons(totalLessons)

@@ -28,9 +28,5 @@ public class TopicRequest {
     private ProficiencyLevel difficulty;
 
     @NotNull
-    @Min(0)
-    private Integer orderIndex;
-
-    @NotNull
     private Boolean isActive;
 }

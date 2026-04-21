@@ -25,6 +25,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 
+import com.glotrush.dto.request.LessonReorderRequest;
+
 @RestController
 @RequestMapping("/api/v1/lessons")
 @RequiredArgsConstructor
@@ -107,5 +109,12 @@ public class LessonController {
         UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         List<LessonSummaryResponse> lessons = lessonService.getLessonsByTopicForAdmin(topicId, accountId);
         return ResponseEntity.ok(lessons);
+    }
+
+    @PatchMapping("/topic/{topicId}/reorder")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> reorderLessons(@PathVariable UUID topicId, @RequestBody List<LessonReorderRequest> requests) {
+        lessonService.reorderLessons(topicId, requests);
+        return ResponseEntity.noContent().build();
     }
 }
