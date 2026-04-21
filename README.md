@@ -13,7 +13,8 @@ Application d'apprentissage des langues structurée (Spring Boot 3.5.7).
 
 ## 📊 Base de données
 
-Pour peupler la base de données avec des données de test cohérentes :
+- **Migrations (Flyway) :** Toujours utiliser des conditions (`IF EXISTS`, `IF NOT EXISTS`, blocs `DO $$`) dans les scripts SQL pour garantir l'idempotence et la stabilité des tests d'intégration.
+- **Données de test :** Pour peupler la base avec des données cohérentes :
 ```powershell
 psql -U postgres -d glotrush -f src/main/resources/sql/seed_data.sql
 ```
