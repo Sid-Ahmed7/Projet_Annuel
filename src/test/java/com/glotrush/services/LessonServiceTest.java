@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
+import com.glotrush.dispatcher.notifications.NotificationDispatcher;
 import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
@@ -93,6 +94,9 @@ class LessonServiceTest {
     @Mock
     private LessonBuilder lessonBuilder;
 
+    @Mock
+    private NotificationDispatcher notificationDispatcher;
+
     private LessonService lessonService;
 
     private UUID accountId;
@@ -104,7 +108,7 @@ class LessonServiceTest {
 
     @BeforeEach
     void setUp() {
-        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity);
+        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity, notificationDispatcher);
         accountId = UUID.randomUUID();
         lessonId = UUID.randomUUID();
         topicId = UUID.randomUUID();

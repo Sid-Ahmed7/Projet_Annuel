@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
+import com.glotrush.dispatcher.notifications.NotificationDispatcher;
 import com.glotrush.enumerations.ProficiencyLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -104,6 +105,9 @@ class TopicServiceTest {
 
     @Mock
     private LessonBuilder lessonBuilder;
+
+    @Mock
+    private NotificationDispatcher notificationDispatcher;
         
 
     private TopicService topicService;
@@ -128,6 +132,7 @@ class TopicServiceTest {
                 topicBuilder,
                 topicMapper,
                 lessonMapper,
+                notificationDispatcher,
                 flashcardRepository,
                 qcmQuestionRepository,
                 matchingPairRepository,

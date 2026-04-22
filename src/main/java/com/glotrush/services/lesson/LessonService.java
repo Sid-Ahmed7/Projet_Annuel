@@ -11,6 +11,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.LessonBuilder;
+import com.glotrush.dispatcher.notifications.NotificationDispatcher;
 import com.glotrush.dto.request.CompleteLessonRequest;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.LessonResponse;
@@ -51,6 +52,7 @@ public class LessonService implements ILessonService {
     private final TopicRepository topicRepository;
     private final LessonEntityToLessonResponse lessonEntityToLessonResponse;
     private final LessonRequestToLessonEntity lessonRequestToLessonEntity;
+    private final NotificationDispatcher notificationDispatcher;
 
     @Override
     public List<LessonSummaryResponse> getLessonsByTopic(UUID topicId, UUID accountId) {
@@ -219,6 +221,7 @@ public class LessonService implements ILessonService {
         lesson.setTopic(topic);
 
         lessonRepository.save(lesson);
+        notificationDispatcher.sendNotificationWhenNewLesson(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
     }
 
