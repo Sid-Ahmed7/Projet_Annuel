@@ -137,6 +137,19 @@ public class EmailService {
     }
     }
 
+    public void sendNotificationEmail(String toEmail, String subject, String body) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(subject);
+            message.setText(body);
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
+        }
+    }
+
     public void sendNewTopicEmail(String toEmail, String username, String topicName, String languageName, String difficulty) {
      try {
         SimpleMailMessage message = new SimpleMailMessage();

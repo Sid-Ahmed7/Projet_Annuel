@@ -7,6 +7,8 @@ import java.util.UUID;
 import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.services.progress.IProgressService;
+import com.glotrush.services.streak.IStreakService;
+
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
@@ -53,7 +55,7 @@ public class LessonService implements ILessonService {
     private final LessonEntityToLessonResponse lessonEntityToLessonResponse;
     private final LessonRequestToLessonEntity lessonRequestToLessonEntity;
     private final NotificationDispatcher notificationDispatcher;
-
+    private final IStreakService streakService;
     @Override
     public List<LessonSummaryResponse> getLessonsByTopic(UUID topicId, UUID accountId) {
         return lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId).stream()
@@ -153,6 +155,7 @@ public class LessonService implements ILessonService {
 
         boolean isFirstCompletion = progress.getStatus() != LessonStatus.COMPLETED;
         progress.setStatus(LessonStatus.COMPLETED);
+        progress.setCompletedAt(LocalDateTime.now());
 
         userLessonProgressRepository.save(progress);
 
@@ -173,6 +176,7 @@ public class LessonService implements ILessonService {
         topicProgress = progressService.addXP(accountId, lesson.getTopic().getId(), xpEarned);
         topicProgress = progressService.incrementLessonCompletion(accountId, lesson.getTopic().getId());
         topicProgress = progressService.updateLastStudiedAt(accountId, lesson.getTopic().getId());
+        streakService.updateStreakForUser(accountId);
         Integer newLevel = LevelUtils.calculateLevel(topicProgress.getTotalXP());
         boolean leveledUp = !oldLevel.equals(newLevel);
 

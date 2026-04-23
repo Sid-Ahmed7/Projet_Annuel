@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.glotrush.dto.request.PushSubscriptionRequest;
@@ -48,25 +49,43 @@ public class PushNotificationSubscriptionController {
     public ResponseEntity<Void> subscrible(@RequestBody PushSubscriptionRequest request, Authentication authentication) throws AccountNotFoundException {
         UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new AccountNotFoundException(messageSource.getMessage("account.notfound", null, LocaleUtils.getCurrentLocale()) ));
-        if(!subscriptionRepository.existsByEndpoint(request.getEndpoint())) {
-            PushNotificationSubscription subscription = PushNotificationSubscription.builder()
-                .account(account)
-                .endpoint(request.getEndpoint())
-                .publicKey(request.getPublicKey())
-                .auth(request.getAuth())
-                .build();
-            subscriptionRepository.save(subscription);
-        }
+        subscriptionRepository.findByEndpoint(request.getEndpoint()).ifPresentOrElse(
+            existing -> {
+                if (!existing.getAccount().getId().equals(accountId)) {
+                    existing.setAccount(account);
+                    subscriptionRepository.save(existing);
+                }
+            },
+            () -> subscriptionRepository.save(
+                PushNotificationSubscription.builder()
+                    .account(account)
+                    .endpoint(request.getEndpoint())
+                    .publicKey(request.getPublicKey())
+                    .auth(request.getAuth())
+                    .build()
+            )
+        );
 
         return ResponseEntity.ok().build();    
     }
 
 
 
+    @GetMapping("/status")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> getStatus(@RequestParam String endpoint, Authentication authentication) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        boolean subscribed = subscriptionRepository.findByEndpoint(endpoint)
+            .map(sub -> sub.getAccount().getId().equals(accountId))
+            .orElse(false);
+        return ResponseEntity.ok(subscribed);
+    }
+
     @DeleteMapping("/unsubscribe")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> unsubscribe(@RequestBody PushSubscriptionRequest request) {
-        subscriptionRepository.deleteByEndpoint(request.getEndpoint());
+    public ResponseEntity<Void> unsubscribe(@RequestBody PushSubscriptionRequest request, Authentication authentication) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        subscriptionRepository.deleteByEndpointAndAccount_Id(request.getEndpoint(), accountId);
         return ResponseEntity.ok().build();
     }
 }
