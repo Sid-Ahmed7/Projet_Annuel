@@ -25,6 +25,7 @@ import com.glotrush.entities.UserProgress;
 import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.builder.TopicBuilder;
 import com.glotrush.constants.TopicConstants;
+import com.glotrush.dispatcher.notifications.NotificationDispatcher;
 import com.glotrush.dto.request.ExamResultRequest;
 import com.glotrush.dto.request.FlashcardAnswerRequest;
 import com.glotrush.dto.request.MatchingPairAnswerRequest;
@@ -83,6 +84,7 @@ public class TopicService implements ITopicService {
     private final TopicBuilder topicBuilder;
     private final TopicMapper topicMapper;
     private final LessonEntityToLessonResponse lessonMapper;
+    private final NotificationDispatcher notificationDispatcher;
 
     private final FlashcardRepository flashcardRepository;
     private final QcmQuestionRepository qcmQuestionRepository;
@@ -148,6 +150,7 @@ public class TopicService implements ITopicService {
         topicEntity.setLanguage(language);
         
         topicRepository.save(topicEntity);
+        notificationDispatcher.sendNotificationWhenNewTopic(topicEntity);
         return topicMapper.mapTopicEntitiesToTopicResponse(topicEntity);
     }
 

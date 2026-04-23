@@ -23,9 +23,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.glotrush.constants.ImageConstants;
+import com.glotrush.dto.request.NotificationPreferencesRequest;
 import com.glotrush.dto.request.PasswordRequest;
 import com.glotrush.dto.request.UpdateProfileRequest;
 import com.glotrush.dto.response.ApiResponse;
+import com.glotrush.dto.response.NotificationPreferencesResponse;
+import com.glotrush.dto.response.StreakResponse;
 import com.glotrush.dto.response.UploadResponse;
 import com.glotrush.dto.response.UserProfileResponse;
 import com.glotrush.services.images.IProfileService;
@@ -43,7 +47,6 @@ public class ProfileController {
     private final IUserProfileService profileService;
     private final IProfileService profileImageService;
     private final MessageSource messageSource;
-    private static final String IMAGE_BASE_URL = "/api/v1/profile/files/";
 
     @GetMapping
     public ResponseEntity<UserProfileResponse> getMyProfile(Authentication authentication) {
@@ -75,7 +78,7 @@ public class ProfileController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UploadResponse> uploadProfileImage(Authentication authentication, @RequestParam("file") MultipartFile file) throws IOException {
         UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
-        String imageUrl =  IMAGE_BASE_URL + profileImageService.uploadImage(accountId, file);
+        String imageUrl =  ImageConstants.IMAGE_BASE_URL + profileImageService.uploadImage(accountId, file);
 
         return ResponseEntity.ok(UploadResponse.builder()
             .message(messageSource.getMessage("success.image.uploaded", null, LocaleUtils.getCurrentLocale()))
@@ -117,6 +120,25 @@ public class ProfileController {
         UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         profileImageService.deleteImage(accountId);
         return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("success.image.deleted", null, LocaleUtils.getCurrentLocale())));
+    }
+
+    @GetMapping("/streak")
+    public ResponseEntity<StreakResponse> getStreak(Authentication authentication) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        StreakResponse streakResponse = profileService.getStreak(accountId);
+        return ResponseEntity.ok(streakResponse);
+    }
+    @GetMapping("/notification-preferences")
+    public ResponseEntity<NotificationPreferencesResponse> getNotificationPreferences(Authentication authentication) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        return ResponseEntity.ok(profileService.getNotificationPreferences(accountId));
+    }
+
+    @PutMapping("/notification-preferences")
+    public ResponseEntity<NotificationPreferencesResponse> updateNotificationPreferences(Authentication authentication, @RequestBody NotificationPreferencesRequest request) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        NotificationPreferencesResponse response = profileService.updateNotificationPreferences(accountId, request);
+        return ResponseEntity.ok(response);
     }
 }
 

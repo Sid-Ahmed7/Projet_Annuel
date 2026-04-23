@@ -124,6 +124,44 @@ public class EmailService {
         }
     }
 
+    public void sendNewLessonEmail(String toEmail, String username, String lessonTitle, String topicName, String languageName) {
+     try {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject(messageSource.getMessage("email.subject.new_lesson", new Object[]{languageName}, LocaleUtils.getCurrentLocale()));
+        message.setText(messageSource.getMessage("email.body.new_lesson", new Object[]{username, lessonTitle, topicName, languageName}, LocaleUtils.getCurrentLocale()));
+        mailSender.send(message);    
+    } catch(Exception e) {
+        throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);  
+    }
+    }
 
+    public void sendNotificationEmail(String toEmail, String subject, String body) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(subject);
+            message.setText(body);
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
+        }
+    }
+
+    public void sendNewTopicEmail(String toEmail, String username, String topicName, String languageName, String difficulty) {
+     try {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject(messageSource.getMessage("email.subject.new_topic", new Object[]{languageName}, LocaleUtils.getCurrentLocale()));
+        message.setText(messageSource.getMessage("email.body.new_topic", new Object[]{username, topicName, languageName, difficulty}, LocaleUtils.getCurrentLocale()));
+        mailSender.send(message);    
+    } catch(Exception e) {
+        throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);  
+    }
+    
+    }
 }
  

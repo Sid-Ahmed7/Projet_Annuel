@@ -36,4 +36,8 @@ public interface UserLanguageRepository extends JpaRepository<UserLanguage, UUID
 
     @Query("SELECT ul.language.id FROM UserLanguage ul WHERE ul.languageType = :type GROUP BY ul.language.id ORDER BY COUNT(ul.id) DESC")
     List<UUID> findMostPopularLanguageIdsByLearnerCount(@Param ("type") LanguageType languageType, Pageable pageable);
+
+    List<UserLanguage> findByLanguage_IdAndLanguageType(UUID languageId, LanguageType languageType);
+
+
 }

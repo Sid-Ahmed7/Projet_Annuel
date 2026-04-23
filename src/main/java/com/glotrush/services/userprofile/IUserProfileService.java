@@ -2,8 +2,11 @@ package com.glotrush.services.userprofile;
 
 import java.util.UUID;
 
+import com.glotrush.dto.request.NotificationPreferencesRequest;
 import com.glotrush.dto.request.PasswordRequest;
 import com.glotrush.dto.request.UpdateProfileRequest;
+import com.glotrush.dto.response.NotificationPreferencesResponse;
+import com.glotrush.dto.response.StreakResponse;
 import com.glotrush.dto.response.UserProfileResponse;
 
 public interface IUserProfileService {
@@ -18,4 +21,9 @@ public interface IUserProfileService {
 
     UserProfileResponse addActiveLanguage(UUID accountId, UUID languageId);
     
+    StreakResponse getStreak(UUID accountId);
+
+    NotificationPreferencesResponse getNotificationPreferences(UUID accountId);
+
+    NotificationPreferencesResponse updateNotificationPreferences(UUID accountId, NotificationPreferencesRequest request);
 }
