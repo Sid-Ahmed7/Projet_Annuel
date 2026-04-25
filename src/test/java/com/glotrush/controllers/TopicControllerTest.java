@@ -67,11 +67,11 @@ class TopicControllerTest {
     void setUp() {
         topicId = UUID.randomUUID();
         topicRequest = TopicRequest.builder()
-                .languageId(UUID.randomUUID())
+                .targetLanguageId(UUID.randomUUID())
+                .sourceLanguageId(UUID.randomUUID())
                 .name("Basics")
                 .description("Description")
                 .difficulty(ProficiencyLevel.A1)
-                .orderIndex(1)
                 .isActive(true)
                 .build();
 

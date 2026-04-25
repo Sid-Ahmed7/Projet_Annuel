@@ -23,7 +23,6 @@ class LanguageMapperTest {
         LanguageRequest request = new LanguageRequest();
         request.setCode("en");
         request.setName("English");
-        request.setOrderIndex(1);
         request.setIsActive(true);
 
         // When
@@ -33,7 +32,6 @@ class LanguageMapperTest {
         assertThat(language).isNotNull();
         assertThat(language.getCode()).isEqualTo(request.getCode());
         assertThat(language.getName()).isEqualTo(request.getName());
-        assertThat(language.getOrderIndex()).isEqualTo(request.getOrderIndex());
         assertThat(language.getIsActive()).isEqualTo(request.getIsActive());
         assertThat(language.getId()).isNull();
     }
@@ -46,7 +44,6 @@ class LanguageMapperTest {
                 .id(UUID.randomUUID())
                 .code("fr")
                 .name("French")
-                .orderIndex(2)
                 .isActive(true)
                 .build();
 
@@ -58,7 +55,7 @@ class LanguageMapperTest {
         assertThat(response.getId()).isEqualTo(language.getId());
         assertThat(response.getCode()).isEqualTo(language.getCode());
         assertThat(response.getName()).isEqualTo(language.getName());
-        assertThat(response.getOrderIndex()).isEqualTo(language.getOrderIndex());
+        assertThat(response.getName()).isEqualTo(language.getName());
         assertThat(response.getIsActive()).isEqualTo(language.getIsActive());
     }
 

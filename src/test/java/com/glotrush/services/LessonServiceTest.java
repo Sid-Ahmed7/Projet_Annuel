@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,14 +18,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
+import com.glotrush.config.LessonRuleProperties;
 import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
 import com.glotrush.repositories.TopicRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -47,6 +51,7 @@ import com.glotrush.dto.response.TopicLessonsResponse;
 import com.glotrush.dto.response.UserLessonProgressSummary;
 import com.glotrush.dto.response.UserProgressResponse;
 import com.glotrush.entities.Accounts;
+import com.glotrush.entities.Lesson;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserLessonProgress;
 import com.glotrush.entities.UserProgress;
@@ -93,6 +98,8 @@ class LessonServiceTest {
     @Mock
     private LessonBuilder lessonBuilder;
 
+    private LessonRuleProperties lessonRuleProperties;
+
     private LessonService lessonService;
 
     private UUID accountId;
@@ -104,7 +111,18 @@ class LessonServiceTest {
 
     @BeforeEach
     void setUp() {
-        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity);
+        lessonRuleProperties = new LessonRuleProperties();
+        // Setup initial rules for testing
+        lessonRuleProperties.setXpPerFlashcard(5);
+        lessonRuleProperties.setSecondsPerFlashcard(30);
+        lessonRuleProperties.setXpPerQcm(10);
+        lessonRuleProperties.setSecondsPerQcm(60);
+        lessonRuleProperties.setMatchingPairFixedXp(50);
+        lessonRuleProperties.setMatchingPairFixedSeconds(300);
+        lessonRuleProperties.setSortingFixedXp(60);
+        lessonRuleProperties.setSortingFixedSeconds(360);
+
+        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity, lessonRuleProperties);
         accountId = UUID.randomUUID();
         lessonId = UUID.randomUUID();
         topicId = UUID.randomUUID();
@@ -127,7 +145,6 @@ class LessonServiceTest {
                 .xpReward(50)
                 .orderIndex(1)
                 .isActive(true)
-                .minLevelRequired(1)
                 .minScoreRequired(70)
                 .durationMinutes(15)
                 .build();
@@ -301,6 +318,8 @@ class LessonServiceTest {
                 .thenReturn(Optional.empty());
         when(lessonBuilder.createNewLessonProgress(account, lesson))
                 .thenReturn(userLessonProgress);
+        when(userLessonProgressRepository.saveAndFlush(any(UserLessonProgress.class)))
+                .thenAnswer(i -> i.getArgument(0));
         when(userLessonProgressRepository.save(any(UserLessonProgress.class)))
                 .thenAnswer(i -> i.getArgument(0));
         when(lessonBuilder.mapToUserLessonProgressSummary(any())).thenReturn(expectedSummary);
@@ -556,11 +575,15 @@ class LessonServiceTest {
         when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
 
         LessonResponse result = lessonService.createLesson(request);
-
+        
+        ArgumentCaptor<Lesson> lessonCaptor = ArgumentCaptor.forClass(Lesson.class);
+        verify(lessonRepository).save(lessonCaptor.capture());
+        
+        Lesson savedLesson = lessonCaptor.getValue();
+        assertThat(savedLesson.getXpReward()).isGreaterThanOrEqualTo(5);
+        assertThat(savedLesson.getDurationMinutes()).isGreaterThanOrEqualTo(1);
         assertThat(result).isInstanceOf(FlashcardLessonResponse.class);
         assertThat(result.getTitle()).isEqualTo("New Lesson");
-        assertThat(((FlashcardLessonResponse)result).getFlashcards()).isNotNull();
-        verify(lessonRepository).save(any());
     }
 
     @Test
@@ -577,11 +600,14 @@ class LessonServiceTest {
         when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
 
         LessonResponse result = lessonService.createLesson(request);
-
+ 
+        ArgumentCaptor<Lesson> lessonCaptor = ArgumentCaptor.forClass(Lesson.class);
+        verify(lessonRepository).save(lessonCaptor.capture());
+        
+        Lesson savedLesson = lessonCaptor.getValue();
+        assertThat(savedLesson.getXpReward()).isEqualTo(lessonRuleProperties.getMatchingPairFixedXp());
         assertThat(result).isInstanceOf(MatchingPairLessonResponse.class);
         assertThat(result.getTitle()).isEqualTo("Matching Pair Lesson");
-        assertThat(((MatchingPairLessonResponse)result).getMatchingPairs()).isNotNull();
-        verify(lessonRepository).save(any());
     }
 
     @Test
@@ -652,10 +678,15 @@ class LessonServiceTest {
         when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
 
         LessonResponse result = lessonService.updateLesson(lessonId, request);
-
+ 
+        ArgumentCaptor<Lesson> lessonCaptor = ArgumentCaptor.forClass(Lesson.class);
+        verify(lessonRepository).save(lessonCaptor.capture());
+        
+        Lesson savedLesson = lessonCaptor.getValue();
+        assertThat(savedLesson.getXpReward()).isNotNull();
+        assertThat(savedLesson.getDurationMinutes()).isNotNull();
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo("Updated Lesson");
-        verify(lessonRepository).save(any());
     }
 
     @Test
@@ -668,6 +699,138 @@ class LessonServiceTest {
         assertThatThrownBy(() -> lessonService.updateLesson(lessonId, request))
                 .isInstanceOf(LessonNotFoundException.class)
                 .hasMessage("Lesson not found");
+    }
+
+    @Test
+    @DisplayName("Should toggle lesson status successfully")
+    void shouldToggleLessonStatusSuccessfully() {
+        lesson.setIsActive(true);
+        LessonResponse expectedResponse = LessonResponse.builder().id(lessonId).isActive(false).build();
+
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
+        when(lessonRepository.save(any())).thenReturn(lesson);
+        when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
+
+        LessonResponse result = lessonService.toggleLessonStatus(lessonId);
+
+        assertThat(result.getIsActive()).isFalse();
+        assertThat(lesson.getIsActive()).isFalse();
+        verify(lessonRepository).save(lesson);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when lesson not found on toggle status")
+    void shouldThrowLessonNotFoundOnToggleStatus() {
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("error.lesson.notfound"), isNull(), any(Locale.class))).thenReturn("Lesson not found");
+
+        assertThatThrownBy(() -> lessonService.toggleLessonStatus(lessonId))
+                .isInstanceOf(LessonNotFoundException.class)
+                .hasMessage("Lesson not found");
+    }
+
+    @Test
+    @DisplayName("Should return all lessons (including inactive) for admin")
+    void shouldGetLessonsByTopicForAdmin() {
+        Lesson inactiveLesson = FlashcardLesson.builder()
+                .id(UUID.randomUUID())
+                .title("Inactive Lesson")
+                .isActive(false)
+                .build();
+
+        LessonSummaryResponse expectedActive = LessonSummaryResponse.builder().id(lessonId).title("Introduction to Spring").build();
+        LessonSummaryResponse expectedInactive = LessonSummaryResponse.builder().id(inactiveLesson.getId()).title("Inactive Lesson").build();
+
+        when(lessonRepository.findByTopic_IdOrderByOrderIndexAsc(topicId))
+                .thenReturn(List.of(lesson, inactiveLesson));
+        when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(eq(accountId), any(UUID.class)))
+                .thenReturn(Optional.empty());
+        when(lessonEntityToLessonResponse.lessonToLessonSummaryResponse(eq(lesson), eq(false)))
+                .thenReturn(expectedActive);
+        when(lessonEntityToLessonResponse.lessonToLessonSummaryResponse(eq(inactiveLesson), eq(false)))
+                .thenReturn(expectedInactive);
+
+        List<LessonSummaryResponse> result = lessonService.getLessonsByTopicForAdmin(topicId, accountId);
+
+        assertThat(result).hasSize(2);
+        verify(lessonRepository).findByTopic_IdOrderByOrderIndexAsc(topicId);
+    }
+
+    @Test
+    @DisplayName("Should handle race condition when starting lesson concurrently")
+    void shouldHandleRaceConditionOnStartLesson() {
+        UserLessonProgressSummary expectedSummary = UserLessonProgressSummary.builder()
+                .status(LessonStatus.IN_PROGRESS)
+                .build();
+
+        when(accountsRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
+        
+        // Premier appel : rien en base
+        when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
+                .thenReturn(Optional.empty()) // Pour l'appel initial
+                .thenReturn(Optional.of(userLessonProgress)); // Pour l'appel dans le catch
+
+        when(lessonBuilder.createNewLessonProgress(account, lesson))
+                .thenReturn(userLessonProgress);
+
+        // Simulation d'une violation de contrainte au moment du saveAndFlush
+        when(userLessonProgressRepository.saveAndFlush(any(UserLessonProgress.class)))
+                .thenThrow(new DataIntegrityViolationException("Duplicate key error"));
+
+        when(lessonBuilder.mapToUserLessonProgressSummary(any())).thenReturn(expectedSummary);
+        when(userLessonProgressRepository.save(any(UserLessonProgress.class))).thenAnswer(i -> i.getArgument(0));
+
+        UserLessonProgressSummary result = lessonService.startLesson(accountId, lessonId);
+
+        assertThat(result.getStatus()).isEqualTo(LessonStatus.IN_PROGRESS);
+        verify(userLessonProgressRepository).saveAndFlush(any(UserLessonProgress.class));
+        verify(userLessonProgressRepository, times(2)).findByAccount_IdAndLesson_Id(accountId, lessonId);
+    }
+
+    @Test
+    @DisplayName("Should recalculate rewards for FlashcardLesson based on item count")
+    void shouldRecalculateRewardsForFlashcardLesson() {
+        FlashcardLesson flashcardLesson = new FlashcardLesson();
+        flashcardLesson.setFlashcards(List.of(new com.glotrush.entities.exercice.FlashcardEntity(), new com.glotrush.entities.exercice.FlashcardEntity()));
+        
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(flashcardLesson));
+        when(lessonRepository.save(any())).thenReturn(flashcardLesson);
+
+        lessonService.recalculateReward(lessonId);
+
+        assertThat(flashcardLesson.getXpReward()).isEqualTo(10);
+        assertThat(flashcardLesson.getDurationMinutes()).isEqualTo(1);
+        verify(lessonRepository).save(flashcardLesson);
+    }
+
+    @Test
+    @DisplayName("Should apply minimum values during reward calculation")
+    void shouldApplyMinimumValues() {
+        FlashcardLesson flashcardLesson = new FlashcardLesson();
+        flashcardLesson.setFlashcards(Collections.emptyList());
+        
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(flashcardLesson));
+        when(lessonRepository.save(any())).thenReturn(flashcardLesson);
+
+        lessonService.recalculateReward(lessonId);
+
+        assertThat(flashcardLesson.getXpReward()).isEqualTo(5);
+        assertThat(flashcardLesson.getDurationMinutes()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Should use fixed rewards for MatchingPairLesson")
+    void shouldCalculateFixedRewardsForMatchingPair() {
+        MatchingPairLesson matchingPairLesson = new MatchingPairLesson();
+        
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(matchingPairLesson));
+        when(lessonRepository.save(any())).thenReturn(matchingPairLesson);
+
+        lessonService.recalculateReward(lessonId);
+
+        assertThat(matchingPairLesson.getXpReward()).isEqualTo(50);
+        assertThat(matchingPairLesson.getDurationMinutes()).isEqualTo(5);
     }
 }
 

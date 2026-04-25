@@ -9,12 +9,14 @@ import com.glotrush.entities.Language;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.Query;
+
 @Repository
 public interface LanguageRepository extends JpaRepository<Language, UUID> {
 
     Optional<Language> findByCode(String code);
 
-    List<Language> findByIsActiveTrueOrderByOrderIndexAsc();
+    List<Language> findByIsActiveTrueOrderByNameAsc();
     
     boolean existsByCode(String code);
 }

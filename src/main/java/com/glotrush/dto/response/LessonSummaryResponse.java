@@ -17,7 +17,6 @@ public class LessonSummaryResponse {
     private String description;
     private Integer orderIndex;
     private Integer xpReward;
-    private Integer minLevelRequired;
     private Integer durationMinutes;
     private Boolean isActive;
     private LessonType lessonType;

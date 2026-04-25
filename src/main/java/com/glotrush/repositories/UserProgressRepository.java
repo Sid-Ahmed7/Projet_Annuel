@@ -18,8 +18,8 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, UUID
 
     Optional<UserProgress> findByAccount_IdAndTopic_Id(UUID accountId, UUID topicId);
 
-    @Query("SELECT up FROM UserProgress up WHERE up.account.id = :accountId AND up.topic.language.id = :languageId")
-    List<UserProgress> findByAccount_IdAndTopic_Language_Id(@Param("accountId") UUID accountId, @Param("languageId") UUID languageId);
+    @Query("SELECT up FROM UserProgress up WHERE up.account.id = :accountId AND up.topic.targetLanguage.id = :languageId")
+    List<UserProgress> findByAccount_IdAndTopic_TargetLanguage_Id(@Param("accountId") UUID accountId, @Param("languageId") UUID languageId);
 
     boolean existsByAccountIdAndTopicId(UUID accountId, UUID topicId);
 
