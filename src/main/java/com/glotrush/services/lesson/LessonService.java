@@ -1,13 +1,20 @@
 package com.glotrush.services.lesson;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.glotrush.dto.request.LessonReorderRequest;
 import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.services.progress.IProgressService;
 import org.springframework.context.MessageSource;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.LessonBuilder;
@@ -25,13 +32,19 @@ import com.glotrush.entities.UserProgress;
 import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.exceptions.UserNotFoundException;
+import com.glotrush.config.LessonRuleProperties;
+import com.glotrush.enumerations.LessonType;
+import com.glotrush.entities.Topic;
+import com.glotrush.entities.lesson.FlashcardLesson;
+import com.glotrush.entities.lesson.MatchingPairLesson;
+import com.glotrush.entities.lesson.QcmLesson;
+import com.glotrush.entities.lesson.SortingExerciseLesson;
+import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
-import com.glotrush.entities.Topic;
-import com.glotrush.exceptions.TopicNotFoundException;
 
 import com.glotrush.utils.LevelUtils;
 import com.glotrush.utils.LocaleUtils;
@@ -42,6 +55,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional
 public class LessonService implements ILessonService {
+    private static final Logger log = LoggerFactory.getLogger(LessonService.class);
     private final MessageSource messageSource;
     private final LessonRepository lessonRepository;
     private final UserLessonProgressRepository userLessonProgressRepository;
@@ -51,6 +65,7 @@ public class LessonService implements ILessonService {
     private final TopicRepository topicRepository;
     private final LessonEntityToLessonResponse lessonEntityToLessonResponse;
     private final LessonRequestToLessonEntity lessonRequestToLessonEntity;
+    private final LessonRuleProperties lessonRuleProperties;
 
     @Override
     public List<LessonSummaryResponse> getLessonsByTopic(UUID topicId, UUID accountId) {
@@ -91,15 +106,20 @@ public class LessonService implements ILessonService {
 
     @Override
     public UserLessonProgressSummary startLesson(UUID accountId, UUID lessonId) {
-       
         Accounts account = accountsRepository.findById(accountId)
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
 
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
-                
-        UserLessonProgress progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
-                .orElseGet(() -> lessonBuilder.createNewLessonProgress(account, lesson));
+
+        UserLessonProgress progress;
+        try {
+            progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
+                    .orElseGet(() -> userLessonProgressRepository.saveAndFlush(lessonBuilder.createNewLessonProgress(account, lesson)));
+        } catch (DataIntegrityViolationException e) {
+            progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
+                    .orElseThrow(() -> e);
+        }
 
         if (progress.getStatus() == LessonStatus.NOT_STARTED) {
             progress.setStatus(LessonStatus.IN_PROGRESS);
@@ -125,11 +145,9 @@ public class LessonService implements ILessonService {
             progress.setUserFeedback(lessonRequest.getFeedback());
         }
 
-        // Mise à jour des stats de réponses globales
         if (lessonRequest.getCorrectAnswers() != null && lessonRequest.getTotalAnswers() != null) {
             progressService.updateAnswerStats(accountId, lesson.getTopic().getId(), lessonRequest.getCorrectAnswers(), lessonRequest.getTotalAnswers());
 
-            // Check if score is high enough to complete
             double score = (double) lessonRequest.getCorrectAnswers() / lessonRequest.getTotalAnswers() * 100;
             if (lesson.getMinScoreRequired() != null && score < lesson.getMinScoreRequired()) {
                 userLessonProgressRepository.save(progress);
@@ -205,6 +223,8 @@ public class LessonService implements ILessonService {
         }
 
         lessonRequestToLessonEntity.updateLessonFromRequest(lessonRequest, lesson, messageSource);
+        
+        recalculateRewards(lesson);
 
         lessonRepository.save(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
@@ -215,11 +235,94 @@ public class LessonService implements ILessonService {
         Topic topic = topicRepository.findById(lessonRequest.getTopicId())
                 .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
 
+        Integer maxOrderIndex = lessonRepository.findMaxOrderIndexByTopicId(lessonRequest.getTopicId());
+
         Lesson lesson = lessonRequestToLessonEntity.lessonRequestToLessonEntity(lessonRequest, messageSource);
         lesson.setTopic(topic);
+        lesson.setOrderIndex(maxOrderIndex + 1);
+
+        recalculateRewards(lesson);
 
         lessonRepository.save(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
+    }
+
+    private void recalculateRewards(Lesson lesson) {
+        if (lesson instanceof FlashcardLesson flashcardLesson) {
+            int count = flashcardLesson.getFlashcards() != null ? flashcardLesson.getFlashcards().size() : 0;
+            lesson.setXpReward(count * lessonRuleProperties.getXpPerFlashcard());
+            lesson.setDurationMinutes((int) Math.ceil((double) (count * lessonRuleProperties.getSecondsPerFlashcard()) / 60));
+        } else if (lesson instanceof QcmLesson qcmLesson) {
+            int count = qcmLesson.getQuestions() != null ? qcmLesson.getQuestions().size() : 0;
+            lesson.setXpReward(count * lessonRuleProperties.getXpPerQcm());
+            lesson.setDurationMinutes((int) Math.ceil((double) (count * lessonRuleProperties.getSecondsPerQcm()) / 60));
+        } else if (lesson instanceof MatchingPairLesson) {
+            lesson.setXpReward(lessonRuleProperties.getMatchingPairFixedXp());
+            lesson.setDurationMinutes((int) Math.ceil((double) lessonRuleProperties.getMatchingPairFixedSeconds() / 60));
+        } else if (lesson instanceof SortingExerciseLesson) {
+            lesson.setXpReward(lessonRuleProperties.getSortingFixedXp());
+            lesson.setDurationMinutes((int) Math.ceil((double) lessonRuleProperties.getSortingFixedSeconds() / 60));
+        }
+
+        if (lesson.getXpReward() == null || lesson.getXpReward() < 5) lesson.setXpReward(5);
+        if (lesson.getDurationMinutes() == null || lesson.getDurationMinutes() < 1) lesson.setDurationMinutes(1);
+        
+        log.info("Recalculated rewards for lesson {} ({}): {} XP, {} min", 
+            lesson.getId(), lesson.getLessonType(), lesson.getXpReward(), lesson.getDurationMinutes());
+    }
+
+    @Override
+    public LessonResponse toggleLessonStatus(UUID lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
+
+        lesson.setIsActive(!lesson.getIsActive());
+        
+        lessonRepository.save(lesson);
+        return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
+    }
+
+    @Override
+    public List<LessonSummaryResponse> getLessonsByTopicForAdmin(UUID topicId, UUID accountId) {
+        return lessonRepository.findByTopic_IdOrderByOrderIndexAsc(topicId).stream()
+                .map(lesson -> {
+                    boolean isAlreadyFinish = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lesson.getId())
+                            .map(progress -> progress.getTotalAttempts() > 0)
+                            .orElse(false);
+                    return lessonEntityToLessonResponse.lessonToLessonSummaryResponse(lesson, isAlreadyFinish);
+                })
+                .toList();
+    }
+
+    @Override
+    public void reorderLessons(UUID topicId, List<LessonReorderRequest> requests) {
+        List<Lesson> allLessons = lessonRepository.findByTopic_Id(topicId);
+        Map<UUID, Lesson> lessonMap = allLessons.stream()
+                .collect(Collectors.toMap(Lesson::getId, lesson -> lesson));
+
+        for (LessonReorderRequest request : requests) {
+            Lesson lesson = lessonMap.get(request.id());
+            if (lesson != null) {
+                lesson.setOrderIndex(request.orderIndex());
+            }
+        }
+
+        allLessons.sort(Comparator.comparing(Lesson::getOrderIndex)
+                .thenComparing(Lesson::getId));
+
+        for (int index = 0; index < allLessons.size(); index++) {
+            allLessons.get(index).setOrderIndex(index);
+        }
+
+        lessonRepository.saveAll(allLessons);
+    }
+
+    @Override
+    public void recalculateReward(UUID lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
+        recalculateRewards(lesson);
+        lessonRepository.save(lesson);
     }
 
 }

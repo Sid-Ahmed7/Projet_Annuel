@@ -25,6 +25,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 
+import com.glotrush.dto.request.LessonReorderRequest;
+
 @RestController
 @RequestMapping("/api/v1/lessons")
 @RequiredArgsConstructor
@@ -92,5 +94,27 @@ public class LessonController {
     public ResponseEntity<ApiResponse> deleteLesson(@PathVariable UUID lessonId){
         lessonService.removeLesson(lessonId);
         return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.lesson.deleted_successfully", null, LocaleUtils.getCurrentLocale())));
+    }
+
+    @PatchMapping("/{lessonId}/toggle-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<LessonResponse> toggleLessonStatus(@PathVariable UUID lessonId) {
+        LessonResponse lessonResponse = lessonService.toggleLessonStatus(lessonId);
+        return ResponseEntity.ok(lessonResponse);
+    }
+
+    @GetMapping("/admin/topic/{topicId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<LessonSummaryResponse>> getLessonsByTopicForAdmin(Authentication authentication, @PathVariable UUID topicId) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        List<LessonSummaryResponse> lessons = lessonService.getLessonsByTopicForAdmin(topicId, accountId);
+        return ResponseEntity.ok(lessons);
+    }
+
+    @PatchMapping("/admin/topic/{topicId}/reorder")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> reorderLessons(@PathVariable UUID topicId, @RequestBody List<LessonReorderRequest> requests) {
+        lessonService.reorderLessons(topicId, requests);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -93,7 +93,7 @@ public class TopicService implements ITopicService {
   
     @Override
     public List<TopicResponse> getAllTopics(UUID accountId) {
-        return topicRepository.findByIsActiveTrueOrderByOrderIndexAsc().stream()
+        return topicRepository.findByIsActiveTrueOrderByDifficultyAscNameAsc().stream()
                 .map(topic -> {
                     Optional<UserProgress> progressOpt = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topic.getId());
                     return topicBuilder.mapToTopicResponse(topic, progressOpt);
@@ -110,7 +110,7 @@ public class TopicService implements ITopicService {
 
     @Override
     public List<TopicWithProgressResponse> getTopicsByLanguage(UUID languageId, UUID accountId) {
-        return topicRepository.findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(languageId).stream().map(topic -> {
+        return topicRepository.findByTargetLanguage_IdAndIsActiveTrueOrderByDifficultyAscNameAsc(languageId).stream().map(topic -> {
             List<LessonResponse> lessons = lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topic.getId()).stream()
                     .map(lesson -> {
                         Optional<UserLessonProgress> progressOpt = accountId != null
@@ -141,11 +141,15 @@ public class TopicService implements ITopicService {
 
     @Override
     public TopicResponse createTopic(TopicRequest topicRequest) {
-        Language language = languageRepository.findById(topicRequest.getLanguageId())
+        Language targetLanguage = languageRepository.findById(topicRequest.getTargetLanguageId())
+                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
+
+        Language sourceLanguage = languageRepository.findById(topicRequest.getSourceLanguageId())
                 .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
         
         Topic topicEntity = topicMapper.mapTopicRequestToMapTopicEntities(topicRequest);
-        topicEntity.setLanguage(language);
+        topicEntity.setTargetLanguage(targetLanguage);
+        topicEntity.setSourceLanguage(sourceLanguage);
         
         topicRepository.save(topicEntity);
         return topicMapper.mapTopicEntitiesToTopicResponse(topicEntity);
@@ -164,10 +168,16 @@ public class TopicService implements ITopicService {
         Topic topic = topicRepository.findById(topicId)
                 .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
 
-        if (topicRequest.getLanguageId() != null && !topicRequest.getLanguageId().equals(topic.getLanguage().getId())) {
-            Language language = languageRepository.findById(topicRequest.getLanguageId())
+        if (topicRequest.getTargetLanguageId() != null && !topicRequest.getTargetLanguageId().equals(topic.getTargetLanguage().getId())) {
+            Language targetLanguage = languageRepository.findById(topicRequest.getTargetLanguageId())
                     .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
-            topic.setLanguage(language);
+            topic.setTargetLanguage(targetLanguage);
+        }
+
+        if (topicRequest.getSourceLanguageId() != null && !topicRequest.getSourceLanguageId().equals(topic.getSourceLanguage().getId())) {
+            Language sourceLanguage = languageRepository.findById(topicRequest.getSourceLanguageId())
+                    .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
+            topic.setSourceLanguage(sourceLanguage);
         }
 
         topicMapper.updateTopicFromRequest(topicRequest, topic);
@@ -198,7 +208,7 @@ public class TopicService implements ITopicService {
             List<Predicate> predicates = new ArrayList<>();
 
             if (languageId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("language").get("id"), languageId));
+                predicates.add(criteriaBuilder.equal(root.get("targetLanguage").get("id"), languageId));
             }
 
             if (name != null && !name.isBlank()) {

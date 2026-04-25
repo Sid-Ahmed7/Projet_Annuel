@@ -19,6 +19,5 @@ public class LanguageResponse {
     private Integer topicsCount;
     private Integer lessonsCount;
     private Boolean isActive;
-    private Integer orderIndex;
     private Boolean isPopular;
 }

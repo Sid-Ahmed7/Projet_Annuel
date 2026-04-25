@@ -35,8 +35,12 @@ public class Topic {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "language_id", nullable = false)
-    private Language language;
+    @JoinColumn(name = "target_language_id", nullable = false)
+    private Language targetLanguage;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "source_language_id", nullable = false)
+    private Language sourceLanguage;
 
     @Column(name = "name", nullable = false, length = 100)
     private String name; 
@@ -47,10 +51,6 @@ public class Topic {
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty", nullable = false)
     private ProficiencyLevel difficulty;
-
-    @Column(name = "order_index", nullable = false)
-    @Builder.Default
-    private Integer orderIndex = 0;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default

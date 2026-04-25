@@ -15,7 +15,10 @@ import java.util.UUID;
 @AllArgsConstructor
 public class TopicRequest {
     @NotNull
-    private UUID languageId;
+    private UUID targetLanguageId;
+
+    @NotNull
+    private UUID sourceLanguageId;
 
     @NotBlank
     @Size(min = 2, max = 100)
@@ -26,10 +29,6 @@ public class TopicRequest {
 
     @NotNull
     private ProficiencyLevel difficulty;
-
-    @NotNull
-    @Min(0)
-    private Integer orderIndex;
 
     @NotNull
     private Boolean isActive;

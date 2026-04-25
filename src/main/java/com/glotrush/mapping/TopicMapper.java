@@ -15,16 +15,19 @@ public abstract class TopicMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "language", ignore = true)
+    @Mapping(target = "targetLanguage", ignore = true)
+    @Mapping(target = "sourceLanguage", ignore = true)
     public abstract Topic mapTopicRequestToMapTopicEntities(TopicRequest topicRequest);
 
-    @Mapping(source = "language.id", target = "languageId")
+    @Mapping(source = "targetLanguage.id", target = "targetLanguageId")
+    @Mapping(source = "sourceLanguage.id", target = "sourceLanguageId")
     public abstract TopicResponse mapTopicEntitiesToTopicResponse(Topic topic);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "language", ignore = true)
+    @Mapping(target = "targetLanguage", ignore = true)
+    @Mapping(target = "sourceLanguage", ignore = true)
     public abstract void updateTopicFromRequest(TopicRequest topicRequest, @MappingTarget Topic topic);
 
 }
