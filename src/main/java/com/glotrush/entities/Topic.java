@@ -35,8 +35,12 @@ public class Topic {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "language_id", nullable = false)
-    private Language language;
+    @JoinColumn(name = "target_language_id", nullable = false)
+    private Language targetLanguage;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "source_language_id", nullable = false)
+    private Language sourceLanguage;
 
     @Column(name = "name", nullable = false, length = 100)
     private String name; 

@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
+import com.glotrush.config.LessonRuleProperties;
 import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
@@ -27,6 +28,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -96,6 +98,8 @@ class LessonServiceTest {
     @Mock
     private LessonBuilder lessonBuilder;
 
+    private LessonRuleProperties lessonRuleProperties;
+
     private LessonService lessonService;
 
     private UUID accountId;
@@ -107,7 +111,18 @@ class LessonServiceTest {
 
     @BeforeEach
     void setUp() {
-        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity);
+        lessonRuleProperties = new LessonRuleProperties();
+        // Setup initial rules for testing
+        lessonRuleProperties.setXpPerFlashcard(5);
+        lessonRuleProperties.setSecondsPerFlashcard(30);
+        lessonRuleProperties.setXpPerQcm(10);
+        lessonRuleProperties.setSecondsPerQcm(60);
+        lessonRuleProperties.setMatchingPairFixedXp(50);
+        lessonRuleProperties.setMatchingPairFixedSeconds(300);
+        lessonRuleProperties.setSortingFixedXp(60);
+        lessonRuleProperties.setSortingFixedSeconds(360);
+
+        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity, lessonRuleProperties);
         accountId = UUID.randomUUID();
         lessonId = UUID.randomUUID();
         topicId = UUID.randomUUID();
@@ -130,7 +145,6 @@ class LessonServiceTest {
                 .xpReward(50)
                 .orderIndex(1)
                 .isActive(true)
-                .minLevelRequired(1)
                 .minScoreRequired(70)
                 .durationMinutes(15)
                 .build();
@@ -561,11 +575,15 @@ class LessonServiceTest {
         when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
 
         LessonResponse result = lessonService.createLesson(request);
-
+        
+        ArgumentCaptor<Lesson> lessonCaptor = ArgumentCaptor.forClass(Lesson.class);
+        verify(lessonRepository).save(lessonCaptor.capture());
+        
+        Lesson savedLesson = lessonCaptor.getValue();
+        assertThat(savedLesson.getXpReward()).isGreaterThanOrEqualTo(5);
+        assertThat(savedLesson.getDurationMinutes()).isGreaterThanOrEqualTo(1);
         assertThat(result).isInstanceOf(FlashcardLessonResponse.class);
         assertThat(result.getTitle()).isEqualTo("New Lesson");
-        assertThat(((FlashcardLessonResponse)result).getFlashcards()).isNotNull();
-        verify(lessonRepository).save(any());
     }
 
     @Test
@@ -582,11 +600,14 @@ class LessonServiceTest {
         when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
 
         LessonResponse result = lessonService.createLesson(request);
-
+ 
+        ArgumentCaptor<Lesson> lessonCaptor = ArgumentCaptor.forClass(Lesson.class);
+        verify(lessonRepository).save(lessonCaptor.capture());
+        
+        Lesson savedLesson = lessonCaptor.getValue();
+        assertThat(savedLesson.getXpReward()).isEqualTo(lessonRuleProperties.getMatchingPairFixedXp());
         assertThat(result).isInstanceOf(MatchingPairLessonResponse.class);
         assertThat(result.getTitle()).isEqualTo("Matching Pair Lesson");
-        assertThat(((MatchingPairLessonResponse)result).getMatchingPairs()).isNotNull();
-        verify(lessonRepository).save(any());
     }
 
     @Test
@@ -657,10 +678,15 @@ class LessonServiceTest {
         when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(any(), any())).thenReturn(expectedResponse);
 
         LessonResponse result = lessonService.updateLesson(lessonId, request);
-
+ 
+        ArgumentCaptor<Lesson> lessonCaptor = ArgumentCaptor.forClass(Lesson.class);
+        verify(lessonRepository).save(lessonCaptor.capture());
+        
+        Lesson savedLesson = lessonCaptor.getValue();
+        assertThat(savedLesson.getXpReward()).isNotNull();
+        assertThat(savedLesson.getDurationMinutes()).isNotNull();
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo("Updated Lesson");
-        verify(lessonRepository).save(any());
     }
 
     @Test
@@ -760,6 +786,51 @@ class LessonServiceTest {
         assertThat(result.getStatus()).isEqualTo(LessonStatus.IN_PROGRESS);
         verify(userLessonProgressRepository).saveAndFlush(any(UserLessonProgress.class));
         verify(userLessonProgressRepository, times(2)).findByAccount_IdAndLesson_Id(accountId, lessonId);
+    }
+
+    @Test
+    @DisplayName("Should recalculate rewards for FlashcardLesson based on item count")
+    void shouldRecalculateRewardsForFlashcardLesson() {
+        FlashcardLesson flashcardLesson = new FlashcardLesson();
+        flashcardLesson.setFlashcards(List.of(new com.glotrush.entities.exercice.FlashcardEntity(), new com.glotrush.entities.exercice.FlashcardEntity()));
+        
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(flashcardLesson));
+        when(lessonRepository.save(any())).thenReturn(flashcardLesson);
+
+        lessonService.recalculateReward(lessonId);
+
+        assertThat(flashcardLesson.getXpReward()).isEqualTo(10); // 2 cards * 5 XP
+        assertThat(flashcardLesson.getDurationMinutes()).isEqualTo(1); // 2 cards * 30s = 60s = 1 min
+        verify(lessonRepository).save(flashcardLesson);
+    }
+
+    @Test
+    @DisplayName("Should apply minimum values during reward calculation")
+    void shouldApplyMinimumValues() {
+        FlashcardLesson flashcardLesson = new FlashcardLesson();
+        flashcardLesson.setFlashcards(Collections.emptyList()); // 0 cards
+        
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(flashcardLesson));
+        when(lessonRepository.save(any())).thenReturn(flashcardLesson);
+
+        lessonService.recalculateReward(lessonId);
+
+        assertThat(flashcardLesson.getXpReward()).isEqualTo(5); // Min XP
+        assertThat(flashcardLesson.getDurationMinutes()).isEqualTo(1); // Min Duration
+    }
+
+    @Test
+    @DisplayName("Should use fixed rewards for MatchingPairLesson")
+    void shouldCalculateFixedRewardsForMatchingPair() {
+        MatchingPairLesson matchingPairLesson = new MatchingPairLesson();
+        
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(matchingPairLesson));
+        when(lessonRepository.save(any())).thenReturn(matchingPairLesson);
+
+        lessonService.recalculateReward(lessonId);
+
+        assertThat(matchingPairLesson.getXpReward()).isEqualTo(50);
+        assertThat(matchingPairLesson.getDurationMinutes()).isEqualTo(5); // 300s / 60
     }
 }
 

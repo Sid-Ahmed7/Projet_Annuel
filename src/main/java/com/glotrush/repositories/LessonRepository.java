@@ -32,7 +32,7 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
     Optional<Lesson> findById(UUID id);
 
     Integer countByTopic_Id(UUID topicId);
-    Integer countByTopic_Language_Id(UUID languageId);
+    Integer countByTopic_TargetLanguage_Id(UUID languageId);
     boolean existsById(UUID lessonId);
     Optional<Lesson> findFirstByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(UUID topicId);
 

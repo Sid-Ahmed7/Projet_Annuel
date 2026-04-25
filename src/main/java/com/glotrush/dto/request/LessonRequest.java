@@ -36,12 +36,6 @@ public abstract class LessonRequest {
     @NotBlank
     private String description;
     @NotNull
-    private Integer xpReward;
-    @NotNull
-    private Integer minLevelRequired;
-    @NotNull
-    private Integer durationMinutes;
-    @NotNull
     private Boolean isActive;
     @NotNull
     private LessonType lessonType;

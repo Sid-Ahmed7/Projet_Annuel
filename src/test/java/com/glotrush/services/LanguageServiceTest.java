@@ -101,10 +101,10 @@ class LanguageServiceTest {
         when(languageRepository.findByIsActiveTrueOrderByNameAsc())
                 .thenReturn(Arrays.asList(japanese, french));
         when(userLanguageRepository.findMostPopularLanguageIdsByLearnerCount(any(), any())).thenReturn(Collections.emptyList());
-        when(topicRepository.findByLanguage_Id(japanese.getId())).thenReturn(Collections.emptyList());
-        when(topicRepository.findByLanguage_Id(french.getId())).thenReturn(Collections.emptyList());
-        when(lessonRepository.countByTopic_Language_Id(japanese.getId())).thenReturn(0);
-        when(lessonRepository.countByTopic_Language_Id(french.getId())).thenReturn(0);
+        when(topicRepository.findByTargetLanguage_Id(japanese.getId())).thenReturn(Collections.emptyList());
+        when(topicRepository.findByTargetLanguage_Id(french.getId())).thenReturn(Collections.emptyList());
+        when(lessonRepository.countByTopic_TargetLanguage_Id(japanese.getId())).thenReturn(0);
+        when(lessonRepository.countByTopic_TargetLanguage_Id(french.getId())).thenReturn(0);
         when(languageBuilder.mapToLanguageResponse(japanese, null, 0, 0, false)).thenReturn(japaneseResponse);
         when(languageBuilder.mapToLanguageResponse(french, null, 0, 0, false)).thenReturn(frenchResponse);
 
@@ -129,8 +129,8 @@ class LanguageServiceTest {
 
         when(languageRepository.findById(languageId)).thenReturn(Optional.of(japanese));
         when(userLanguageRepository.findMostPopularLanguageIdsByLearnerCount(any(), any())).thenReturn(Collections.emptyList());
-        when(topicRepository.findByLanguage_Id(japanese.getId())).thenReturn(Collections.emptyList());
-        when(lessonRepository.countByTopic_Language_Id(japanese.getId())).thenReturn(0);
+        when(topicRepository.findByTargetLanguage_Id(japanese.getId())).thenReturn(Collections.emptyList());
+        when(lessonRepository.countByTopic_TargetLanguage_Id(japanese.getId())).thenReturn(0);
         when(languageBuilder.mapToLanguageResponse(japanese, null, 0, 0, false)).thenReturn(japaneseResponse);
 
         LanguageResponse result = languageService.getLanguageById(languageId);
@@ -163,8 +163,8 @@ class LanguageServiceTest {
 
         when(languageRepository.findByCode("ja")).thenReturn(Optional.of(japanese));
         when(userLanguageRepository.findMostPopularLanguageIdsByLearnerCount(any(), any())).thenReturn(Collections.emptyList());
-        when(topicRepository.findByLanguage_Id(japanese.getId())).thenReturn(Collections.emptyList());
-        when(lessonRepository.countByTopic_Language_Id(japanese.getId())).thenReturn(0);
+        when(topicRepository.findByTargetLanguage_Id(japanese.getId())).thenReturn(Collections.emptyList());
+        when(lessonRepository.countByTopic_TargetLanguage_Id(japanese.getId())).thenReturn(0);
         when(languageBuilder.mapToLanguageResponse(japanese, null, 0, 0, false)).thenReturn(japaneseResponse);
 
         LanguageResponse result = languageService.getLanguageByCode("ja");

@@ -87,10 +87,7 @@ class LessonMapperTest {
         request.setTopicId(topicId);
         request.setTitle("QCM Title");
         request.setDescription("QCM Description");
-        request.setXpReward(15);
         request.setIsActive(true);
-        request.setMinLevelRequired(1);
-        request.setDurationMinutes(10);
         request.setLessonType(LessonType.QCM);
 
         QcmQuestionRequest questionRequest = new QcmQuestionRequest();

@@ -44,9 +44,6 @@ public abstract class Lesson {
     @Column(name = "min_score_required")
     private Integer minScoreRequired = 70;
 
-    @Column(name = "min_level_required")
-    private Integer minLevelRequired;
-
     @Column(name = "duration_minutes")
     private Integer durationMinutes;
 

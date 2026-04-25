@@ -25,4 +25,5 @@ public interface ILessonService {
     LessonResponse toggleLessonStatus(UUID lessonId);
     List<LessonSummaryResponse> getLessonsByTopicForAdmin(UUID topicId, UUID accountId);
     void reorderLessons(UUID topicId, List<LessonReorderRequest> requests);
+    void recalculateReward(UUID lessonId);
 }

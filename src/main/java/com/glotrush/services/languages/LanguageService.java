@@ -51,7 +51,7 @@ public class LanguageService implements ILanguageService {
             userLanguageRepository.findMostPopularLanguageIdsByLearnerCount(LanguageType.LEARNING, PageRequest.of(0, LanguagesConstants.POPULAR_LANGUAGES_LIMIT))
         );
         
-        List<Topic> topics = topicRepository.findByLanguage_Id(language.getId());
+        List<Topic> topics = topicRepository.findByTargetLanguage_Id(language.getId());
         String levelRange = null;
         if (!topics.isEmpty()) {
             ProficiencyLevel min = topics.stream().map(Topic::getDifficulty).min(Comparator.naturalOrder()).orElse(null);
@@ -61,7 +61,7 @@ public class LanguageService implements ILanguageService {
             }
         }
         int topicsCount = topics.size();
-        int lessonsCount = lessonRepository.countByTopic_Language_Id(language.getId());
+        int lessonsCount = lessonRepository.countByTopic_TargetLanguage_Id(language.getId());
         boolean isPopular = popularLanguages.contains(language.getId());
         return languageBuilder.mapToLanguageResponse(language, levelRange, topicsCount, lessonsCount, isPopular);
     }

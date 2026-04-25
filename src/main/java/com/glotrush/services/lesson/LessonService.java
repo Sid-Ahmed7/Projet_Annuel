@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.glotrush.dto.request.LessonReorderRequest;
 import com.glotrush.dto.request.LessonRequest;
@@ -30,13 +32,19 @@ import com.glotrush.entities.UserProgress;
 import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.exceptions.UserNotFoundException;
+import com.glotrush.config.LessonRuleProperties;
+import com.glotrush.enumerations.LessonType;
+import com.glotrush.entities.Topic;
+import com.glotrush.entities.lesson.FlashcardLesson;
+import com.glotrush.entities.lesson.MatchingPairLesson;
+import com.glotrush.entities.lesson.QcmLesson;
+import com.glotrush.entities.lesson.SortingExerciseLesson;
+import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
-import com.glotrush.entities.Topic;
-import com.glotrush.exceptions.TopicNotFoundException;
 
 import com.glotrush.utils.LevelUtils;
 import com.glotrush.utils.LocaleUtils;
@@ -47,6 +55,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional
 public class LessonService implements ILessonService {
+    private static final Logger log = LoggerFactory.getLogger(LessonService.class);
     private final MessageSource messageSource;
     private final LessonRepository lessonRepository;
     private final UserLessonProgressRepository userLessonProgressRepository;
@@ -56,6 +65,7 @@ public class LessonService implements ILessonService {
     private final TopicRepository topicRepository;
     private final LessonEntityToLessonResponse lessonEntityToLessonResponse;
     private final LessonRequestToLessonEntity lessonRequestToLessonEntity;
+    private final LessonRuleProperties lessonRuleProperties;
 
     @Override
     public List<LessonSummaryResponse> getLessonsByTopic(UUID topicId, UUID accountId) {
@@ -216,6 +226,9 @@ public class LessonService implements ILessonService {
         }
 
         lessonRequestToLessonEntity.updateLessonFromRequest(lessonRequest, lesson, messageSource);
+        
+        // Recalculate XP and duration based on content
+        recalculateRewards(lesson);
 
         lessonRepository.save(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
@@ -232,8 +245,36 @@ public class LessonService implements ILessonService {
         lesson.setTopic(topic);
         lesson.setOrderIndex(maxOrderIndex + 1);
 
+        // Automating XP and duration based on rules and content
+        recalculateRewards(lesson);
+
         lessonRepository.save(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
+    }
+
+    private void recalculateRewards(Lesson lesson) {
+        if (lesson instanceof FlashcardLesson flashcardLesson) {
+            int count = flashcardLesson.getFlashcards() != null ? flashcardLesson.getFlashcards().size() : 0;
+            lesson.setXpReward(count * lessonRuleProperties.getXpPerFlashcard());
+            lesson.setDurationMinutes((int) Math.ceil((double) (count * lessonRuleProperties.getSecondsPerFlashcard()) / 60));
+        } else if (lesson instanceof QcmLesson qcmLesson) {
+            int count = qcmLesson.getQuestions() != null ? qcmLesson.getQuestions().size() : 0;
+            lesson.setXpReward(count * lessonRuleProperties.getXpPerQcm());
+            lesson.setDurationMinutes((int) Math.ceil((double) (count * lessonRuleProperties.getSecondsPerQcm()) / 60));
+        } else if (lesson instanceof MatchingPairLesson) {
+            lesson.setXpReward(lessonRuleProperties.getMatchingPairFixedXp());
+            lesson.setDurationMinutes((int) Math.ceil((double) lessonRuleProperties.getMatchingPairFixedSeconds() / 60));
+        } else if (lesson instanceof SortingExerciseLesson) {
+            lesson.setXpReward(lessonRuleProperties.getSortingFixedXp());
+            lesson.setDurationMinutes((int) Math.ceil((double) lessonRuleProperties.getSortingFixedSeconds() / 60));
+        }
+
+        // Ensure minimum values
+        if (lesson.getXpReward() == null || lesson.getXpReward() < 5) lesson.setXpReward(5);
+        if (lesson.getDurationMinutes() == null || lesson.getDurationMinutes() < 1) lesson.setDurationMinutes(1);
+        
+        log.info("Recalculated rewards for lesson {} ({}): {} XP, {} min", 
+            lesson.getId(), lesson.getLessonType(), lesson.getXpReward(), lesson.getDurationMinutes());
     }
 
     @Override
@@ -280,6 +321,14 @@ public class LessonService implements ILessonService {
         }
 
         lessonRepository.saveAll(allLessons);
+    }
+
+    @Override
+    public void recalculateReward(UUID lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
+        recalculateRewards(lesson);
+        lessonRepository.save(lesson);
     }
 
 }

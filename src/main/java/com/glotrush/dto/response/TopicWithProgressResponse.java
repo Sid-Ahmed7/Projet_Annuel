@@ -17,7 +17,8 @@ import lombok.NoArgsConstructor;
 public class TopicWithProgressResponse {
 
     private UUID id;
-    private UUID languageId;
+    private UUID targetLanguageId;
+    private UUID sourceLanguageId;
     private String name;
     private String description;
     private ProficiencyLevel difficulty;

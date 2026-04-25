@@ -20,6 +20,8 @@ public class LessonTestFactory {
         return Topic.builder()
                 .id(id)
                 .name(name)
+                .targetLanguage(com.glotrush.entities.Language.builder().id(UUID.randomUUID()).name("English").build())
+                .sourceLanguage(com.glotrush.entities.Language.builder().id(UUID.randomUUID()).name("French").build())
                 .build();
     }
     public static FlashcardLessonRequest createFlashcardLessonRequest(UUID topicId, String title) {
@@ -27,9 +29,6 @@ public class LessonTestFactory {
         request.setTopicId(topicId);
         request.setTitle(title);
         request.setDescription("Description");
-        request.setXpReward(50);
-        request.setMinLevelRequired(1);
-        request.setDurationMinutes(15);
         request.setIsActive(true);
         request.setFlashcards(new ArrayList<>());
         request.setLessonType(LessonType.FLASHCARD);
@@ -43,7 +42,6 @@ public class LessonTestFactory {
                 .description("Description")
                 .orderIndex(1)
                 .xpReward(50)
-                .minLevelRequired(1)
                 .durationMinutes(15)
                 .isActive(true)
                 .flashcards(new ArrayList<>())
@@ -56,7 +54,6 @@ public class LessonTestFactory {
                 .description("Description")
                 .orderIndex(1)
                 .xpReward(50)
-                .minLevelRequired(1)
                 .durationMinutes(15)
                 .isActive(true)
                 .flashcards(new ArrayList<>())
@@ -71,7 +68,6 @@ public class LessonTestFactory {
                 .description("Description")
                 .orderIndex(1)
                 .xpReward(50)
-                .minLevelRequired(1)
                 .durationMinutes(15)
                 .isActive(true)
                 .matchingPairs(new ArrayList<>())
@@ -84,7 +80,6 @@ public class LessonTestFactory {
                 .description("Description")
                 .orderIndex(1)
                 .xpReward(50)
-                .minLevelRequired(1)
                 .durationMinutes(15)
                 .isActive(true)
                 .matchingPairs(new ArrayList<>())
@@ -99,7 +94,6 @@ public class LessonTestFactory {
                 .description("Description")
                 .orderIndex(1)
                 .xpReward(50)
-                .minLevelRequired(1)
                 .durationMinutes(15)
                 .isActive(true)
                 .questions(new ArrayList<>())
@@ -112,7 +106,6 @@ public class LessonTestFactory {
                 .description("Description")
                 .orderIndex(1)
                 .xpReward(50)
-                .minLevelRequired(1)
                 .durationMinutes(15)
                 .isActive(true)
                 .questions(new ArrayList<>())
@@ -127,7 +120,6 @@ public class LessonTestFactory {
                 .description("Description")
                 .orderIndex(1)
                 .xpReward(50)
-                .minLevelRequired(1)
                 .durationMinutes(15)
                 .isActive(true)
                 .sortingExercise(new ArrayList<>())
@@ -140,7 +132,6 @@ public class LessonTestFactory {
                 .description("Description")
                 .orderIndex(1)
                 .xpReward(50)
-                .minLevelRequired(1)
                 .durationMinutes(15)
                 .isActive(true)
                 .sortingExercise(new ArrayList<>())
@@ -152,9 +143,6 @@ public class LessonTestFactory {
         request.setTopicId(topicId);
         request.setTitle(title);
         request.setDescription("Description");
-        request.setXpReward(50);
-        request.setMinLevelRequired(1);
-        request.setDurationMinutes(15);
         request.setIsActive(true);
         request.setQuestions(new ArrayList<>());
         request.setLessonType(LessonType.QCM);
@@ -165,9 +153,6 @@ public class LessonTestFactory {
         request.setTopicId(topicId);
         request.setTitle(title);
         request.setDescription("Description");
-        request.setXpReward(50);
-        request.setMinLevelRequired(1);
-        request.setDurationMinutes(15);
         request.setIsActive(true);
         request.setMatchingPairs(new ArrayList<>());
         request.setLessonType(LessonType.MATCHING_PAIR);
@@ -178,9 +163,6 @@ public class LessonTestFactory {
         request.setTopicId(topicId);
         request.setTitle(title);
         request.setDescription("Description");
-        request.setXpReward(50);
-        request.setMinLevelRequired(1);
-        request.setDurationMinutes(15);
         request.setIsActive(true);
         request.setSortingExercise(new ArrayList<>());
         request.setLessonType(LessonType.SORTING_EXERCISE);

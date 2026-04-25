@@ -107,7 +107,7 @@ public class ProgressService implements IProgressService {
 
     @Override
     public List<UserProgressResponse> getProgressByLanguage(UUID accountId, UUID languageId) {
-        List<UserProgress> progressList = userProgressRepository.findByAccount_IdAndTopic_Language_Id(accountId, languageId);
+        List<UserProgress> progressList = userProgressRepository.findByAccount_IdAndTopic_TargetLanguage_Id(accountId, languageId);
         return progressList.stream()
                 .map(progressBuilder::mapToUserProgressResponse)
                 .toList();
@@ -185,7 +185,7 @@ public class ProgressService implements IProgressService {
 
         List<UserProgress> allProgress = userProgressRepository.findByAccount_Id(accountId);
         Map<UUID, Long> xpByLanguage = allProgress.stream().collect(Collectors.groupingBy(
-                        p -> p.getTopic().getLanguage().getId(),
+                        p -> p.getTopic().getTargetLanguage().getId(),
                         Collectors.summingLong(UserProgress::getTotalXP)
                 ));
 
@@ -215,7 +215,7 @@ public class ProgressService implements IProgressService {
         return Optional.empty();
       }
       Topic lastTopic = lastAttempt.get().getLesson().getTopic();
-      UUID languageId = lastTopic.getLanguage().getId();
+      UUID languageId = lastTopic.getTargetLanguage().getId();
 
       Optional<Lesson> nextLessonUnCompleted = lessonRepository.findFirstUncompletedLessonInTopic(accountId, lastTopic.getId());
       Lesson nextLesson = null;
@@ -223,7 +223,7 @@ public class ProgressService implements IProgressService {
       if(nextLessonUnCompleted.isPresent()) {
         nextLesson = nextLessonUnCompleted.get();
       } else {
-        List<Topic> topicsInLanguage = topicRepository.findByLanguage_IdAndIsActiveTrueOrderByDifficultyAscNameAsc(languageId);
+        List<Topic> topicsInLanguage = topicRepository.findByTargetLanguage_IdAndIsActiveTrueOrderByDifficultyAscNameAsc(languageId);
 
         int currentTopicIndex = -1;
         for (int i = 0; i < topicsInLanguage.size(); i++) {
@@ -258,8 +258,8 @@ public class ProgressService implements IProgressService {
             .xpReward(nextLesson.getXpReward())
             .topicId(topic.getId())
             .topicName(topic.getName())
-            .languageName(topic.getLanguage().getName())
-            .languageCode(topic.getLanguage().getCode())
+            .languageName(topic.getTargetLanguage().getName())
+            .languageCode(topic.getTargetLanguage().getCode())
             .completionCount(completedCount)
             .totalLessonsInTopic(totalLessons)
             .build());

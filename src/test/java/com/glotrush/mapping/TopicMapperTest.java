@@ -28,7 +28,8 @@ class TopicMapperTest {
     void shouldMapTopicRequestToTopicEntity() {
         UUID languageId = UUID.randomUUID();
         TopicRequest request = TopicRequest.builder()
-                .languageId(languageId)
+                .targetLanguageId(languageId)
+                .sourceLanguageId(languageId)
                 .name("Test Topic")
                 .description("Test Description")
                 .difficulty(ProficiencyLevel.B1)
@@ -58,7 +59,8 @@ class TopicMapperTest {
 
         Topic entity = Topic.builder()
                 .id(topicId)
-                .language(language)
+                .targetLanguage(language)
+                .sourceLanguage(language)
                 .name("Test Topic")
                 .description("Test Description")
                 .difficulty(ProficiencyLevel.B2)
@@ -75,6 +77,7 @@ class TopicMapperTest {
         assertThat(response.getIsActive()).isEqualTo(entity.getIsActive());
 
         // Vérification des clés étrangères / données liées
-        assertThat(response.getLanguageId()).isEqualTo(languageId);
+        assertThat(response.getTargetLanguageId()).isEqualTo(languageId);
+        assertThat(response.getSourceLanguageId()).isEqualTo(languageId);
     }
 }
