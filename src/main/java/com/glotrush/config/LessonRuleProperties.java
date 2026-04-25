@@ -12,27 +12,27 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class LessonRuleProperties {
     
-    @NotNull(message = "La configuration glotrush.lesson.rules.xp-per-flashcard est obligatoire")
+    @NotNull(message = "{validation.lesson.rules.xp-per-flashcard.required}")
     private Integer xpPerFlashcard;
 
-    @NotNull(message = "La configuration glotrush.lesson.rules.seconds-per-flashcard est obligatoire")
+    @NotNull(message = "{validation.lesson.rules.seconds-per-flashcard.required}")
     private Integer secondsPerFlashcard;
 
-    @NotNull(message = "La configuration glotrush.lesson.rules.xp-per-qcm est obligatoire")
+    @NotNull(message = "{validation.lesson.rules.xp-per-qcm.required}")
     private Integer xpPerQcm;
 
-    @NotNull(message = "La configuration glotrush.lesson.rules.seconds-per-qcm est obligatoire")
+    @NotNull(message = "{validation.lesson.rules.seconds-per-qcm.required}")
     private Integer secondsPerQcm;
 
-    @NotNull(message = "La configuration glotrush.lesson.rules.matching-pair-fixed-xp est obligatoire")
+    @NotNull(message = "{validation.lesson.rules.matching-pair-fixed-xp.required}")
     private Integer matchingPairFixedXp;
 
-    @NotNull(message = "La configuration glotrush.lesson.rules.matching-pair-fixed-seconds est obligatoire")
+    @NotNull(message = "{validation.lesson.rules.matching-pair-fixed-seconds.required}")
     private Integer matchingPairFixedSeconds;
 
-    @NotNull(message = "La configuration glotrush.lesson.rules.sorting-fixed-xp est obligatoire")
+    @NotNull(message = "{validation.lesson.rules.sorting-fixed-xp.required}")
     private Integer sortingFixedXp;
 
-    @NotNull(message = "La configuration glotrush.lesson.rules.sorting-fixed-seconds est obligatoire")
+    @NotNull(message = "{validation.lesson.rules.sorting-fixed-seconds.required}")
     private Integer sortingFixedSeconds;
 }
