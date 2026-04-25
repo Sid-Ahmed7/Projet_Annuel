@@ -799,8 +799,8 @@ class LessonServiceTest {
 
         lessonService.recalculateReward(lessonId);
 
-        assertThat(flashcardLesson.getXpReward()).isEqualTo(10); // 2 cards * 5 XP
-        assertThat(flashcardLesson.getDurationMinutes()).isEqualTo(1); // 2 cards * 30s = 60s = 1 min
+        assertThat(flashcardLesson.getXpReward()).isEqualTo(10);
+        assertThat(flashcardLesson.getDurationMinutes()).isEqualTo(1);
         verify(lessonRepository).save(flashcardLesson);
     }
 
@@ -808,15 +808,15 @@ class LessonServiceTest {
     @DisplayName("Should apply minimum values during reward calculation")
     void shouldApplyMinimumValues() {
         FlashcardLesson flashcardLesson = new FlashcardLesson();
-        flashcardLesson.setFlashcards(Collections.emptyList()); // 0 cards
+        flashcardLesson.setFlashcards(Collections.emptyList());
         
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(flashcardLesson));
         when(lessonRepository.save(any())).thenReturn(flashcardLesson);
 
         lessonService.recalculateReward(lessonId);
 
-        assertThat(flashcardLesson.getXpReward()).isEqualTo(5); // Min XP
-        assertThat(flashcardLesson.getDurationMinutes()).isEqualTo(1); // Min Duration
+        assertThat(flashcardLesson.getXpReward()).isEqualTo(5);
+        assertThat(flashcardLesson.getDurationMinutes()).isEqualTo(1);
     }
 
     @Test
@@ -830,7 +830,7 @@ class LessonServiceTest {
         lessonService.recalculateReward(lessonId);
 
         assertThat(matchingPairLesson.getXpReward()).isEqualTo(50);
-        assertThat(matchingPairLesson.getDurationMinutes()).isEqualTo(5); // 300s / 60
+        assertThat(matchingPairLesson.getDurationMinutes()).isEqualTo(5);
     }
 }
 

@@ -117,9 +117,8 @@ public class LessonService implements ILessonService {
             progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
                     .orElseGet(() -> userLessonProgressRepository.saveAndFlush(lessonBuilder.createNewLessonProgress(account, lesson)));
         } catch (DataIntegrityViolationException e) {
-            // En cas de concurrence (ex: React StrictMode), on retente de récupérer l'objet créé par l'autre thread
             progress = userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId)
-                    .orElseThrow(() -> e); // Si toujours rien, on relance l'erreur d'origine
+                    .orElseThrow(() -> e);
         }
 
         if (progress.getStatus() == LessonStatus.NOT_STARTED) {
@@ -146,11 +145,9 @@ public class LessonService implements ILessonService {
             progress.setUserFeedback(lessonRequest.getFeedback());
         }
 
-        // Mise à jour des stats de réponses globales
         if (lessonRequest.getCorrectAnswers() != null && lessonRequest.getTotalAnswers() != null) {
             progressService.updateAnswerStats(accountId, lesson.getTopic().getId(), lessonRequest.getCorrectAnswers(), lessonRequest.getTotalAnswers());
 
-            // Check if score is high enough to complete
             double score = (double) lessonRequest.getCorrectAnswers() / lessonRequest.getTotalAnswers() * 100;
             if (lesson.getMinScoreRequired() != null && score < lesson.getMinScoreRequired()) {
                 userLessonProgressRepository.save(progress);
@@ -227,7 +224,6 @@ public class LessonService implements ILessonService {
 
         lessonRequestToLessonEntity.updateLessonFromRequest(lessonRequest, lesson, messageSource);
         
-        // Recalculate XP and duration based on content
         recalculateRewards(lesson);
 
         lessonRepository.save(lesson);
@@ -245,7 +241,6 @@ public class LessonService implements ILessonService {
         lesson.setTopic(topic);
         lesson.setOrderIndex(maxOrderIndex + 1);
 
-        // Automating XP and duration based on rules and content
         recalculateRewards(lesson);
 
         lessonRepository.save(lesson);
@@ -269,7 +264,6 @@ public class LessonService implements ILessonService {
             lesson.setDurationMinutes((int) Math.ceil((double) lessonRuleProperties.getSortingFixedSeconds() / 60));
         }
 
-        // Ensure minimum values
         if (lesson.getXpReward() == null || lesson.getXpReward() < 5) lesson.setXpReward(5);
         if (lesson.getDurationMinutes() == null || lesson.getDurationMinutes() < 1) lesson.setDurationMinutes(1);
         
