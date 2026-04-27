@@ -1,0 +1,143 @@
+package com.glotrush.security.totp;
+
+import java.nio.ByteBuffer;
+import java.security.SecureRandom;
+import java.util.Base64;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.stereotype.Service;
+
+import com.glotrush.exceptions.DecryptException;
+import com.glotrush.exceptions.EncryptException;
+import com.glotrush.exceptions.QrCodeGenerationException;
+import com.glotrush.utils.LocaleUtils;
+
+
+import dev.samstevens.totp.code.CodeGenerator;
+import dev.samstevens.totp.code.DefaultCodeGenerator;
+import dev.samstevens.totp.code.DefaultCodeVerifier;
+import dev.samstevens.totp.code.HashingAlgorithm;
+import dev.samstevens.totp.qr.QrData;
+import dev.samstevens.totp.secret.DefaultSecretGenerator;
+import dev.samstevens.totp.time.SystemTimeProvider;
+import dev.samstevens.totp.time.TimeProvider;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@Slf4j
+public class TotpService {
+    private final MessageSource messageSource;
+    private final TimeProvider timeProvider = new SystemTimeProvider();
+    private final CodeGenerator codeGenerator = new DefaultCodeGenerator();
+    private final DefaultCodeVerifier verifier;
+    private final SecureRandom secureRandom = new SecureRandom();
+
+    private static final int GCM_IV_LENGTH = 12; 
+    private static final int GCM_TAG_LENGTH = 128;
+
+    @Value("${totp.encryption}")
+    private String encryptionKey;
+
+
+    public TotpService(MessageSource messageSource) {
+        this.verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
+        this.messageSource = messageSource;
+    }
+
+    public String generateSecret() {
+        return new DefaultSecretGenerator().generate();
+    }
+
+    public String generateOtpUri(String secret, String email, String issuer) {
+        try {
+            if (secret == null || email == null || issuer == null) {
+                throw new IllegalArgumentException(messageSource.getMessage("error.security.invalid_params", null, LocaleUtils.getCurrentLocale()));
+            }
+
+            QrData data = new QrData.Builder()
+                    .label(email)
+                    .secret(secret)
+                    .issuer(issuer)
+                    .algorithm(HashingAlgorithm.SHA1)
+                    .digits(6)
+                    .period(30)
+                    .build();
+
+                    return data.getUri();
+        } catch (Exception e) {
+            log.error("Error generating OTP code", e);
+            throw new QrCodeGenerationException(messageSource.getMessage("error.security.qr_code_failed", null, LocaleUtils.getCurrentLocale()), e);
+        }
+    }
+
+
+    public boolean verifyCode(String secret, String code) {
+        try {
+            return verifier.isValidCode(secret, code);
+        } catch (Exception e) {
+            log.error("Error verifying TOTP code", e);
+            return false;
+        }
+    }
+
+   
+    public String encryptSecret(String secret) {
+        try {
+            byte[] keyBytes = Base64.getDecoder().decode(encryptionKey);
+
+            if (keyBytes.length != 32) {
+                throw new IllegalStateException(messageSource.getMessage("error.security.invalid_key_size", null, LocaleUtils.getCurrentLocale()));
+            }
+
+            byte[] iv = new byte[GCM_IV_LENGTH];
+            secureRandom.nextBytes(iv);
+
+            SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmParameterSpec);
+            byte[] encrypted = cipher.doFinal(secret.getBytes());
+            ByteBuffer byteBuffer = ByteBuffer.allocate(iv.length + encrypted.length);
+            byteBuffer.put(iv);
+            byteBuffer.put(encrypted);
+            return Base64.getEncoder().encodeToString(byteBuffer.array());
+        } catch (Exception e) {
+            log.error("Error encrypting secret", e);
+            throw new EncryptException(messageSource.getMessage("error.security.encrypt_failed", null, LocaleUtils.getCurrentLocale()), e);
+        }
+    }
+
+public String decryptSecret(String encryptedSecret) {
+    try {
+        byte[] keyBytes = Base64.getDecoder().decode(encryptionKey);
+
+        if (keyBytes.length != 32) {
+            throw new IllegalStateException(messageSource.getMessage("error.security.decrypt_failed", null, LocaleUtils.getCurrentLocale()));
+        }
+
+        byte[] decodedData = Base64.getDecoder().decode(encryptedSecret);
+
+        ByteBuffer byteBuffer = ByteBuffer.wrap(decodedData);
+        byte[] iv = new byte[GCM_IV_LENGTH];
+        byteBuffer.get(iv);
+        byte[] encryptedData = new byte[byteBuffer.remaining()];
+        byteBuffer.get(encryptedData);
+        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
+        cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmParameterSpec);
+
+        byte[] decrypted = cipher.doFinal(encryptedData);
+        return new String(decrypted);
+
+    } catch (Exception e) {
+        log.error("Error decrypting secret", e);
+        throw new DecryptException(messageSource.getMessage("error.security.decrypt_failed", null, LocaleUtils.getCurrentLocale()), e);
+    }
+}
+}

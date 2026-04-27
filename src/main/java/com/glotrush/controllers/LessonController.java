@@ -1,0 +1,120 @@
+package com.glotrush.controllers;
+
+import java.util.List;
+import java.util.UUID;
+
+import com.glotrush.dto.request.LessonRequest;
+import com.glotrush.dto.response.ApiResponse;
+import org.springframework.context.MessageSource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import com.glotrush.dto.request.CompleteLessonRequest;
+import com.glotrush.dto.response.CompleteLessonResponse;
+import com.glotrush.dto.response.LessonResponse;
+import com.glotrush.dto.response.LessonSummaryResponse;
+import com.glotrush.dto.response.TopicLessonsResponse;
+import com.glotrush.dto.response.UserLessonProgressSummary;
+import com.glotrush.services.lesson.ILessonService;
+import com.glotrush.utils.LocaleUtils;
+import com.glotrush.utils.SecurityUtils;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+
+import com.glotrush.dto.request.LessonReorderRequest;
+
+@RestController
+@RequestMapping("/api/v1/lessons")
+@RequiredArgsConstructor
+public class LessonController {
+    private final MessageSource messageSource;
+    private final ILessonService lessonService;
+
+    @GetMapping("/topic/{topicId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<List<LessonSummaryResponse>> getLessonsByTopic(Authentication authentication, @PathVariable UUID topicId) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        List<LessonSummaryResponse> lessons = lessonService.getLessonsByTopic(topicId, accountId);
+        return ResponseEntity.ok(lessons);
+    }
+
+    @GetMapping("/topic/{topicId}/details")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<TopicLessonsResponse> getTopicLessonsDetails(Authentication authentication, @PathVariable UUID topicId) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        TopicLessonsResponse response = lessonService.getTopicLessonsDetails(topicId, accountId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{lessonId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<LessonResponse> getLessonById(Authentication authentication, @PathVariable UUID lessonId) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        LessonResponse lesson = lessonService.getLessonById(lessonId, accountId);
+        return ResponseEntity.ok(lesson);
+    }
+
+    @PostMapping("/{lessonId}/start")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<UserLessonProgressSummary> startLesson(Authentication authentication, @PathVariable UUID lessonId) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        UserLessonProgressSummary progressSummary = lessonService.startLesson(accountId, lessonId);
+        return ResponseEntity.ok(progressSummary);
+    }
+
+    @PostMapping("/{lessonId}/complete")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<CompleteLessonResponse> completeLesson(Authentication authentication, @PathVariable UUID lessonId, @Valid @RequestBody CompleteLessonRequest lessonRequest) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        CompleteLessonResponse response = lessonService.completeLesson(accountId, lessonId, lessonRequest);
+        return ResponseEntity.ok(response);
+    }
+
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<LessonResponse> createLesson(@Valid @RequestBody LessonRequest lessonRequest){
+        LessonResponse lessonResponse = lessonService.createLesson(lessonRequest);
+        return ResponseEntity.ok(lessonResponse);
+    }
+
+    @PutMapping("/{lessonId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<LessonResponse> updateLesson(@PathVariable UUID lessonId, @Valid @RequestBody LessonRequest lessonRequest){
+        LessonResponse lessonResponse = lessonService.updateLesson(lessonId, lessonRequest);
+        return ResponseEntity.ok(lessonResponse);
+    }
+
+    @DeleteMapping("/{lessonId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse> deleteLesson(@PathVariable UUID lessonId){
+        lessonService.removeLesson(lessonId);
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.lesson.deleted_successfully", null, LocaleUtils.getCurrentLocale())));
+    }
+
+    @PatchMapping("/{lessonId}/toggle-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<LessonResponse> toggleLessonStatus(@PathVariable UUID lessonId) {
+        LessonResponse lessonResponse = lessonService.toggleLessonStatus(lessonId);
+        return ResponseEntity.ok(lessonResponse);
+    }
+
+    @GetMapping("/admin/topic/{topicId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<LessonSummaryResponse>> getLessonsByTopicForAdmin(Authentication authentication, @PathVariable UUID topicId) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        List<LessonSummaryResponse> lessons = lessonService.getLessonsByTopicForAdmin(topicId, accountId);
+        return ResponseEntity.ok(lessons);
+    }
+
+    @PatchMapping("/admin/topic/{topicId}/reorder")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> reorderLessons(@PathVariable UUID topicId, @RequestBody List<LessonReorderRequest> requests) {
+        lessonService.reorderLessons(topicId, requests);
+        return ResponseEntity.noContent().build();
+    }
+}

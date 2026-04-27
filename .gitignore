@@ -3,7 +3,8 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-
+/src/main/resources/application-*.properties
+/src/test/resources/application-test.yml
 ### STS ###
 .apt_generated
 .classpath
@@ -18,7 +19,7 @@ target/
 *.iws
 *.iml
 *.ipr
-
+.junie
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -28,6 +29,7 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
-
 ### VS Code ###
 .vscode/
+
+.env
