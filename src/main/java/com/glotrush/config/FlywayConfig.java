@@ -12,13 +12,9 @@ public class FlywayConfig {
     @Bean
     FlywayMigrationStrategy flywayMigrationStrategy() {
         return flyway -> {
-        };
-    }
-
-    @Bean
-    CommandLineRunner runFlyway(Flyway flyway) {
-        return args -> {
+            flyway.repair();
             flyway.migrate();
         };
     }
+
 }
