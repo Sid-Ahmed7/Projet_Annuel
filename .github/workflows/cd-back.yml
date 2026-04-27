@@ -48,4 +48,4 @@ jobs:
           passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
           script: |
             docker pull arthurbrd/glotrush-back:latest
-            docker service update --image arthurbrd/glotrush-back:latest skaldly_back
+            docker service update --image arthurbrd/glotrush-back:latest --force skaldly_back
