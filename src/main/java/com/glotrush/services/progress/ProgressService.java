@@ -115,29 +115,35 @@ public class ProgressService implements IProgressService {
 
     @Override
     public UserProgress getOrCreateProgress(UUID accountId, UUID topicId) {
-        return userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)
-                .orElseGet(() -> {
-                    Accounts account = accountsRepository.findById(accountId)
-                            .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
-                    Topic topic = topicRepository.findById(topicId)
-                            .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
+        Optional<UserProgress> existing = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        Accounts account = accountsRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
+        Topic topic = topicRepository.findById(topicId)
+                .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
 
-                    UserProgress newProgress = UserProgress.builder()
-                            .account(account)
-                            .topic(topic)
-                            .totalXP(0L)
-                            .completedLessons(0)
-                            .completionPercentage(0.0)
-                            .correctAnswers(0)
-                            .totalAnswers(0)
-                            .accuracy(0.0)
-                            .studyStreak(0)
-                            .examPassed(false)
-                            .examAttempts(0)
-                            .build();
+        UserProgress newProgress = UserProgress.builder()
+                .account(account)
+                .topic(topic)
+                .totalXP(0L)
+                .completedLessons(0)
+                .completionPercentage(0.0)
+                .correctAnswers(0)
+                .totalAnswers(0)
+                .accuracy(0.0)
+                .studyStreak(0)
+                .examPassed(false)
+                .examAttempts(0)
+                .build();
 
-                    return userProgressRepository.save(newProgress);
-                });
+        try {
+            return userProgressRepository.save(newProgress);
+        } catch (Exception e) {
+            return userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)
+                    .orElseThrow(() -> new RuntimeException(e));
+        }
     }
 
     @Override

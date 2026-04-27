@@ -91,6 +91,14 @@ public class Accounts {
     @Column(name="auth_key", nullable = true)
     private String authKey;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer rejectedReviewCount = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isBannedOfReview = false;
+
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
