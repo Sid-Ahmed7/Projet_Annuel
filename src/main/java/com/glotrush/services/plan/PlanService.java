@@ -44,6 +44,7 @@ public class PlanService implements IPlanService {
     @Override
     public PlanResponse updatePlan(UUID planId, UpdatePlanRequest request) {
         Plan plan = getPlanById(planId);
+
         if (request.getName() != null) {
             plan.setName(request.getName());
         }
@@ -99,6 +100,20 @@ public class PlanService implements IPlanService {
         .orElseThrow(() -> new PlanNotFoundException(
             messageSource.getMessage("error.plan.notfound",null, LocaleUtils.getCurrentLocale())
         ));
+    }
+
+    @Override
+    public PlanResponse togglePlanStatus(UUID planId) {
+        Plan plan = getPlanById(planId);
+        plan.setIsActive(!plan.getIsActive());
+        return planBuilder.mapToResponse(planRepository.save(plan));
+    }
+
+    @Override
+    public List<PlanResponse> getAllPlansForAdmin() {
+        return planRepository.findAllByOrderByPriceAsc().stream()
+                .map(planBuilder::mapToResponse)
+                .toList();
     }
    
 }

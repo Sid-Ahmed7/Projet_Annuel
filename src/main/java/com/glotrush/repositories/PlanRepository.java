@@ -16,6 +16,7 @@ import com.glotrush.enumerations.SubscriptionType;
 public interface PlanRepository extends JpaRepository<Plan, UUID> {
 
     List<Plan> findAllByIsActiveTrueOrderByPriceAsc();
+    List<Plan> findAllByOrderByPriceAsc();
     List<Plan> findAllByPaymentIntervalAndIsActiveTrue(PaymentInterval paymentInterval);
     Optional<Plan> findBySubscriptionTypeAndIsActiveTrue(SubscriptionType subscriptionType);
 }

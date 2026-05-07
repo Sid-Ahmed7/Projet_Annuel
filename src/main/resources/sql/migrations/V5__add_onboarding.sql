@@ -1,1 +1,1 @@
-ALTER TABLE user_profiles ADD COLUMN has_completed_onboarding BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS has_completed_onboarding BOOLEAN NOT NULL DEFAULT FALSE;

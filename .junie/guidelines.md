@@ -4,7 +4,7 @@
 - **Langage :** Java 21
 - **Framework :** Spring Boot 3.5.7
 - **Base de données :** PostgreSQL
-- **Migration DB :** Flyway
+- **Migration DB :** Flyway (utiliser systématiquement des conditions `IF EXISTS` / `IF NOT EXISTS` pour assurer l'idempotence).
 - **Mapping :** MapStruct 1.6.3
 - **Sécurité :** Spring Security, OAuth2 (Client & Resource Server), JWT (jjwt 0.13.0), TOTP (2FA)
 - **Paiements :** Stripe (stripe-java 28.2.0)
@@ -57,3 +57,6 @@ Afin de maintenir la cohérence et la qualité du projet, les principes suivants
     *   Suivre la convention de nommage CamelCase (PascalCase pour les classes, camelCase pour les méthodes/variables).
     *   Les noms de tables et colonnes dans les entités doivent être en snake_case via `@Table` et `@Column`.
     *   Préférer les interfaces pour les services (ex: `IAuthService` et `AuthService`).
+8.  **Migrations Flyway :**
+    *   Sécuriser systématiquement les scripts SQL avec des conditions (ex: `IF EXISTS`, `IF NOT EXISTS`, ou blocs `DO $$`).
+    *   Cela garantit l'idempotence des migrations et évite les échecs lors des tests d'intégration.

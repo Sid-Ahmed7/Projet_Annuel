@@ -121,7 +121,6 @@ class LanguageControllerTest {
         LanguageRequest request = new LanguageRequest();
         request.setCode("it");
         request.setName("Italian");
-        request.setOrderIndex(0);
         request.setIsActive(true);
 
         LanguageResponse response = LanguageResponse.builder()
@@ -147,7 +146,6 @@ class LanguageControllerTest {
         LanguageRequest request = new LanguageRequest();
         request.setCode("pt");
         request.setName("Portuguese");
-        request.setOrderIndex(0);
         request.setIsActive(true);
 
         LanguageResponse response = LanguageResponse.builder()

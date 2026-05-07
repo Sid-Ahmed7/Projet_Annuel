@@ -26,7 +26,6 @@ public class LanguageBuilder {
                 .topicsCount(topicsCount)
                 .lessonsCount(lessonsCount)
                 .isActive(language.getIsActive())
-                .orderIndex(language.getOrderIndex())
                 .isPopular(isPopular)
                 .build();
     }

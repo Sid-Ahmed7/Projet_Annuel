@@ -11,6 +11,8 @@ import com.glotrush.dto.response.LessonSummaryResponse;
 import com.glotrush.dto.response.TopicLessonsResponse;
 import com.glotrush.dto.response.UserLessonProgressSummary;
 
+import com.glotrush.dto.request.LessonReorderRequest;
+
 public interface ILessonService {
     List<LessonSummaryResponse> getLessonsByTopic(UUID topicId, UUID accountId);
     TopicLessonsResponse getTopicLessonsDetails(UUID topicId, UUID accountId);
@@ -20,4 +22,8 @@ public interface ILessonService {
     void removeLesson(UUID lessonId);
     LessonResponse updateLesson(UUID lessonId, LessonRequest lesson);
     LessonResponse createLesson(LessonRequest lesson);
+    LessonResponse toggleLessonStatus(UUID lessonId);
+    List<LessonSummaryResponse> getLessonsByTopicForAdmin(UUID topicId, UUID accountId);
+    void reorderLessons(UUID topicId, List<LessonReorderRequest> requests);
+    void recalculateReward(UUID lessonId);
 }

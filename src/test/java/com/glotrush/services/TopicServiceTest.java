@@ -152,8 +152,8 @@ class TopicServiceTest {
                 .id(topicId)
                 .name("Basics")
                 .description("Basics Course")
-                .language(language)
-                .orderIndex(1)
+                .targetLanguage(language)
+                .sourceLanguage(language)
                 .isActive(true)
                 .build();
 
@@ -193,7 +193,7 @@ class TopicServiceTest {
                 .name("Basics Course")
                 .build();
 
-        when(topicRepository.findByIsActiveTrueOrderByOrderIndexAsc()).thenReturn(List.of(topic));
+        when(topicRepository.findByIsActiveTrueOrderByDifficultyAscNameAsc()).thenReturn(List.of(topic));
         when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId))
                 .thenReturn(Optional.of(userProgress));
         when(topicBuilder.mapToTopicResponse(eq(topic), any())).thenReturn(expectedResponse);
@@ -203,7 +203,7 @@ class TopicServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("Basics Course");
 
-        verify(topicRepository).findByIsActiveTrueOrderByOrderIndexAsc();
+        verify(topicRepository).findByIsActiveTrueOrderByDifficultyAscNameAsc();
     }
 
     @Test
@@ -214,7 +214,7 @@ class TopicServiceTest {
                 .name("Basics Course")
                 .build();
 
-        when(topicRepository.findByIsActiveTrueOrderByOrderIndexAsc()).thenReturn(List.of(topic));
+        when(topicRepository.findByIsActiveTrueOrderByDifficultyAscNameAsc()).thenReturn(List.of(topic));
         when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId))
                 .thenReturn(Optional.empty());
         when(topicBuilder.mapToTopicResponse(eq(topic), eq(Optional.empty()))).thenReturn(expectedResponse);
@@ -227,7 +227,7 @@ class TopicServiceTest {
     @Test
     @DisplayName("Should return empty list when no active topics")
     void shouldReturnEmptyListWhenNoActiveTopics() {
-        when(topicRepository.findByIsActiveTrueOrderByOrderIndexAsc()).thenReturn(Collections.emptyList());
+        when(topicRepository.findByIsActiveTrueOrderByDifficultyAscNameAsc()).thenReturn(Collections.emptyList());
 
         List<TopicResponse> result = topicService.getAllTopics(accountId);
 
@@ -240,10 +240,11 @@ class TopicServiceTest {
         TopicWithProgressResponse expectedResponse = TopicWithProgressResponse.builder()
                 .id(topicId)
                 .name("Basics Course")
-                .languageId(languageId)
+                .targetLanguageId(languageId)
+                .sourceLanguageId(languageId)
                 .build();
 
-        when(topicRepository.findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(languageId))
+        when(topicRepository.findByTargetLanguage_IdAndIsActiveTrueOrderByDifficultyAscNameAsc(languageId))
                 .thenReturn(List.of(topic));
         when(lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topicId))
                 .thenReturn(Collections.emptyList());
@@ -255,15 +256,15 @@ class TopicServiceTest {
         List<TopicWithProgressResponse> result = topicService.getTopicsByLanguage(languageId, accountId);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getLanguageId()).isEqualTo(languageId);
+        assertThat(result.get(0).getTargetLanguageId()).isEqualTo(languageId);
 
-        verify(topicRepository).findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(languageId);
+        verify(topicRepository).findByTargetLanguage_IdAndIsActiveTrueOrderByDifficultyAscNameAsc(languageId);
     }
 
     @Test
     @DisplayName("Should return empty list when no topics for language")
     void shouldReturnEmptyListWhenNoTopicsForLanguage() {
-        when(topicRepository.findByLanguage_IdAndIsActiveTrueOrderByOrderIndexAsc(languageId))
+        when(topicRepository.findByTargetLanguage_IdAndIsActiveTrueOrderByDifficultyAscNameAsc(languageId))
                 .thenReturn(Collections.emptyList());
 
         List<TopicWithProgressResponse> result = topicService.getTopicsByLanguage(languageId, accountId);
@@ -307,7 +308,8 @@ class TopicServiceTest {
     @DisplayName("Should create topic successfully")
     void shouldCreateTopicSuccessfully() {
         TopicRequest request = TopicRequest.builder()
-                .languageId(languageId)
+                .targetLanguageId(languageId)
+                .sourceLanguageId(languageId)
                 .name("New Topic")
                 .build();
         TopicResponse expectedResponse = TopicResponse.builder().id(topicId).name("New Topic").build();
@@ -324,9 +326,12 @@ class TopicServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception when creating topic with invalid language")
-    void shouldThrowExceptionWhenCreatingTopicWithInvalidLanguage() {
-        TopicRequest request = TopicRequest.builder().languageId(languageId).build();
+    @DisplayName("Should throw exception when creating topic with invalid target language")
+    void shouldThrowExceptionWhenCreatingTopicWithInvalidTargetLanguage() {
+        TopicRequest request = TopicRequest.builder()
+                .targetLanguageId(languageId)
+                .sourceLanguageId(languageId)
+                .build();
         when(languageRepository.findById(languageId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> topicService.createTopic(request))
@@ -356,7 +361,8 @@ class TopicServiceTest {
     @DisplayName("Should update topic successfully")
     void shouldUpdateTopicSuccessfully() {
         TopicRequest request = TopicRequest.builder()
-                .languageId(languageId)
+                .targetLanguageId(languageId)
+                .sourceLanguageId(languageId)
                 .name("Updated Name")
                 .build();
         TopicResponse expectedResponse = TopicResponse.builder().id(topicId).name("Updated Name").build();
@@ -376,7 +382,10 @@ class TopicServiceTest {
     @Test
     @DisplayName("Should throw exception when updating non-existent topic")
     void shouldThrowExceptionWhenUpdatingNonExistentTopic() {
-        TopicRequest request = TopicRequest.builder().languageId(languageId).build();
+        TopicRequest request = TopicRequest.builder()
+                .targetLanguageId(languageId)
+                .sourceLanguageId(languageId)
+                .build();
         when(topicRepository.findById(topicId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> topicService.updateTopic(topicId, request))

@@ -40,7 +40,6 @@ public class UserProfileBuilder {
                     .code(activeLang.getCode())
                     .name(activeLang.getName())
                     .isActive(activeLang.getIsActive())
-                    .orderIndex(activeLang.getOrderIndex())
                     .build();
         }
         return UserProfileResponse.builder()

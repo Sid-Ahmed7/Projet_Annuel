@@ -17,4 +17,6 @@ public interface IPlanService {
     List<PlanResponse> getAllActivePlans();
     List<PlanResponse> getPlansByPaymentInterval(PaymentInterval paymentInterval);
     Plan getPlanById(UUID planId);
+    PlanResponse togglePlanStatus(UUID planId);
+    List<PlanResponse> getAllPlansForAdmin();
 }

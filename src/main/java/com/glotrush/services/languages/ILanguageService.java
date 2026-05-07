@@ -6,6 +6,8 @@ import java.util.UUID;
 import com.glotrush.dto.request.LanguageRequest;
 import com.glotrush.dto.response.LanguageResponse;
 
+import com.glotrush.dto.request.LessonReorderRequest;
+
 public interface ILanguageService {
     List<LanguageResponse> getAllActiveLanguages();
     List<LanguageResponse> getAllLanguages();

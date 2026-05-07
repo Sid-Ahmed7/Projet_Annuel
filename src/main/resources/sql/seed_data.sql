@@ -25,30 +25,30 @@ DECLARE
     sorting_entity_id UUID;
 BEGIN
     -- 1. LANGUES
-    INSERT INTO languages (id, code, name, order_index, is_active, created_at) 
-    VALUES (gen_random_uuid(), 'fr', 'Français', 1, true, NOW())
+    INSERT INTO languages (id, code, name, is_active, created_at) 
+    VALUES (gen_random_uuid(), 'fr', 'Français', true, NOW())
     RETURNING id INTO lang_fr_id;
 
-    INSERT INTO languages (id, code, name, order_index, is_active, created_at) 
-    VALUES (gen_random_uuid(), 'en', 'Anglais', 2, true, NOW())
+    INSERT INTO languages (id, code, name, is_active, created_at) 
+    VALUES (gen_random_uuid(), 'en', 'Anglais', true, NOW())
     RETURNING id INTO lang_en_id;
 
-    INSERT INTO languages (id, code, name, order_index, is_active, created_at) 
-    VALUES (gen_random_uuid(), 'es', 'Espagnol', 3, true, NOW())
+    INSERT INTO languages (id, code, name, is_active, created_at) 
+    VALUES (gen_random_uuid(), 'es', 'Espagnol', true, NOW())
     RETURNING id INTO lang_es_id;
 
     -- 2. TOPICS (pour l'Anglais)
-    INSERT INTO topic (id, language_id, name, description, difficulty, order_index, is_active, created_at, updated_at) 
-    VALUES (gen_random_uuid(), lang_en_id, 'Salutations & Présentations', 'Apprenez les bases pour dire bonjour et vous présenter.', 'A1', 1, true, NOW(), NOW())
+    INSERT INTO topic (id, target_language_id, source_language_id, name, description, difficulty, is_active, created_at, updated_at) 
+    VALUES (gen_random_uuid(), lang_en_id, lang_fr_id, 'Salutations & Présentations', 'Apprenez les bases pour dire bonjour et vous présenter.', 'A1', true, NOW(), NOW())
     RETURNING id INTO topic_salutations_id;
 
-    INSERT INTO topic (id, language_id, name, description, difficulty, order_index, is_active, created_at, updated_at) 
-    VALUES (gen_random_uuid(), lang_en_id, 'Voyage & Transport', 'Vocabulaire essentiel pour vos déplacements à l''étranger.', 'B1', 2, true, NOW(), NOW())
+    INSERT INTO topic (id, target_language_id, source_language_id, name, description, difficulty, is_active, created_at, updated_at) 
+    VALUES (gen_random_uuid(), lang_en_id, lang_fr_id, 'Voyage & Transport', 'Vocabulaire essentiel pour vos déplacements à l''étranger.', 'B1', true, NOW(), NOW())
     RETURNING id INTO topic_voyage_id;
 
     -- 3. LESSONS (Type FLASHCARD)
-    INSERT INTO lesson (id, topic_id, title, description, order_index, xp_reward, min_score_required, min_level_required, duration_minutes, is_active, is_included_in_exam, lesson_type, created_at, updated_at) 
-    VALUES (gen_random_uuid(), topic_salutations_id, 'Les mots de base', 'Découvrez les salutations courantes.', 1, 50, 80, 1, 5, true, true, 'FLASHCARD', NOW(), NOW())
+    INSERT INTO lesson (id, topic_id, title, description, order_index, xp_reward, min_score_required, duration_minutes, is_active, is_included_in_exam, lesson_type, created_at, updated_at) 
+    VALUES (gen_random_uuid(), topic_salutations_id, 'Les mots de base', 'Découvrez les salutations courantes.', 1, 50, 80, 5, true, true, 'FLASHCARD', NOW(), NOW())
     RETURNING id INTO lesson_mots_base_id;
 
     -- Exercices FLASHCARD
@@ -58,8 +58,8 @@ BEGIN
     (gen_random_uuid(), lesson_mots_base_id, 'S''il vous plaît', 'Please', 'fr', 'en');
 
     -- 4. LESSONS (Type QCM)
-    INSERT INTO lesson (id, topic_id, title, description, order_index, xp_reward, min_score_required, min_level_required, duration_minutes, is_active, is_included_in_exam, lesson_type, created_at, updated_at) 
-    VALUES (gen_random_uuid(), topic_salutations_id, 'Quiz de salutations', 'Vérifiez vos connaissances sur les bases.', 2, 60, 75, 1, 10, true, true, 'QCM', NOW(), NOW())
+    INSERT INTO lesson (id, topic_id, title, description, order_index, xp_reward, min_score_required, duration_minutes, is_active, is_included_in_exam, lesson_type, created_at, updated_at) 
+    VALUES (gen_random_uuid(), topic_salutations_id, 'Quiz de salutations', 'Vérifiez vos connaissances sur les bases.', 2, 60, 75, 10, true, true, 'QCM', NOW(), NOW())
     RETURNING id INTO lesson_quiz_salutations_id;
 
     -- Exercices QCM
@@ -81,8 +81,8 @@ BEGIN
     (qcm_q2_id, 'My name is John');
 
     -- 5. LESSONS (Type MATCHING_PAIR)
-    INSERT INTO lesson (id, topic_id, title, description, order_index, xp_reward, min_score_required, min_level_required, duration_minutes, is_active, is_included_in_exam, lesson_type, created_at, updated_at) 
-    VALUES (gen_random_uuid(), topic_voyage_id, 'Correspondance Transport', 'Associez les moyens de transport.', 1, 70, 70, 2, 8, true, true, 'MATCHING_PAIR', NOW(), NOW())
+    INSERT INTO lesson (id, topic_id, title, description, order_index, xp_reward, min_score_required, duration_minutes, is_active, is_included_in_exam, lesson_type, created_at, updated_at) 
+    VALUES (gen_random_uuid(), topic_voyage_id, 'Correspondance Transport', 'Associez les moyens de transport.', 1, 70, 70, 8, true, true, 'MATCHING_PAIR', NOW(), NOW())
     RETURNING id INTO lesson_transport_id;
 
     -- Exercices MATCHING_PAIR
@@ -93,8 +93,8 @@ BEGIN
     (gen_random_uuid(), lesson_transport_id, 'Bateau', 'Boat');
 
     -- 6. LESSONS (Type SORTING_EXERCISE)
-    INSERT INTO lesson (id, topic_id, title, description, order_index, xp_reward, min_score_required, min_level_required, duration_minutes, is_active, is_included_in_exam, lesson_type, created_at, updated_at) 
-    VALUES (gen_random_uuid(), topic_voyage_id, 'Ordre d''une phrase de voyage', 'Remettez les mots dans l''ordre pour former une phrase.', 2, 80, 80, 2, 12, true, true, 'SORTING_EXERCISE', NOW(), NOW())
+    INSERT INTO lesson (id, topic_id, title, description, order_index, xp_reward, min_score_required, duration_minutes, is_active, is_included_in_exam, lesson_type, created_at, updated_at) 
+    VALUES (gen_random_uuid(), topic_voyage_id, 'Ordre d''une phrase de voyage', 'Remettez les mots dans l''ordre pour former une phrase.', 2, 80, 80, 12, true, true, 'SORTING_EXERCISE', NOW(), NOW())
     RETURNING id INTO lesson_ordre_phrase_id;
 
     -- Exercices SORTING_EXERCISE

@@ -103,7 +103,8 @@ class ProgressServiceTest {
         testTopic = Topic.builder()
                 .id(topicId)
                 .name("Grammar Basics")
-                .language(testLanguage)
+                .targetLanguage(testLanguage)
+                .sourceLanguage(testLanguage)
                 .build();
 
         testProgress = UserProgress.builder()
@@ -214,14 +215,14 @@ class ProgressServiceTest {
     void shouldGetProgressByLanguageSuccessfully() {
         UserProgressResponse expectedResponse = new UserProgressResponse();
 
-        when(userProgressRepository.findByAccount_IdAndTopic_Language_Id(accountId, languageId))
+        when(userProgressRepository.findByAccount_IdAndTopic_TargetLanguage_Id(accountId, languageId))
                 .thenReturn(List.of(testProgress));
         when(progressBuilder.mapToUserProgressResponse(testProgress)).thenReturn(expectedResponse);
 
         List<UserProgressResponse> result = progressService.getProgressByLanguage(accountId, languageId);
 
         assertThat(result).hasSize(1);
-        verify(userProgressRepository).findByAccount_IdAndTopic_Language_Id(accountId, languageId);
+        verify(userProgressRepository).findByAccount_IdAndTopic_TargetLanguage_Id(accountId, languageId);
     }
 
     @Test

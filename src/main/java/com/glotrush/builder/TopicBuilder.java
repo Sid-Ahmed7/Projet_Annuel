@@ -15,14 +15,13 @@ import com.glotrush.entities.UserProgress;
 public class TopicBuilder {
 
     public TopicResponse mapToTopicResponse(Topic topic, Optional<UserProgress> progressOpt) {
-
         return TopicResponse.builder()
                 .id(topic.getId())
-                .languageId(topic.getLanguage().getId())
+                .targetLanguageId(topic.getTargetLanguage().getId())
+                .sourceLanguageId(topic.getSourceLanguage().getId())
                 .name(topic.getName())
                 .description(topic.getDescription())
                 .difficulty(topic.getDifficulty())
-                .orderIndex(topic.getOrderIndex())
                 .isActive(topic.getIsActive())
                 .build();
     }
@@ -33,11 +32,11 @@ public class TopicBuilder {
 
         return TopicWithProgressResponse.builder()
                 .id(topic.getId())
-                .languageId(topic.getLanguage().getId())
+                .targetLanguageId(topic.getTargetLanguage().getId())
+                .sourceLanguageId(topic.getSourceLanguage().getId())
                 .name(topic.getName())
                 .description(topic.getDescription())
                 .difficulty(topic.getDifficulty())
-                .orderIndex(topic.getOrderIndex())
                 .isActive(topic.getIsActive())
                 .completedLessons(completedLessons)
                 .totalLessons(totalLessons)

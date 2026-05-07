@@ -24,5 +24,6 @@ public class PlanResponse {
     private String currency;
     private PaymentInterval paymentInterval;
     private SubscriptionType subscriptionType;
+    private Boolean isActive;
 
 }

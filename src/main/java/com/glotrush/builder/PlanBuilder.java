@@ -21,6 +21,7 @@ public class PlanBuilder {
                 .currency(plan.getCurrency())
                 .paymentInterval(plan.getPaymentInterval())
                 .subscriptionType(plan.getSubscriptionType())
+                .isActive(plan.getIsActive())
                 .build();
     }
     

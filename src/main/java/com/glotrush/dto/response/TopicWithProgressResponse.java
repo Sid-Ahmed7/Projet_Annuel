@@ -17,11 +17,11 @@ import lombok.NoArgsConstructor;
 public class TopicWithProgressResponse {
 
     private UUID id;
-    private UUID languageId;
+    private UUID targetLanguageId;
+    private UUID sourceLanguageId;
     private String name;
     private String description;
     private ProficiencyLevel difficulty;
-    private Integer orderIndex;
     private Boolean isActive;
 
     private int completedLessons;

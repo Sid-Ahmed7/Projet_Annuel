@@ -3,10 +3,13 @@ package com.glotrush.services.languages;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.glotrush.dto.request.LanguageRequest;
+import com.glotrush.dto.request.LessonReorderRequest;
 import com.glotrush.entities.Topic;
 import com.glotrush.enumerations.LanguageType;
 import com.glotrush.enumerations.ProficiencyLevel;
@@ -48,7 +51,7 @@ public class LanguageService implements ILanguageService {
             userLanguageRepository.findMostPopularLanguageIdsByLearnerCount(LanguageType.LEARNING, PageRequest.of(0, LanguagesConstants.POPULAR_LANGUAGES_LIMIT))
         );
         
-        List<Topic> topics = topicRepository.findByLanguage_Id(language.getId());
+        List<Topic> topics = topicRepository.findByTargetLanguage_Id(language.getId());
         String levelRange = null;
         if (!topics.isEmpty()) {
             ProficiencyLevel min = topics.stream().map(Topic::getDifficulty).min(Comparator.naturalOrder()).orElse(null);
@@ -58,7 +61,7 @@ public class LanguageService implements ILanguageService {
             }
         }
         int topicsCount = topics.size();
-        int lessonsCount = lessonRepository.countByTopic_Language_Id(language.getId());
+        int lessonsCount = lessonRepository.countByTopic_TargetLanguage_Id(language.getId());
         boolean isPopular = popularLanguages.contains(language.getId());
         return languageBuilder.mapToLanguageResponse(language, levelRange, topicsCount, lessonsCount, isPopular);
     }
@@ -66,7 +69,7 @@ public class LanguageService implements ILanguageService {
     @Override
     @Transactional
     public List<LanguageResponse> getAllActiveLanguages() {
-        return languageRepository.findByIsActiveTrueOrderByOrderIndexAsc().stream()
+        return languageRepository.findByIsActiveTrueOrderByNameAsc().stream()
                 .map(this::getLanguageDetails)
                 .toList();
     }
@@ -114,6 +117,7 @@ public class LanguageService implements ILanguageService {
     @Override
     public LanguageResponse createLanguage(LanguageRequest languageRequest) {
         Language language = languageMapper.mapLanguageRequestToMapLanguageEntities(languageRequest);
+        
         languageRepository.save(language);
         return languageMapper.mapLanguageEntitiesToLanguageResponse(language);
     }
