@@ -35,8 +35,8 @@ public class NotificationDispatcher {
     @Async
     @Transactional
     public void sendNotificationWhenNewLesson(Lesson lesson) {
-        UUID languageId = lesson.getTopic().getLanguage().getId();
-        String languageName = lesson.getTopic().getLanguage().getName();
+        UUID languageId = lesson.getTopic().getTargetLanguage().getId();
+        String languageName = lesson.getTopic().getTargetLanguage().getName();
         String topicName = lesson.getTopic().getName();
         String lessonTitle = lesson.getTitle();
 
@@ -58,8 +58,8 @@ public class NotificationDispatcher {
     @Async
     @Transactional
     public void sendNotificationWhenNewTopic(Topic topic) {
-        UUID languageId = topic.getLanguage().getId();
-        String languageName = topic.getLanguage().getName();
+        UUID languageId = topic.getTargetLanguage().getId();
+        String languageName = topic.getTargetLanguage().getName();
         String topicName = topic.getName();
         String difficulty = topic.getDifficulty().name();
 
