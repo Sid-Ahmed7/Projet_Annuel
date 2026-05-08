@@ -57,7 +57,7 @@ public class RankingService implements IRankingService {
             }
         }
         return RankingResponse.builder()
-                .rankedPlayers(rankedUsers).currentUserRank(currentUserRanked)
+                .rankedUser(rankedUsers).currentUserRank(currentUserRanked)
                 .totalParticipants(totalParticipants)
                 .currentPage(page)
                 .pageSize(size)
@@ -93,7 +93,7 @@ public class RankingService implements IRankingService {
         }
         
         return RankingResponse.builder()
-                .rankedPlayers(rankedUsers).currentUserRank(currentUserRanked)
+                .rankedUser(rankedUsers).currentUserRank(currentUserRanked)
                 .totalParticipants(totalParticipants)
                 .currentPage(page)
                 .pageSize(size)

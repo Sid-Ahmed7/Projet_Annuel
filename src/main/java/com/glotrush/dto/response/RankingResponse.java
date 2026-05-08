@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RankingResponse {
 
-    private List<RankedUserResponse> rankedPlayers;
+    private List<RankedUserResponse> rankedUser;
     private RankedUserResponse currentUserRank;
     private Long totalParticipants;
     private Integer currentPage;
