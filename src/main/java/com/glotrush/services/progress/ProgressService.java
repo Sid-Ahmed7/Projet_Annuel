@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.glotrush.builder.ProgressBuilder;
 import com.glotrush.dto.response.LanguageLevelResponse;
@@ -32,6 +33,8 @@ import com.glotrush.repositories.UserProgressRepository;
 
 import com.glotrush.utils.LevelUtils;
 import com.glotrush.utils.LocaleUtils;
+import com.glotrush.websocket.IRankingWsService;
+import com.glotrush.websocket.RankingSynchronization;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -48,6 +51,7 @@ public class ProgressService implements IProgressService {
     private final LessonRepository lessonRepository;
     private final UserLessonProgressRepository userLessonProgressRepository;
     private final UserLanguageRepository userLanguageRepository;
+    private final IRankingWsService rankingWsService;
 
 
 
@@ -146,7 +150,12 @@ public class ProgressService implements IProgressService {
 
         progress.setTotalXP(progress.getTotalXP() + xpToAdd);
 
-        return userProgressRepository.save(progress);
+        UserProgress userProgress = userProgressRepository.save(progress);
+        UUID languageId = progress.getTopic().getTargetLanguage().getId();
+        TransactionSynchronizationManager.registerSynchronization(
+            new RankingSynchronization(rankingWsService, languageId)
+        );
+        return userProgress;
     }
 
     @Override
@@ -265,4 +274,4 @@ public class ProgressService implements IProgressService {
             .build());
 
         }
-}
+    }

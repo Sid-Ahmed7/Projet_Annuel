@@ -1,5 +1,6 @@
 package com.glotrush.repositories;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,5 +14,6 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, UUID> 
     
     Optional<UserProfile> findByAccount_Id(UUID accountId);
     boolean existsByAccount_Id(UUID accountId);
+    List<UserProfile> findByAccount_IdIn(List<UUID> accountIds);
 
-}
+    }
