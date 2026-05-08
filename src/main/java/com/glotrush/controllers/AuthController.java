@@ -28,6 +28,7 @@ import com.glotrush.dto.response.RefreshTokenResponse;
 import com.glotrush.dto.response.RegisterResponse;
 import com.glotrush.dto.response.UserInfoResponse;
 import com.glotrush.entities.Accounts;
+import com.glotrush.exceptions.InvalidTokenException;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
@@ -153,9 +154,9 @@ public class AuthController {
                     .filter(cookie -> "refresh_token".equals(cookie.getName()))
                     .map(Cookie::getValue)
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.auth.refresh_token_not_found", null, LocaleUtils.getCurrentLocale())));
+                    .orElseThrow(() -> new InvalidTokenException(messageSource.getMessage("error.auth.refresh_token_not_found", null, LocaleUtils.getCurrentLocale())));
         }
-        throw new RuntimeException(messageSource.getMessage("error.auth.no_cookies_found", null, LocaleUtils.getCurrentLocale()));
+        throw new InvalidTokenException(messageSource.getMessage("error.auth.no_cookies_found", null, LocaleUtils.getCurrentLocale()));
     }
 
    
