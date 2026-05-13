@@ -5,5 +5,6 @@ public enum ChallengeStatus {
     ACTIVE,
     COMPLETED,
     EXPIRED,
-    DECLINED
+    DECLINED,
+    CANCELLED
 }

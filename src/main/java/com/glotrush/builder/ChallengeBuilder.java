@@ -1,6 +1,8 @@
 package com.glotrush.builder;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -15,7 +17,7 @@ import com.glotrush.dto.response.challenge.ChallengeResponse;
 import com.glotrush.dto.response.challenge.ChallengeSortingExerciseResponse;
 import com.glotrush.dto.response.challenge.ChallengeUserResponse;
 import com.glotrush.entities.Accounts;
-import com.glotrush.entities.Language;
+import com.glotrush.entities.Lesson;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.entities.challenge.Challenge;
 import com.glotrush.entities.challenge.ChallengeFlashCard;
@@ -23,6 +25,14 @@ import com.glotrush.entities.challenge.ChallengeMatchingPair;
 import com.glotrush.entities.challenge.ChallengeParticipant;
 import com.glotrush.entities.challenge.ChallengeQcm;
 import com.glotrush.entities.challenge.ChallengeSortingExercise;
+import com.glotrush.entities.exercice.FlashcardEntity;
+import com.glotrush.entities.exercice.MatchingPairEntity;
+import com.glotrush.entities.exercice.QcmQuestionEntity;
+import com.glotrush.entities.exercice.SortingExerciseEntity;
+import com.glotrush.entities.lesson.FlashcardLesson;
+import com.glotrush.entities.lesson.MatchingPairLesson;
+import com.glotrush.entities.lesson.QcmLesson;
+import com.glotrush.entities.lesson.SortingExerciseLesson;
 import com.glotrush.enumerations.ChallengeStatus;
 import com.glotrush.enumerations.ChallengeType;
 
@@ -31,68 +41,78 @@ import org.springframework.stereotype.Component;
 @Component
 public class ChallengeBuilder {
 
-
-    public Challenge buildChallenge(CreateChallengeRequest newChallenge, Accounts challenger,Accounts challenged, Language language) {
+    public Challenge buildChallenge(CreateChallengeRequest newChallenge, Lesson lesson, Accounts challenger, Accounts challenged) {
         ChallengeStatus status = newChallenge.getChallengeType() == ChallengeType.PUBLIC ? ChallengeStatus.ACTIVE : ChallengeStatus.PENDING;
+
+        LocalDateTime expiresAt = newChallenge.getChallengeType() == ChallengeType.DUEL ? LocalDateTime.now().plusMinutes(10) : LocalDateTime.now().plusHours(24);
+
+        int count = newChallenge.getChallengeType() == ChallengeType.DUEL ? 1 : (newChallenge.getQuestionCount() != null ? newChallenge.getQuestionCount() : Integer.MAX_VALUE);
 
         Challenge challenge = Challenge.builder()
                 .challenger(challenger)
                 .challenged(challenged)
-                .language(language)
+                .language(lesson.getTopic().getTargetLanguage())
                 .challengeType(newChallenge.getChallengeType())
-                .lessonType(newChallenge.getLessonType())
+                .lessonType(lesson.getLessonType())
                 .challengeStatus(status)
                 .title(newChallenge.getTitle())
-                .expiresAt(LocalDateTime.now().plusHours(24))
+                .expiresAt(expiresAt)
                 .build();
 
-        if (newChallenge.getQcm() != null) {
-            List<ChallengeQcm> qcm = newChallenge.getQcm().stream().map(q ->
-                ChallengeQcm.builder()
-                    .challenge(challenge)
-                    .question(q.getQuestion())
-                    .options(q.getOptions())
-                    .correctOptionIndex(q.getCorrectOptionIndex())
-                    .explanation(q.getExplanation())
-                    .build()
-            ).collect(Collectors.toList());
-            challenge.setQcm(qcm);
-        }
-
-        if (newChallenge.getFlashcards() != null) {
-            List<ChallengeFlashCard> flashcards = newChallenge.getFlashcards().stream().map(flashCard ->
-                ChallengeFlashCard.builder()
-                    .challenge(challenge)
-                    .front(flashCard.getFront())
-                    .back(flashCard.getBack())
-                    .frontLanguage(flashCard.getFrontLanguage())
-                    .backLanguage(flashCard.getBackLanguage())
-                    .timeLimitSeconds(flashCard.getTimeLimitSeconds() != null ? flashCard.getTimeLimitSeconds() : 30)
-                    .build()
-            ).collect(Collectors.toList());
-            challenge.setFlashcards(flashcards);
-        }
-
-        if (newChallenge.getMatchingPairs() != null) {
-            List<ChallengeMatchingPair> pairs = newChallenge.getMatchingPairs().stream().map(pair ->
-                ChallengeMatchingPair.builder()
-                    .challenge(challenge)
-                    .item1(pair.getItem1())
-                    .item2(pair.getItem2())
-                    .build()
-            ).collect(Collectors.toList());
-            challenge.setMatchingPairs(pairs);
-        }
-
-        if (newChallenge.getSortingExercises() != null) {
-            List<ChallengeSortingExercise> exercises = newChallenge.getSortingExercises().stream().map(sortingExercise ->
-                ChallengeSortingExercise.builder()
-                    .challenge(challenge)
-                    .items(sortingExercise.getItems())
-                    .correctOrder(sortingExercise.getCorrectOrder())
-                    .build()
-            ).collect(Collectors.toList());
-            challenge.setSortingExercises(exercises);
+        switch (lesson.getLessonType()) {
+            case QCM -> {
+                List<QcmQuestionEntity> questions = new ArrayList<>(((QcmLesson) lesson).getQuestions());
+                Collections.shuffle(questions);
+                List<ChallengeQcm> qcm = questions.stream().limit(count).map(q ->
+                    ChallengeQcm.builder()
+                        .challenge(challenge)
+                        .question(q.getQuestion())
+                        .options(q.getOptions())
+                        .correctOptionIndex(q.getCorrectOptionIndex())
+                        .explanation(q.getExplanation())
+                        .build()
+                ).collect(Collectors.toList());
+                challenge.setQcm(qcm);
+            }
+            case FLASHCARD -> {
+                List<FlashcardEntity> flashcards = new ArrayList<>(((FlashcardLesson) lesson).getFlashcards());
+                Collections.shuffle(flashcards);
+                List<ChallengeFlashCard> challengeFlashCards = flashcards.stream().limit(count).map(f ->
+                    ChallengeFlashCard.builder()
+                        .challenge(challenge)
+                        .front(f.getFront())
+                        .back(f.getBack())
+                        .frontLanguage(f.getFrontLanguage())
+                        .backLanguage(f.getBackLanguage())
+                        .timeLimitSeconds(30)
+                        .build()
+                ).collect(Collectors.toList());
+                challenge.setFlashcards(challengeFlashCards);
+            }
+            case MATCHING_PAIR -> {
+                List<MatchingPairEntity> pairs = new ArrayList<>(((MatchingPairLesson) lesson).getMatchingPairs());
+                Collections.shuffle(pairs);
+                List<ChallengeMatchingPair> challengePairs = pairs.stream().limit(count).map(p ->
+                    ChallengeMatchingPair.builder()
+                        .challenge(challenge)
+                        .item1(p.getItem1())
+                        .item2(p.getItem2())
+                        .build()
+                ).collect(Collectors.toList());
+                challenge.setMatchingPairs(challengePairs);
+            }
+            case SORTING_EXERCISE -> {
+                List<SortingExerciseEntity> exercises = new ArrayList<>(((SortingExerciseLesson) lesson).getSortingExercise());
+                Collections.shuffle(exercises);
+                List<ChallengeSortingExercise> challengeExercises = exercises.stream().limit(count).map(e ->
+                    ChallengeSortingExercise.builder()
+                        .challenge(challenge)
+                        .items(e.getItems())
+                        .correctOrder(e.getCorrectOrder())
+                        .build()
+                ).collect(Collectors.toList());
+                challenge.setSortingExercises(challengeExercises);
+            }
         }
 
         return challenge;
