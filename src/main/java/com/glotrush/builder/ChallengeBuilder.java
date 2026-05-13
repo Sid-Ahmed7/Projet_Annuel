@@ -26,6 +26,9 @@ import com.glotrush.entities.challenge.ChallengeSortingExercise;
 import com.glotrush.enumerations.ChallengeStatus;
 import com.glotrush.enumerations.ChallengeType;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class ChallengeBuilder {
 
 
