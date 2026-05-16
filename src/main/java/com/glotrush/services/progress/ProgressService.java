@@ -23,7 +23,9 @@ import com.glotrush.entities.UserLessonProgress;
 import com.glotrush.entities.UserProgress;
 import com.glotrush.enumerations.LanguageType;
 import com.glotrush.exceptions.ResourceNotFoundException;
+import com.glotrush.enumerations.ChallengeType;
 import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.ChallengeParticipantsRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserLanguageRepository;
@@ -48,6 +50,7 @@ public class ProgressService implements IProgressService {
     private final LessonRepository lessonRepository;
     private final UserLessonProgressRepository userLessonProgressRepository;
     private final UserLanguageRepository userLanguageRepository;
+    private final ChallengeParticipantsRepository challengeParticipantsRepository;
 
 
 
@@ -55,7 +58,9 @@ public class ProgressService implements IProgressService {
     public ProgressOverviewResponse getProgressOverview(UUID accountId) {
         List<UserProgress> allProgress = userProgressRepository.findByAccount_Id(accountId);
 
-        Long totalXP = allProgress.stream().mapToLong(UserProgress::getTotalXP).sum();
+        Long topicXP = allProgress.stream().mapToLong(UserProgress::getTotalXP).sum();
+        Long publicChallengeXP = challengeParticipantsRepository.sumXpGained(accountId, ChallengeType.PUBLIC);
+        Long totalXP = topicXP + publicChallengeXP;
         Integer overallLevel = LevelUtils.calculateLevel(totalXP);
         Integer totalTopicsStarted = allProgress.size();
 

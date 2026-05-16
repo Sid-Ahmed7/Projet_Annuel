@@ -17,6 +17,7 @@ import com.glotrush.dto.response.challenge.ChallengeResponse;
 import com.glotrush.dto.response.challenge.ChallengeSortingExerciseResponse;
 import com.glotrush.dto.response.challenge.ChallengeUserResponse;
 import com.glotrush.entities.Accounts;
+import com.glotrush.entities.Language;
 import com.glotrush.entities.Lesson;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.entities.challenge.Challenge;
@@ -35,87 +36,140 @@ import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
 import com.glotrush.enumerations.ChallengeStatus;
 import com.glotrush.enumerations.ChallengeType;
+import com.glotrush.enumerations.LessonType;
 
 import org.springframework.stereotype.Component;
 
 @Component
 public class ChallengeBuilder {
 
-    public Challenge buildChallenge(CreateChallengeRequest newChallenge, Lesson lesson, Accounts challenger, Accounts challenged) {
+    public Challenge buildChallenge(CreateChallengeRequest newChallenge, Lesson lesson, Language language, Accounts challenger, Accounts challenged) {
         ChallengeStatus status = newChallenge.getChallengeType() == ChallengeType.PUBLIC ? ChallengeStatus.ACTIVE : ChallengeStatus.PENDING;
-
         LocalDateTime expiresAt = newChallenge.getChallengeType() == ChallengeType.DUEL ? LocalDateTime.now().plusMinutes(10) : LocalDateTime.now().plusHours(24);
 
-        int count = newChallenge.getChallengeType() == ChallengeType.DUEL ? 1 : (newChallenge.getQuestionCount() != null ? newChallenge.getQuestionCount() : Integer.MAX_VALUE);
+        Language languages = lesson != null ? lesson.getTopic().getTargetLanguage() : language;
+        LessonType lessonType = lesson != null ? lesson.getLessonType() : newChallenge.getLessonType();
 
         Challenge challenge = Challenge.builder()
                 .challenger(challenger)
                 .challenged(challenged)
-                .language(lesson.getTopic().getTargetLanguage())
+                .language(languages)
                 .challengeType(newChallenge.getChallengeType())
-                .lessonType(lesson.getLessonType())
+                .lessonType(lessonType)
                 .challengeStatus(status)
                 .title(newChallenge.getTitle())
                 .expiresAt(expiresAt)
                 .build();
 
+        if (newChallenge.getChallengeType() == ChallengeType.DUEL) {
+            buildQuestionsFromLesson(challenge, lesson, newChallenge.getQuestionCount());
+        } else {
+            buildQuestionsFromRequest(challenge, newChallenge);
+        }
+
+        return challenge;
+    }
+
+    private void buildQuestionsFromLesson(Challenge challenge, Lesson lesson, Integer questionCount) {
         switch (lesson.getLessonType()) {
             case QCM -> {
                 List<QcmQuestionEntity> questions = new ArrayList<>(((QcmLesson) lesson).getQuestions());
                 Collections.shuffle(questions);
-                List<ChallengeQcm> qcm = questions.stream().limit(count).map(q ->
+                int nbQuestions = (questionCount != null && questionCount > 0) ? questionCount : questions.size();
+                challenge.setQcm(questions.stream().limit(nbQuestions).map(qcm ->
                     ChallengeQcm.builder()
                         .challenge(challenge)
-                        .question(q.getQuestion())
-                        .options(q.getOptions())
-                        .correctOptionIndex(q.getCorrectOptionIndex())
-                        .explanation(q.getExplanation())
+                        .question(qcm.getQuestion())
+                        .options(new ArrayList<>(qcm.getOptions()))
+                        .correctOptionIndex(qcm.getCorrectOptionIndex())
+                        .explanation(qcm.getExplanation())
                         .build()
-                ).collect(Collectors.toList());
-                challenge.setQcm(qcm);
+                ).collect(Collectors.toList()));
             }
             case FLASHCARD -> {
                 List<FlashcardEntity> flashcards = new ArrayList<>(((FlashcardLesson) lesson).getFlashcards());
                 Collections.shuffle(flashcards);
-                List<ChallengeFlashCard> challengeFlashCards = flashcards.stream().limit(count).map(f ->
+                int nbQuestions = (questionCount != null && questionCount > 0) ? questionCount : flashcards.size();
+                challenge.setFlashcards(flashcards.stream().limit(nbQuestions).map(flashcard ->
                     ChallengeFlashCard.builder()
                         .challenge(challenge)
-                        .front(f.getFront())
-                        .back(f.getBack())
-                        .frontLanguage(f.getFrontLanguage())
-                        .backLanguage(f.getBackLanguage())
+                        .front(flashcard.getFront())
+                        .back(flashcard.getBack())
+                        .frontLanguage(flashcard.getFrontLanguage())
+                        .backLanguage(flashcard.getBackLanguage())
                         .timeLimitSeconds(30)
                         .build()
-                ).collect(Collectors.toList());
-                challenge.setFlashcards(challengeFlashCards);
+                ).collect(Collectors.toList()));
             }
             case MATCHING_PAIR -> {
                 List<MatchingPairEntity> pairs = new ArrayList<>(((MatchingPairLesson) lesson).getMatchingPairs());
                 Collections.shuffle(pairs);
-                List<ChallengeMatchingPair> challengePairs = pairs.stream().limit(count).map(p ->
+                int nbQuestions = (questionCount != null && questionCount > 0) ? questionCount : pairs.size();
+                challenge.setMatchingPairs(pairs.stream().limit(nbQuestions).map(pair ->
                     ChallengeMatchingPair.builder()
                         .challenge(challenge)
-                        .item1(p.getItem1())
-                        .item2(p.getItem2())
+                        .item1(pair.getItem1())
+                        .item2(pair.getItem2())
                         .build()
-                ).collect(Collectors.toList());
-                challenge.setMatchingPairs(challengePairs);
+                ).collect(Collectors.toList()));
             }
             case SORTING_EXERCISE -> {
                 List<SortingExerciseEntity> exercises = new ArrayList<>(((SortingExerciseLesson) lesson).getSortingExercise());
                 Collections.shuffle(exercises);
-                List<ChallengeSortingExercise> challengeExercises = exercises.stream().limit(count).map(e ->
+                int nbQuestions = (questionCount != null && questionCount > 0) ? questionCount : exercises.size();
+                challenge.setSortingExercises(exercises.stream().limit(nbQuestions).map(exercise ->
                     ChallengeSortingExercise.builder()
                         .challenge(challenge)
-                        .items(e.getItems())
-                        .correctOrder(e.getCorrectOrder())
+                        .items(exercise.getItems())
+                        .correctOrder(exercise.getCorrectOrder())
                         .build()
-                ).collect(Collectors.toList());
-                challenge.setSortingExercises(challengeExercises);
+                ).collect(Collectors.toList()));
             }
         }
+    }
 
-        return challenge;
+    private void buildQuestionsFromRequest(Challenge challenge, CreateChallengeRequest request) {
+        if (request.getQcm() != null) {
+            challenge.setQcm(request.getQcm().stream().map(qcm ->
+                ChallengeQcm.builder()
+                    .challenge(challenge)
+                    .question(qcm.getQuestion())
+                    .options(new ArrayList<>(qcm.getOptions()))
+                    .correctOptionIndex(qcm.getCorrectOptionIndex())
+                    .explanation(qcm.getExplanation())
+                    .build()
+            ).collect(Collectors.toList()));
+        }
+        if (request.getFlashcards() != null) {
+            challenge.setFlashcards(request.getFlashcards().stream().map(flashCard ->
+                ChallengeFlashCard.builder()
+                    .challenge(challenge)
+                    .front(flashCard.getFront())
+                    .back(flashCard.getBack())
+                    .frontLanguage(flashCard.getFrontLanguage())
+                    .backLanguage(flashCard.getBackLanguage())
+                    .timeLimitSeconds(flashCard.getTimeLimitSeconds() != null ? flashCard.getTimeLimitSeconds() : 30)
+                    .build()
+            ).collect(Collectors.toList()));
+        }
+        if (request.getMatchingPairs() != null) {
+            challenge.setMatchingPairs(request.getMatchingPairs().stream().map(pair ->
+                ChallengeMatchingPair.builder()
+                    .challenge(challenge)
+                    .item1(pair.getItem1())
+                    .item2(pair.getItem2())
+                    .build()
+            ).collect(Collectors.toList()));
+        }
+        if (request.getSortingExercises() != null) {
+            challenge.setSortingExercises(request.getSortingExercises().stream().map(exercise ->
+                ChallengeSortingExercise.builder()
+                    .challenge(challenge)
+                    .items(exercise.getItems())
+                    .correctOrder(exercise.getCorrectOrder())
+                    .build()
+            ).collect(Collectors.toList()));
+        }
     }
 
     public ChallengeParticipant buildParticipant(Challenge challenge, Accounts account) {
