@@ -322,6 +322,22 @@ public class ChallengeService implements IChallengeService {
             }).collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    public void startChallenge(UUID challengeId, UUID accountId) {
+        challengeParticipantRepository.findByChallengeIdAndAccountId(challengeId, accountId).orElseThrow(() -> new ChallengeAccessDeniedException(messageSource.getMessage("error.challenge.access_denied", null, LocaleUtils.getCurrentLocale())));
+        Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
+        UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElse(null);
+
+        challengeWsService.sendChallengeProgress(challengeId,
+            ChallengeProgress.builder()
+                .challengeId(challengeId)
+                .accountId(accountId)
+                .username(account.getUsername())
+                .photoUrl(profile != null ? profile.getPhotoUrl() : null)
+                .build()
+        );
+    }
 
     private ChallengeResponse mapToChallengeResponse(Challenge challenge, UUID currentAccountId) {
         UserProfile challengerProfile = userProfileRepository.findByAccount_Id(challenge.getChallenger().getId()).orElse(null);
@@ -349,12 +365,12 @@ public class ChallengeService implements IChallengeService {
             addXp(participant.getAccount().getId(), challenge.getLanguage().getId(), participant.getXpGained().intValue());
             challengeParticipantRepository.save(participant);
        }
-       UUID fChallengeId = challenge.getId();
+       UUID challengeId = challenge.getId();
        List<ChallengeProgress> results = participants.stream().map(participant -> {
             Accounts account = participant.getAccount();
             UserProfile prof = userProfileRepository.findByAccount_Id(account.getId()).orElse(null);
             return ChallengeProgress.builder()
-                .challengeId(fChallengeId)
+                .challengeId(challengeId)
                 .accountId(account.getId())
                 .username(account.getUsername())
                 .photoUrl(prof != null ? prof.getPhotoUrl() : null)
@@ -365,7 +381,7 @@ public class ChallengeService implements IChallengeService {
                 .build();
         }).collect(Collectors.toList());
        TransactionSynchronizationManager.registerSynchronization(
-           new ChallengeSynchronization(() -> results.forEach(result -> challengeWsService.sendChallengeResult(fChallengeId, result)))
+           new ChallengeSynchronization(() -> results.forEach(result -> challengeWsService.sendChallengeResult(challengeId, result)))
        );
 
     }
@@ -379,7 +395,7 @@ public class ChallengeService implements IChallengeService {
     }
 
     private void updatePublicChallengeRankings(Challenge challenge, List<ChallengeParticipant> participants, boolean giveXp) {
-       List<ChallengeParticipant> rankedParticipants = participants.stream().filter(particiapnt -> particiapnt.getCompletedAt() != null).sorted(
+       List<ChallengeParticipant> rankedParticipants = participants.stream().filter(participant -> participant.getCompletedAt() != null).sorted(
         Comparator.comparingDouble(ChallengeParticipant::getScore).reversed().thenComparing(ChallengeParticipant::getTimePassed)
        ).collect(Collectors.toList());
 
@@ -399,12 +415,12 @@ public class ChallengeService implements IChallengeService {
             challengeParticipantRepository.save(participant);
         }
 
-       UUID fChallengeIdPublic = challenge.getId();
+       UUID challengeId = challenge.getId();
        List<ChallengeProgress> publicResults = rankedParticipants.stream().map(participant -> {
             Accounts account = participant.getAccount();
             UserProfile profile = userProfileRepository.findByAccount_Id(account.getId()).orElse(null);
             return ChallengeProgress.builder()
-                .challengeId(fChallengeIdPublic)
+                .challengeId(challengeId)
                 .accountId(account.getId())
                 .username(account.getUsername())
                 .photoUrl(profile != null ? profile.getPhotoUrl() : null)
@@ -415,7 +431,9 @@ public class ChallengeService implements IChallengeService {
                 .build();
         }).collect(Collectors.toList());
        TransactionSynchronizationManager.registerSynchronization(
-           new ChallengeSynchronization(() -> publicResults.forEach(result -> challengeWsService.sendChallengeResult(fChallengeIdPublic, result)))
+           new ChallengeSynchronization(() -> publicResults.forEach(result -> challengeWsService.sendChallengeResult(challengeId, result)))
        );
     }
+
+
 }

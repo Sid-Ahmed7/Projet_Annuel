@@ -22,5 +22,6 @@ public interface IChallengeService {
     void giveResultWhenExpired(Challenge challenge);
     ChallengeResponse cancelChallenge(UUID challengeId, UUID accountId);
     List<ChallengeUserResponse> getChallengeUsers(UUID languageId, UUID accountId);
+    void startChallenge(UUID challengeId, UUID accountId);
 
 }

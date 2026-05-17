@@ -112,4 +112,12 @@ public class ChallengeController {
         List<ChallengeUserResponse> response = challengeService.getChallengeUsers(languageId, accountId);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{challengeId}/start")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> startChallenge(Authentication authentication, @PathVariable UUID challengeId) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        challengeService.startChallenge(challengeId, accountId);
+        return ResponseEntity.ok().build();
+    }
 }
