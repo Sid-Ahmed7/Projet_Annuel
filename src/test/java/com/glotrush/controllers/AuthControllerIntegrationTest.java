@@ -75,6 +75,9 @@ class AuthControllerIntegrationTest {
     @Autowired
     private PlanRepository planRepository;
 
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    private com.glotrush.services.EmailService emailService;
+
     private Accounts testAccount;
     private Plan freePlan;
     private static final String TEST_EMAIL = "test@example.com";
