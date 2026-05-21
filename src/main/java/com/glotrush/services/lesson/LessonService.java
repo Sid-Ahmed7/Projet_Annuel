@@ -13,11 +13,15 @@ import com.glotrush.dto.request.LessonReorderRequest;
 import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.services.progress.IProgressService;
+import com.glotrush.services.session.ILessonSessionService;
+
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.LessonBuilder;
+import com.glotrush.builder.LessonSessionBuilder;
+import com.glotrush.enumerations.LessonSessionStatus;
 import com.glotrush.dto.request.CompleteLessonRequest;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.LessonResponse;
@@ -33,7 +37,6 @@ import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.config.LessonRuleProperties;
-import com.glotrush.enumerations.LessonType;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.entities.lesson.MatchingPairLesson;
@@ -62,10 +65,12 @@ public class LessonService implements ILessonService {
     private final AccountsRepository accountsRepository;
     private final IProgressService progressService;
     private final LessonBuilder lessonBuilder;
+    private final LessonSessionBuilder lessonSessionBuilder;
     private final TopicRepository topicRepository;
     private final LessonEntityToLessonResponse lessonEntityToLessonResponse;
     private final LessonRequestToLessonEntity lessonRequestToLessonEntity;
     private final LessonRuleProperties lessonRuleProperties;
+    private final ILessonSessionService lessonSessionService;
 
     @Override
     public List<LessonSummaryResponse> getLessonsByTopic(UUID topicId, UUID accountId) {
@@ -151,6 +156,8 @@ public class LessonService implements ILessonService {
             double score = (double) lessonRequest.getCorrectAnswers() / lessonRequest.getTotalAnswers() * 100;
             if (lesson.getMinScoreRequired() != null && score < lesson.getMinScoreRequired()) {
                 userLessonProgressRepository.save(progress);
+
+                lessonSessionService.saveLessonSession(lessonSessionBuilder.buildLessonSessionRequest(accountId, lessonId, lessonRequest, LessonSessionStatus.FAILED));
                 UserProgress topicProgress = progressService.getOrCreateProgress(accountId, lesson.getTopic().getId());
                 UserProgressResponse progressResponse = progressService.getProgressByTopic(accountId, lesson.getTopic().getId());
                 Integer currentLevel = LevelUtils.calculateLevel(topicProgress.getTotalXP());
@@ -172,11 +179,9 @@ public class LessonService implements ILessonService {
 
         userLessonProgressRepository.save(progress);
 
-        if (isFirstCompletion) {
-            return handleFirstCompletion(accountId, lesson);
-        } else {
-            return handleRecompletion(accountId, lesson);
-        }
+        CompleteLessonResponse response = isFirstCompletion ? handleFirstCompletion(accountId, lesson) : handleRecompletion(accountId, lesson);
+        lessonSessionService.saveLessonSession(lessonSessionBuilder.buildLessonSessionRequest(accountId, lesson.getId(), lessonRequest, LessonSessionStatus.COMPLETED));
+        return response;
     }
 
 

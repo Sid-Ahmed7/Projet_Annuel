@@ -33,6 +33,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.glotrush.builder.LessonBuilder;
+import com.glotrush.builder.LessonSessionBuilder;
+import com.glotrush.services.session.ILessonSessionService;
 import com.glotrush.dto.request.CompleteLessonRequest;
 import com.glotrush.dto.request.lesson.FlashcardLessonRequest;
 import com.glotrush.dto.request.lesson.MatchingPairLessonRequest;
@@ -98,6 +100,12 @@ class LessonServiceTest {
     @Mock
     private LessonBuilder lessonBuilder;
 
+    @Mock
+    private LessonSessionBuilder lessonSessionBuilder;
+
+    @Mock
+    private ILessonSessionService lessonSessionService;
+
     private LessonRuleProperties lessonRuleProperties;
 
     private LessonService lessonService;
@@ -122,7 +130,7 @@ class LessonServiceTest {
         lessonRuleProperties.setSortingFixedXp(60);
         lessonRuleProperties.setSortingFixedSeconds(360);
 
-        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity, lessonRuleProperties);
+        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, lessonSessionBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity, lessonRuleProperties, lessonSessionService);
         accountId = UUID.randomUUID();
         lessonId = UUID.randomUUID();
         topicId = UUID.randomUUID();
