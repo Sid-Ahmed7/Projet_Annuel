@@ -37,9 +37,12 @@ public class AILessonGeneratorService {
     private final LessonEntityToLessonResponse lessonEntityToLessonResponse;
     private final MessageSource messageSource;
     private final ObjectMapper objectMapper;
+    private final AIQuotaService aiQuotaService;
 
     @Transactional
     public LessonRequest generateLesson(UUID accountId, UUID topicId, LessonType lessonType, String description, Integer itemCount) {
+        aiQuotaService.verifyAndConsumeAIQuota(accountId);
+
         Topic topic = topicRepository.findById(topicId)
                 .orElseThrow(() -> new RuntimeException("Topic not found: " + topicId));
 
@@ -67,6 +70,8 @@ public class AILessonGeneratorService {
 
     @Transactional
     public LessonRequest modifyLesson(UUID accountId, UUID lessonId, String prompt, Integer itemCount, LessonRequest currentLessonRequest) {
+        aiQuotaService.verifyAndConsumeAIQuota(accountId);
+
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new RuntimeException("Lesson not found: " + lessonId));
         
@@ -132,8 +137,18 @@ public class AILessonGeneratorService {
         promptBuilder.append("- Génère le contenu en conséquence. Par exemple, pour un QCM, les questions peuvent être en ").append(sourceLang.getName());
         promptBuilder.append(" ou ").append(targetLang.getName()).append(" selon le contexte pédagogique, mais les réponses et explications doivent aider à l'apprentissage du ").append(targetLang.getName()).append(".\n\n");
 
-        if (itemCount != null && (lessonType == LessonType.QCM || lessonType == LessonType.FLASHCARD)) {
-            promptBuilder.append("Quantité : Tu dois générer exactement ").append(itemCount).append(" éléments (questions ou flashcards).\n\n");
+        if (itemCount != null) {
+            String elementsDescription = "éléments";
+            if (lessonType == LessonType.QCM) {
+                elementsDescription = "questions";
+            } else if (lessonType == LessonType.FLASHCARD) {
+                elementsDescription = "flashcards";
+            } else if (lessonType == LessonType.MATCHING_PAIR) {
+                elementsDescription = "paires à associer";
+            } else if (lessonType == LessonType.SORTING_EXERCISE) {
+                elementsDescription = "phrases à ordonner";
+            }
+            promptBuilder.append("Quantité : Tu dois générer exactement ").append(itemCount).append(" ").append(elementsDescription).append(".\n\n");
         }
 
         promptBuilder.append("Voici un exemple du format JSON attendu pour ce type :\n");

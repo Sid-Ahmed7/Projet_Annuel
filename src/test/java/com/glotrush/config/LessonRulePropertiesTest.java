@@ -48,7 +48,7 @@ class LessonRulePropertiesTest {
                 // Other properties missing
         ).run(context -> {
             assertThat(context).hasFailed();
-            assertThat(context).getFailure().hasStackTraceContaining("obligatoire");
+            assertThat(context).getFailure().hasStackTraceContaining("validation.lesson.rules");
         });
     }
 
