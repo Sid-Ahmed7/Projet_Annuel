@@ -19,6 +19,7 @@ import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
 import com.glotrush.config.LessonRuleProperties;
+import com.glotrush.dispatcher.notifications.NotificationDispatcher;
 import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
@@ -66,6 +67,8 @@ import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.services.lesson.LessonService;
 import com.glotrush.services.progress.ProgressService;
+import com.glotrush.services.streak.StreakService;
+
 import org.springframework.context.MessageSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -98,6 +101,13 @@ class LessonServiceTest {
     @Mock
     private LessonBuilder lessonBuilder;
 
+    @Mock
+    private NotificationDispatcher notificationDispatcher;
+
+    @Mock
+    private StreakService streakService;
+
+
     private LessonRuleProperties lessonRuleProperties;
 
     private LessonService lessonService;
@@ -122,7 +132,7 @@ class LessonServiceTest {
         lessonRuleProperties.setSortingFixedXp(60);
         lessonRuleProperties.setSortingFixedSeconds(360);
 
-        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity, lessonRuleProperties);
+        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity, lessonRuleProperties, notificationDispatcher, streakService);
         accountId = UUID.randomUUID();
         lessonId = UUID.randomUUID();
         topicId = UUID.randomUUID();
