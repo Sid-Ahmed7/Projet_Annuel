@@ -38,6 +38,8 @@ public class GlobalExceptionHandler {
             InvalidPathException.class,
             LanguageException.class,
             UserLanguageException.class,
+            ReviewNotAllowedException.class,
+            ReviewBannedException.class,
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -84,6 +86,7 @@ public class GlobalExceptionHandler {
             PlanNotFoundException.class,
             LessonNotFoundException.class,
             TopicNotFoundException.class,
+            ReviewNotFoundException.class,
     })
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
@@ -96,7 +99,8 @@ public class GlobalExceptionHandler {
             EmailAlreadyExistsException.class,
             UsernameAlreadyExistsException.class,
             TwoFactorAlreadyEnabledException.class,
-            SubscriptionAlreadyExistException.class
+            SubscriptionAlreadyExistException.class,
+            ReviewAlreadyExistsException.class,
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.CONFLICT);

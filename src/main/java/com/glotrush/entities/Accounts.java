@@ -92,6 +92,14 @@ public class Accounts {
     @Column(name="auth_key", nullable = true)
     private String authKey;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer rejectedReviewCount = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isBannedOfReview = false;
+
     @Column(name = "current_streak")
     @Builder.Default
     private int currentStreak = 0;
