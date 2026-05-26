@@ -9,8 +9,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.UserProfileBuilder;
+import com.glotrush.dto.request.NotificationPreferencesRequest;
 import com.glotrush.dto.request.PasswordRequest;
 import com.glotrush.dto.request.UpdateProfileRequest;
+import com.glotrush.dto.response.NotificationPreferencesResponse;
+import com.glotrush.dto.response.StreakResponse;
 import com.glotrush.dto.response.UserLanguageResponse;
 import com.glotrush.dto.response.UserProfileResponse;
 import com.glotrush.entities.Accounts;
@@ -162,6 +165,49 @@ public class UserProfileService implements IUserProfileService {
 
         return userProfileBuilder.mapToUserProfileResponse(account, profile, languages);
 
-    }   
+    }
+
+    @Override
+    public StreakResponse getStreak(UUID accountId) {
+        Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
+        return StreakResponse.builder()
+            .currentStreak(account.getCurrentStreak())
+            .longestStreak(account.getLongestStreak())
+            .lastActivityDate(account.getLastActivityDate())
+            .build();
+    }
+
+    @Override
+    public NotificationPreferencesResponse getNotificationPreferences(UUID accountId) {
+        Accounts account = accountsRepository.findById(accountId)
+            .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
+        return NotificationPreferencesResponse.builder()
+            .lessonRemindersEnabled(account.isNotifLessonReminder())
+            .streakUrgencyEnabled(account.isNotifStreakUrgency())
+            .inactivityEnabled(account.isNotifInactivity())
+            .weeklyGoalRemindersEnabled(account.isNotifWeeklyGoal())
+            .reviewRemindersEnabled(account.isNotifReviewReminder())
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public NotificationPreferencesResponse updateNotificationPreferences(UUID accountId, NotificationPreferencesRequest request) {
+        Accounts account = accountsRepository.findById(accountId)
+            .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
+        account.setNotifLessonReminder(request.isLessonRemindersEnabled());
+        account.setNotifStreakUrgency(request.isStreakUrgencyEnabled());
+        account.setNotifInactivity(request.isInactivityEnabled());
+        account.setNotifWeeklyGoal(request.isWeeklyGoalRemindersEnabled());
+        account.setNotifReviewReminder(request.isReviewRemindersEnabled());
+        accountsRepository.save(account);
+        return NotificationPreferencesResponse.builder()
+            .lessonRemindersEnabled(account.isNotifLessonReminder())
+            .streakUrgencyEnabled(account.isNotifStreakUrgency())
+            .inactivityEnabled(account.isNotifInactivity())
+            .weeklyGoalRemindersEnabled(account.isNotifWeeklyGoal())
+            .reviewRemindersEnabled(account.isNotifReviewReminder())
+            .build();
+    }
 }
 
