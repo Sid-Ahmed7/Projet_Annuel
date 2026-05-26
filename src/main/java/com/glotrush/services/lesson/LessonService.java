@@ -13,6 +13,8 @@ import com.glotrush.dto.request.LessonReorderRequest;
 import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.services.progress.IProgressService;
+import com.glotrush.services.streak.IStreakService;
+
 import com.glotrush.services.session.ILessonSessionService;
 
 import org.springframework.context.MessageSource;
@@ -20,6 +22,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.LessonBuilder;
+import com.glotrush.dispatcher.notifications.NotificationDispatcher;
 import com.glotrush.builder.LessonSessionBuilder;
 import com.glotrush.enumerations.LessonSessionStatus;
 import com.glotrush.dto.request.CompleteLessonRequest;
@@ -70,6 +73,8 @@ public class LessonService implements ILessonService {
     private final LessonEntityToLessonResponse lessonEntityToLessonResponse;
     private final LessonRequestToLessonEntity lessonRequestToLessonEntity;
     private final LessonRuleProperties lessonRuleProperties;
+    private final NotificationDispatcher notificationDispatcher;
+    private final IStreakService streakService;    
     private final ILessonSessionService lessonSessionService;
 
     @Override
@@ -176,6 +181,7 @@ public class LessonService implements ILessonService {
 
         boolean isFirstCompletion = progress.getStatus() != LessonStatus.COMPLETED;
         progress.setStatus(LessonStatus.COMPLETED);
+        progress.setCompletedAt(LocalDateTime.now());
 
         userLessonProgressRepository.save(progress);
 
@@ -194,6 +200,7 @@ public class LessonService implements ILessonService {
         topicProgress = progressService.addXP(accountId, lesson.getTopic().getId(), xpEarned);
         topicProgress = progressService.incrementLessonCompletion(accountId, lesson.getTopic().getId());
         topicProgress = progressService.updateLastStudiedAt(accountId, lesson.getTopic().getId());
+        streakService.updateStreakForUser(accountId);
         Integer newLevel = LevelUtils.calculateLevel(topicProgress.getTotalXP());
         boolean leveledUp = !oldLevel.equals(newLevel);
 
@@ -249,6 +256,7 @@ public class LessonService implements ILessonService {
         recalculateRewards(lesson);
 
         lessonRepository.save(lesson);
+        notificationDispatcher.sendNotificationWhenNewLesson(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
     }
 
@@ -282,11 +290,15 @@ public class LessonService implements ILessonService {
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
 
         lesson.setIsActive(!lesson.getIsActive());
+      
         
         lessonRepository.save(lesson);
+        notificationDispatcher.sendNotificationWhenNewLesson(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
     }
 
+
+    
     @Override
     public List<LessonSummaryResponse> getLessonsByTopicForAdmin(UUID topicId, UUID accountId) {
         return lessonRepository.findByTopic_IdOrderByOrderIndexAsc(topicId).stream()

@@ -62,6 +62,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/plans/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/stripe/webhook").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/profile/files/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
             ).authenticationProvider(authenticationProvider())

@@ -6,4 +6,5 @@ public final class TopicConstants {
     public static final String REGEX_PATTERN = "\\d+";
     public static final double MIN_SUCCESS_SCORE = 80.0;
     public static final int EXAM_QUESTION_LIMIT = 5;
+    public static final int LIMIT_REJECTED_REVIEWS = 3;
 }
