@@ -40,6 +40,11 @@ public class GlobalExceptionHandler {
             UserLanguageException.class,
             ReviewNotAllowedException.class,
             ReviewBannedException.class,
+            MissingChallengedIdException.class,
+            InvalidDuelTypeException.class,
+            ChallengeCannotAcceptException.class,
+            ChallengeNotActiveException.class,
+            ChallengeExpiredException.class,
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -66,6 +71,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             PasswordExpiredException.class,
             ProfilePrivateException.class,
+            ChallengeAccessDeniedException.class,
     })
     public ResponseEntity<ErrorResponse> handleForbidden(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
@@ -87,6 +93,8 @@ public class GlobalExceptionHandler {
             LessonNotFoundException.class,
             TopicNotFoundException.class,
             ReviewNotFoundException.class,
+            ChallengeNotFoundException.class,
+            ChallengedUserNotFoundException.class,
     })
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
@@ -101,6 +109,7 @@ public class GlobalExceptionHandler {
             TwoFactorAlreadyEnabledException.class,
             SubscriptionAlreadyExistException.class,
             ReviewAlreadyExistsException.class,
+            ScoreAlreadySubmittedException.class,
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.CONFLICT);

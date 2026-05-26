@@ -33,6 +33,7 @@ import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
 import com.glotrush.exceptions.ResourceNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.ChallengeParticipantsRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserLanguageRepository;
@@ -75,6 +76,9 @@ class ProgressServiceTest {
     @Mock    
     private UserLanguageRepository userLanguageRepository;
 
+    @Mock
+    private ChallengeParticipantsRepository challengeParticipantsRepository;
+
 
     @Mock
     private UserLessonProgressRepository userLessonProgressRepository;
@@ -92,7 +96,7 @@ class ProgressServiceTest {
 
      @BeforeEach
     void setUp() {
-        progressService = new ProgressService(messageSource, userProgressRepository, topicRepository, accountsRepository, progressBuilder, lessonRepository, userLessonProgressRepository, userLanguageRepository, rankingWsService);
+        progressService = new ProgressService(messageSource, userProgressRepository, topicRepository, accountsRepository, progressBuilder, lessonRepository, userLessonProgressRepository, userLanguageRepository, rankingWsService, challengeParticipantsRepository);
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
         languageId = UUID.randomUUID();
