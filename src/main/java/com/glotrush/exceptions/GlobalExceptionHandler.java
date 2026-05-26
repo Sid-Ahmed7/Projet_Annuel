@@ -38,6 +38,8 @@ public class GlobalExceptionHandler {
             InvalidPathException.class,
             LanguageException.class,
             UserLanguageException.class,
+            ReviewNotAllowedException.class,
+            ReviewBannedException.class,
             MissingChallengedIdException.class,
             InvalidDuelTypeException.class,
             ChallengeCannotAcceptException.class,
@@ -90,6 +92,7 @@ public class GlobalExceptionHandler {
             PlanNotFoundException.class,
             LessonNotFoundException.class,
             TopicNotFoundException.class,
+            ReviewNotFoundException.class,
             ChallengeNotFoundException.class,
             ChallengedUserNotFoundException.class,
     })
@@ -105,6 +108,7 @@ public class GlobalExceptionHandler {
             UsernameAlreadyExistsException.class,
             TwoFactorAlreadyEnabledException.class,
             SubscriptionAlreadyExistException.class,
+            ReviewAlreadyExistsException.class,
             ScoreAlreadySubmittedException.class,
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex) {
