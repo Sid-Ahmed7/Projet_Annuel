@@ -45,6 +45,8 @@ public class GlobalExceptionHandler {
             ChallengeCannotAcceptException.class,
             ChallengeNotActiveException.class,
             ChallengeExpiredException.class,
+            CannotAddYourselfException.class,
+            FriendsAlreadyExistsException.class,
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -95,6 +97,7 @@ public class GlobalExceptionHandler {
             ReviewNotFoundException.class,
             ChallengeNotFoundException.class,
             ChallengedUserNotFoundException.class,
+            FriendsNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
