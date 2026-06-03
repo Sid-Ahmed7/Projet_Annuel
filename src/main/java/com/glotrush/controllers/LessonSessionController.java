@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,5 +32,14 @@ public class LessonSessionController {
         List<LessonSessionResponse> sessions = lessonSessionService.getAllSessionOfAnAccount(accountId);
         return ResponseEntity.ok(sessions);
     }
+
+    @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<LessonSessionResponse>> getSessionsOfUser(Authentication authentication, @PathVariable UUID userId) {
+    UUID viewerId = SecurityUtils.extractUserIdFromAuth(authentication);
+    List<LessonSessionResponse> sessions = lessonSessionService.getSessionOfAnUser(viewerId, userId);
+    return ResponseEntity.ok(sessions);
+    }
+
     
 }

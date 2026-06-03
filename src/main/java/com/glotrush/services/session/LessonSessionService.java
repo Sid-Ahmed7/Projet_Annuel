@@ -12,11 +12,16 @@ import com.glotrush.dto.response.LessonSessionResponse;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.Lesson;
 import com.glotrush.entities.LessonSession;
+import com.glotrush.entities.UserProfile;
+import com.glotrush.enumerations.FriendRequestStatus;
 import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.FriendsRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.LessonSessionRepository;
+import com.glotrush.repositories.UserProfileRepository;
+import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,13 +34,15 @@ public class LessonSessionService implements ILessonSessionService {
     private final AccountsRepository accountsRepository;
     private final LessonRepository lessonRepository;
     private final MessageSource messageSource;
+    private final UserProfileRepository userProfileRepository;
+    private final FriendsRepository friendsRepository;
 
     @Override
     @Transactional
     public void saveLessonSession(LessonSessionRequest request) {
 
-        Accounts account = accountsRepository.findById(request.getAccountId()).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("account.not.found", null, null)));
-        Lesson lesson = lessonRepository.findById(request.getLessonId()).orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("lesson.not.found", null, null)));
+        Accounts account = accountsRepository.findById(request.getAccountId()).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("account.not.found", null, LocaleUtils.getCurrentLocale())));
+        Lesson lesson = lessonRepository.findById(request.getLessonId()).orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("lesson.not.found", null, LocaleUtils.getCurrentLocale())));
 
         LessonSession session = LessonSession.builder()
                 .account(account)
@@ -56,7 +63,18 @@ public class LessonSessionService implements ILessonSessionService {
         List<LessonSession> sessions = lessonSessionRepository.findByAccount_IdOrderByCompletedAtDesc(accountId);
         return sessions.stream().map(this::toResponse).toList();
     }
+    @Override
+    public List<LessonSessionResponse> getSessionOfAnUser(UUID viewerId, UUID accountId) {
+        UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.profile.not_found", null, LocaleUtils.getCurrentLocale())));
 
+    boolean isFriend = friendsRepository.findBetweenTwoUsers(viewerId, accountId).map(friends -> friends.getStatus() == FriendRequestStatus.ACCEPTED).orElse(false);
+
+    boolean hasAccess = profile.getIsPublic() || isFriend;
+    if (!hasAccess) {
+        return List.of();
+    }
+    return lessonSessionRepository.findByAccount_IdOrderByCompletedAtDesc(accountId).stream().map(this::toResponse).toList();
+    }   
 
      private LessonSessionResponse toResponse(LessonSession session) {
         Lesson lesson = session.getLesson();
@@ -74,6 +92,4 @@ public class LessonSessionService implements ILessonSessionService {
                 .completedAt(session.getCompletedAt())
                 .build();
     }
-
-    
 }

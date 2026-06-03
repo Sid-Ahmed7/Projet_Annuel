@@ -15,6 +15,7 @@ import com.glotrush.entities.UserLanguage;
 import com.glotrush.enumerations.LanguageType;
 import com.glotrush.repositories.UserLanguageRepository;
 import com.glotrush.services.EmailService;
+import com.glotrush.services.notifications.NotificationService;
 import com.glotrush.services.pushNotifications.IPushNotification;
 import com.glotrush.utils.LocaleUtils;
 
@@ -30,6 +31,7 @@ public class NotificationDispatcher {
     private final EmailService emailService;
     private final IPushNotification pushNotificationService;
     private final MessageSource messageSource;
+    private final NotificationService notificationService;
 
 
     @Async
@@ -146,7 +148,26 @@ public class NotificationDispatcher {
         emailService.sendNotificationEmail(account.getEmail(), emailSubject, emailBody);
     }
 
+    @Async
+    public void sendFriendRequestReceived(Accounts sender, Accounts receiver) {
+        String message = messageSource.getMessage("notif.friend.request.received.body",new Object[]{sender.getUsername()},LocaleUtils.getCurrentLocale());
+        notificationService.sendNotification(receiver.getId(), "FRIEND_REQUEST_RECEIVED", message);
+        emailService.sendFriendRequestEmail(
+            receiver.getEmail(),
+            receiver.getUsername(),
+            sender.getUsername()
+        );
+    }
 
-
-    
+    @Async
+    public void sendFriendRequestAccepted(Accounts accepter, Accounts originalSender) {
+        String message = messageSource.getMessage("notif.friend.request.accepted.body",new Object[]{accepter.getUsername()},LocaleUtils.getCurrentLocale());
+        notificationService.sendNotification(originalSender.getId(), "FRIEND_REQUEST_ACCEPTED", message);
+        emailService.sendFriendRequestAcceptedEmail(
+            originalSender.getEmail(),
+            originalSender.getUsername(),
+            accepter.getUsername()
+        );
+    }
+        
 }

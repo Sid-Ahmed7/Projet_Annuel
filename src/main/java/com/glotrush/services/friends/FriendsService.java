@@ -24,6 +24,7 @@ import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.FriendsRepository;
 import com.glotrush.repositories.UserProfileRepository;
+import com.glotrush.dispatcher.notifications.NotificationDispatcher;
 import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
@@ -38,6 +39,7 @@ public class FriendsService implements IFriendsService {
     private final UserProfileRepository userProfileRepository;
     private final MessageSource messageSource;
     private final FriendsBuilder friendsResponseBuilder;
+    private final NotificationDispatcher notificationDispatcher;
 
     @Override
     @Transactional
@@ -48,7 +50,7 @@ public class FriendsService implements IFriendsService {
         }
 
         Accounts receiver = accountsRepository.findById(receiverId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.account_not_found", null, LocaleUtils.getCurrentLocale())));
-        friendsRepository.findBetweenTwoUsers(senderId, receiverId).ifPresent(f -> {
+        friendsRepository.findBetweenTwoUsers(senderId, receiverId).ifPresent(friend -> {
             throw new FriendsAlreadyExistsException(messageSource.getMessage("error.friend_request_exists", null, LocaleUtils.getCurrentLocale()));
         });
 
@@ -61,6 +63,7 @@ public class FriendsService implements IFriendsService {
             .build();
 
         friends = friendsRepository.save(friends);
+        notificationDispatcher.sendFriendRequestReceived(sender, receiver);
 
         return friendsResponseBuilder.toFriendRequestResponse(friends, receiver);
     }
@@ -81,7 +84,11 @@ public class FriendsService implements IFriendsService {
         friends.setStatus(FriendRequestStatus.ACCEPTED);
         friends = friendsRepository.save(friends);
 
-        return friendsResponseBuilder.toFriendResponse(friends, friends.getSender());
+        Accounts receiver = accountsRepository.findById(friends.getReceiver().getId()).orElseThrow();
+        Accounts sender = accountsRepository.findById(friends.getSender().getId()).orElseThrow();
+        notificationDispatcher.sendFriendRequestAccepted(receiver, sender);
+
+        return friendsResponseBuilder.toFriendResponse(friends, sender);
     }
 
     @Override
@@ -187,9 +194,6 @@ public class FriendsService implements IFriendsService {
                     .build();
             })
             .toList();
-
-
-
     }
     
 }
