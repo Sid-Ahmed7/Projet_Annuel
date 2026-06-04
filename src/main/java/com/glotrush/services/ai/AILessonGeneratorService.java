@@ -23,6 +23,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
@@ -57,8 +58,11 @@ public class AILessonGeneratorService {
 
         LessonRequest generatedRequest = aiService.generateJsonContent(fullPrompt, targetClass);
         
+        limitLessonRequestItemCountToRequestedSize(generatedRequest, itemCount);
+        
         generatedRequest.setTopicId(topicId);
         generatedRequest.setLessonType(lessonType);
+        
         if (generatedRequest.getIsActive() == null) {
             generatedRequest.setIsActive(true);
         }
@@ -102,8 +106,11 @@ public class AILessonGeneratorService {
 
         LessonRequest modifiedRequest = aiService.generateJsonContent(fullPrompt, targetClass);
 
+        limitLessonRequestItemCountToRequestedSize(modifiedRequest, itemCount);
+
         modifiedRequest.setTopicId(topic.getId());
         modifiedRequest.setLessonType(lessonType);
+        
         if (modifiedRequest.getIsActive() == null) {
             modifiedRequest.setIsActive(lesson.getIsActive());
         }
@@ -148,7 +155,8 @@ public class AILessonGeneratorService {
             } else if (lessonType == LessonType.SORTING_EXERCISE) {
                 elementsDescription = "phrases à ordonner";
             }
-            promptBuilder.append("Quantité : Tu dois générer exactement ").append(itemCount).append(" ").append(elementsDescription).append(".\n\n");
+            promptBuilder.append("Quantité : Tu dois générer exactement ").append(itemCount).append(" ").append(elementsDescription).append(".\n");
+            promptBuilder.append("ATTENTION : La liste d'éléments générés doit contenir STRICTEMENT ").append(itemCount).append(" ").append(elementsDescription).append(". C'est une contrainte absolue.\n\n");
         }
 
         promptBuilder.append("Voici un exemple du format JSON attendu pour ce type :\n");
@@ -243,6 +251,31 @@ public class AILessonGeneratorService {
             logRepository.save(logEntry);
         } catch (JsonProcessingException e) {
             log.warn("Impossible de sérialiser la réponse AI pour le log", e);
+        }
+    }
+
+    private void limitLessonRequestItemCountToRequestedSize(LessonRequest lessonRequest, Integer itemCount) {
+        if (itemCount == null) {
+            return;
+        }
+
+        // Limiter la taille des listes d'exercices au quota requis en cas de sur-génération par le modèle d'IA.
+        if (lessonRequest instanceof QcmLessonRequest qcmLessonRequest) {
+            if (qcmLessonRequest.getQuestions() != null && qcmLessonRequest.getQuestions().size() > itemCount) {
+                qcmLessonRequest.setQuestions(new ArrayList<>(qcmLessonRequest.getQuestions().subList(0, itemCount)));
+            }
+        } else if (lessonRequest instanceof FlashcardLessonRequest flashcardLessonRequest) {
+            if (flashcardLessonRequest.getFlashcards() != null && flashcardLessonRequest.getFlashcards().size() > itemCount) {
+                flashcardLessonRequest.setFlashcards(new ArrayList<>(flashcardLessonRequest.getFlashcards().subList(0, itemCount)));
+            }
+        } else if (lessonRequest instanceof MatchingPairLessonRequest matchingPairLessonRequest) {
+            if (matchingPairLessonRequest.getMatchingPairs() != null && matchingPairLessonRequest.getMatchingPairs().size() > itemCount) {
+                matchingPairLessonRequest.setMatchingPairs(new ArrayList<>(matchingPairLessonRequest.getMatchingPairs().subList(0, itemCount)));
+            }
+        } else if (lessonRequest instanceof SortingExerciseLessonRequest sortingExerciseLessonRequest) {
+            if (sortingExerciseLessonRequest.getSortingExercise() != null && sortingExerciseLessonRequest.getSortingExercise().size() > itemCount) {
+                sortingExerciseLessonRequest.setSortingExercise(new ArrayList<>(sortingExerciseLessonRequest.getSortingExercise().subList(0, itemCount)));
+            }
         }
     }
 }

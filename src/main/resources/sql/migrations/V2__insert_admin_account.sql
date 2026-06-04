@@ -10,6 +10,16 @@ INSERT INTO accounts (
     status,
     auth_key,
     failed_login_attempts,
+    last_password_change,
+    current_streak,
+    longest_streak,
+    notif_lesson_reminder,
+    notif_streak_urgency,
+    notif_inactivity,
+    notif_weekly_goal,
+    notif_review_reminder,
+    rejected_review_count,
+    is_banned_of_review,
     created_at,
     updated_at
 ) VALUES (
@@ -22,9 +32,19 @@ INSERT INTO accounts (
     'ADMIN',                             
     'ACTIVE',                          
     '${secret_key}',          
-    0,                                  
+    0,
+    CURRENT_TIMESTAMP,
+    0,
+    0,
+    TRUE,
+    TRUE,
+    TRUE,
+    TRUE,
+    TRUE,
+    0,
+    FALSE,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 )
-ON CONFLICT (email) DO NOTHING;       
+ON CONFLICT (email) DO NOTHING;
 
