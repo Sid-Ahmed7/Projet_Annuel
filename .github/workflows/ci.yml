@@ -62,6 +62,7 @@ jobs:
           FLYWAY_ADMIN_PASS: ${{ secrets.TEST_FLYWAY_ADMIN_PASS }}
           FLYWAY_SECRET_KEY: ${{ secrets.TEST_FLYWAY_SECRET_KEY }}
           SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: true
+          SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
       - name: Upload rapports de tests
         uses: actions/upload-artifact@v4
