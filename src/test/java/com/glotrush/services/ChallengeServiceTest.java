@@ -3,6 +3,7 @@ package com.glotrush.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -112,9 +113,9 @@ public class ChallengeServiceTest {
         lesson = mock(Lesson.class);
 
         challenge = mock(Challenge.class);
-        when(challenge.getChallenger()).thenReturn(challenger);
-        when(challenge.getChallenged()).thenReturn(challenged);
-        when(challenge.getParticipants()).thenReturn(new ArrayList<>());
+        lenient().when(challenge.getChallenger()).thenReturn(challenger);
+        lenient().when(challenge.getChallenged()).thenReturn(challenged);
+        lenient().when(challenge.getParticipants()).thenReturn(new ArrayList<>());
     }
     
     @Test
