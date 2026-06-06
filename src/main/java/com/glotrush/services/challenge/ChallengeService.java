@@ -49,7 +49,7 @@ import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.services.progress.IProgressService;
 import com.glotrush.utils.LocaleUtils;
-import com.glotrush.websocket.challenge.ChallengeWsService;
+import com.glotrush.websocket.challenge.IChallengeWsService;
 import com.glotrush.websocket.challenge.ChallengeSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -65,7 +65,7 @@ public class ChallengeService implements IChallengeService {
     private final AccountsRepository accountsRepository;
     private final UserProfileRepository userProfileRepository;
     private final UserProgressRepository userProgressRepository;
-    private final ChallengeWsService challengeWsService;
+    private final IChallengeWsService challengeWsService;
     private final MessageSource messageSource;
     private final LessonRepository lessonRepository;
     private final LanguageRepository languageRepository;

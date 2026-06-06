@@ -7,23 +7,35 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glotrush.dto.request.LanguageRequest;
+import com.glotrush.dto.request.LoginRequest;
 import com.glotrush.dto.response.LanguageResponse;
+import com.glotrush.entities.Accounts;
+import com.glotrush.enumerations.AccountStatus;
+import com.glotrush.enumerations.UserRole;
+import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.services.languages.ILanguageService;
+
+import jakarta.servlet.http.Cookie;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -37,13 +49,71 @@ class LanguageControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private LanguageRepository languageRepository;
+
+    @Autowired
+    private AccountsRepository accountsRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @MockitoBean
     private ILanguageService languageService;
 
+    private static final String TEST_EMAIL = "test@gmail.com";
+    private static final String TEST_PASSWORD = "Password123!@#";
+    private static final String TEST_USERNAME = "GojoSatoru";
+
+    private static final String ADMIN_EMAIL = "admin@gmail.com";
+    private static final String ADMIN_PASSWORD = "Admin123!@#";
+
+    @BeforeEach
+    void setUp() {
+        languageRepository.deleteAll();
+        accountsRepository.deleteAll();
+
+        accountsRepository.save(Accounts.builder()
+                .email(TEST_EMAIL)
+                .password(passwordEncoder.encode(TEST_PASSWORD))
+                .username(TEST_USERNAME)
+                .firstName("Gojo").lastName("Satoru")
+                .role(UserRole.USER).status(AccountStatus.ACTIVE)
+                .failedLoginAttempts(0)
+                .lastPasswordChange(LocalDateTime.now())
+                .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
+                .build());
+
+        accountsRepository.save(Accounts.builder()
+                .email(ADMIN_EMAIL)
+                .password(passwordEncoder.encode(ADMIN_PASSWORD))
+                .username("AdminUser")
+                .firstName("Admin").lastName("Admin")
+                .role(UserRole.ADMIN).status(AccountStatus.ACTIVE)
+                .failedLoginAttempts(0)
+                .lastPasswordChange(LocalDateTime.now())
+                .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
+                .build());
+    }
+
+    private Cookie logAndGetCookie(String email, String password) throws Exception {
+        LoginRequest req = new LoginRequest();
+        req.setEmail(email);
+        req.setPassword(password);
+
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        return result.getResponse().getCookie("access_token");
+    }
+
     @Test
     @DisplayName("Should get all languages")
-    @WithMockUser
     void shouldGetAllLanguages() throws Exception {
+        Cookie cookie = logAndGetCookie(TEST_EMAIL, TEST_PASSWORD);
         LanguageResponse response = LanguageResponse.builder()
                 .id(UUID.randomUUID())
                 .code("en")
@@ -53,7 +123,8 @@ class LanguageControllerTest {
 
         when(languageService.getAllLanguages()).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/api/v1/languages"))
+        mockMvc.perform(get("/api/v1/languages")
+                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].code").value("en"))
                 .andExpect(jsonPath("$[0].name").value("English"));
@@ -61,8 +132,8 @@ class LanguageControllerTest {
 
     @Test
     @DisplayName("Should get all active languages")
-    @WithMockUser
     void shouldGetAllActiveLanguages() throws Exception {
+        Cookie cookie = logAndGetCookie(TEST_EMAIL, TEST_PASSWORD);
         LanguageResponse response = LanguageResponse.builder()
                 .id(UUID.randomUUID())
                 .code("en")
@@ -72,7 +143,8 @@ class LanguageControllerTest {
 
         when(languageService.getAllActiveLanguages()).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/api/v1/languages/active"))
+        mockMvc.perform(get("/api/v1/languages/active")
+                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].code").value("en"))
                 .andExpect(jsonPath("$[0].name").value("English"));
@@ -80,8 +152,8 @@ class LanguageControllerTest {
 
     @Test
     @DisplayName("Should get language by ID")
-    @WithMockUser
     void shouldGetLanguageById() throws Exception {
+        Cookie cookie = logAndGetCookie(TEST_EMAIL, TEST_PASSWORD);
         UUID id = UUID.randomUUID();
         LanguageResponse response = LanguageResponse.builder()
                 .id(id)
@@ -91,7 +163,8 @@ class LanguageControllerTest {
 
         when(languageService.getLanguageById(id)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/languages/{id}", id))
+        mockMvc.perform(get("/api/v1/languages/{id}", id)
+                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id.toString()))
                 .andExpect(jsonPath("$.code").value("fr"));
@@ -99,8 +172,8 @@ class LanguageControllerTest {
 
     @Test
     @DisplayName("Should get language by code")
-    @WithMockUser
     void shouldGetLanguageByCode() throws Exception {
+        Cookie cookie = logAndGetCookie(TEST_EMAIL, TEST_PASSWORD);
         LanguageResponse response = LanguageResponse.builder()
                 .id(UUID.randomUUID())
                 .code("es")
@@ -109,15 +182,16 @@ class LanguageControllerTest {
 
         when(languageService.getLanguageByCode("es")).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/languages/code/es"))
+        mockMvc.perform(get("/api/v1/languages/code/es")
+                .cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("es"));
     }
 
     @Test
     @DisplayName("Should create language when admin")
-    @WithMockUser(roles = "ADMIN")
     void shouldCreateLanguage() throws Exception {
+        Cookie cookie = logAndGetCookie(ADMIN_EMAIL, ADMIN_PASSWORD);
         LanguageRequest request = new LanguageRequest();
         request.setCode("it");
         request.setName("Italian");
@@ -132,6 +206,7 @@ class LanguageControllerTest {
         when(languageService.createLanguage(any(LanguageRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/languages")
+                .cookie(cookie)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -140,8 +215,8 @@ class LanguageControllerTest {
 
     @Test
     @DisplayName("Should update language when admin")
-    @WithMockUser(roles = "ADMIN")
     void shouldUpdateLanguage() throws Exception {
+        Cookie cookie = logAndGetCookie(ADMIN_EMAIL, ADMIN_PASSWORD);
         UUID id = UUID.randomUUID();
         LanguageRequest request = new LanguageRequest();
         request.setCode("pt");
@@ -157,6 +232,7 @@ class LanguageControllerTest {
         when(languageService.updateLanguage(eq(id), any(LanguageRequest.class))).thenReturn(response);
 
         mockMvc.perform(put("/api/v1/languages/{languageId}", id)
+                .cookie(cookie)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -166,23 +242,25 @@ class LanguageControllerTest {
 
     @Test
     @DisplayName("Should delete language when admin")
-    @WithMockUser(roles = "ADMIN")
     void shouldDeleteLanguage() throws Exception {
+        Cookie cookie = logAndGetCookie(ADMIN_EMAIL, ADMIN_PASSWORD);
         UUID id = UUID.randomUUID();
 
-        mockMvc.perform(delete("/api/v1/languages/{languageId}", id))
+        mockMvc.perform(delete("/api/v1/languages/{languageId}", id)
+                .cookie(cookie))
                 .andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("Should return 403 when creating language as non-admin")
-    @WithMockUser(roles = "USER")
     void shouldReturn403WhenCreatingAsUser() throws Exception {
+        Cookie cookie = logAndGetCookie(TEST_EMAIL, TEST_PASSWORD);
         LanguageRequest request = new LanguageRequest();
         request.setCode("it");
         request.setName("Italian");
 
         mockMvc.perform(post("/api/v1/languages")
+                .cookie(cookie)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());

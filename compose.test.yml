@@ -1,0 +1,31 @@
+services:
+  db-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${TEST_DB_NAME}
+      POSTGRES_USER: ${TEST_DB_USER}
+      POSTGRES_PASSWORD: ${TEST_DB_PASSWORD}
+    tmpfs:
+      - /var/lib/postgresql/data
+    networks:
+      - test-backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TEST_DB_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      SPRING_DATASOURCE_URL: ${TEST_DATASOURCE_URL}
+    networks:
+      - test-backend
+    depends_on:
+      db-test:
+        condition: service_healthy
+
+networks:
+  test-backend:
