@@ -27,7 +27,6 @@ import com.glotrush.entities.Plan;
 import com.glotrush.entities.Subscription;
 import com.glotrush.enumerations.SubscriptionType;
 import com.glotrush.enumerations.AccountStatus;
-import com.glotrush.enumerations.PaymentInterval;
 import com.glotrush.enumerations.UserRole;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.PlanRepository;
