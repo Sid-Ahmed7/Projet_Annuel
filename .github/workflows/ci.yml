@@ -61,6 +61,7 @@ jobs:
           FLYWAY_LAST_NAME: ${{ secrets.TEST_FLYWAY_LAST_NAME }}
           FLYWAY_ADMIN_PASS: ${{ secrets.TEST_FLYWAY_ADMIN_PASS }}
           FLYWAY_SECRET_KEY: ${{ secrets.TEST_FLYWAY_SECRET_KEY }}
+          SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: true
 
       - name: Upload rapports de tests
         uses: actions/upload-artifact@v4
