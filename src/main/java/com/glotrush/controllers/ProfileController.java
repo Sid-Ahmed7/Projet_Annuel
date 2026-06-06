@@ -63,8 +63,10 @@ public class ProfileController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable UUID userId) {
-        UserProfileResponse profile = profileService.getPublicProfile(userId);
+    public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable UUID userId, Authentication authentication) {
+        
+        UUID viewerAccountId = authentication != null ? SecurityUtils.extractUserIdFromAuth(authentication) : null;
+        UserProfileResponse profile = profileService.getPublicProfile(userId, viewerAccountId);
         return ResponseEntity.ok(profile);
     }
 

@@ -204,5 +204,31 @@ public class EmailService {
     }
     
     }
+
+    public void sendFriendRequestEmail(String toEmail, String fromUsername, String toUsername) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(messageSource.getMessage("email.subject.friend_request", new Object[]{fromUsername}, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.friend_request", new Object[]{toUsername, fromUsername}, LocaleUtils.getCurrentLocale()));
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
+        }
+    }
+
+    public void sendFriendRequestAcceptedEmail(String toEmail, String fromUsername, String toUsername) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(messageSource.getMessage("email.subject.friend_request_accepted", new Object[]{fromUsername}, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.friend_request_accepted", new Object[]{toUsername, fromUsername}, LocaleUtils.getCurrentLocale()));
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
+        }
+    }
 }
  

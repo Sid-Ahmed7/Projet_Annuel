@@ -3,6 +3,7 @@ package com.glotrush.services.userprofile;
 import java.util.UUID;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,15 +18,18 @@ import com.glotrush.dto.response.StreakResponse;
 import com.glotrush.dto.response.UserLanguageResponse;
 import com.glotrush.dto.response.UserProfileResponse;
 import com.glotrush.entities.Accounts;
+import com.glotrush.entities.Friends;
 import com.glotrush.entities.UserLanguage;
 import com.glotrush.entities.UserProfile;
+import com.glotrush.enumerations.FriendRequestStatus;
+import com.glotrush.enumerations.FriendsViewStatus;
 import com.glotrush.enumerations.LanguageType;
 import com.glotrush.exceptions.InvalidPasswordException;
-import com.glotrush.exceptions.ProfilePrivateException;
 import com.glotrush.exceptions.UserLanguageException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.exceptions.UsernameAlreadyExistsException;
 import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.FriendsRepository;
 import com.glotrush.repositories.UserLanguageRepository;
 import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.utils.LocaleUtils;
@@ -43,6 +47,7 @@ public class UserProfileService implements IUserProfileService {
     private final UserLanguageRepository userLanguageRepository;
     private final UserProfileBuilder userProfileBuilder;
     private final PasswordEncoder passwordEncoder;
+    private final FriendsRepository friendsRepository;
 
     @Override
     @Transactional
@@ -106,22 +111,51 @@ public class UserProfileService implements IUserProfileService {
     }
 
     @Override
-    public UserProfileResponse getPublicProfile(UUID accountId) {
-        Accounts account = accountsRepository.findById(accountId)
-            .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
+    public UserProfileResponse getPublicProfile(UUID accountId, UUID viewerAccountId) {
+        Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
 
-        UserProfile profile = userProfileRepository.findByAccount_Id(accountId)
-            .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.profile.not_found", null, LocaleUtils.getCurrentLocale())));
+        UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.profile.not_found", null, LocaleUtils.getCurrentLocale())));
   
-        if(!profile.getIsPublic()) {
-            throw new ProfilePrivateException(messageSource.getMessage("error.profile.private", null, LocaleUtils.getCurrentLocale()));
-        }
-        List<UserLanguageResponse> languages = userLanguageRepository.findByAccount_Id(accountId)
-            .stream()
-            .map(userProfileBuilder::mapToUserLanguageResponse)
-            .toList();
+        FriendsViewStatus  friendsViewStatus = null;
+        UUID friendRequestId = null;
 
-        return userProfileBuilder.mapToUserProfileResponse(account, profile, languages);
+        if(viewerAccountId != null && !viewerAccountId.equals(accountId)) {
+            Optional<Friends> relationship = friendsRepository.findBetweenTwoUsers(viewerAccountId, accountId);
+            if(relationship.isPresent()) {
+                Friends friends = relationship.get();
+                friendRequestId = friends.getId();
+                if(friends.getStatus() == FriendRequestStatus.ACCEPTED) {
+                    friendsViewStatus = FriendsViewStatus.ACCEPTED;
+                } else if(friends.getSender().getId().equals(viewerAccountId)) {
+                    friendsViewStatus = FriendsViewStatus.PENDING_SENT;
+                } else {
+                    friendsViewStatus = FriendsViewStatus.PENDING_RECEIVED;
+                }
+            } else {
+                friendsViewStatus = FriendsViewStatus.NONE;
+            }
+        }
+       
+        boolean hasAccess = profile.getIsPublic() || (viewerAccountId != null && viewerAccountId.equals(accountId)) || (friendsViewStatus == FriendsViewStatus.ACCEPTED);
+        if(!hasAccess) {
+            return UserProfileResponse.builder()
+                .id(profile.getId())
+                .accountId(account.getId())
+                .username(account.getUsername())
+                .photoUrl(profile.getPhotoUrl())
+                .isPublic(false)
+                .isAccountPrivate(true)
+                .friendsViewStatus(friendsViewStatus)
+                .friendRequestId(friendRequestId)
+            .build();
+        }
+
+        List<UserLanguageResponse> languages = userLanguageRepository.findByAccount_Id(accountId).stream().map(userProfileBuilder::mapToUserLanguageResponse).toList();
+        
+        UserProfileResponse res = userProfileBuilder.mapToUserProfileResponse(account, profile, languages);
+        res.setFriendsViewStatus(friendsViewStatus);
+        res.setFriendRequestId(friendRequestId);
+        return res;
     }
 
     @Override

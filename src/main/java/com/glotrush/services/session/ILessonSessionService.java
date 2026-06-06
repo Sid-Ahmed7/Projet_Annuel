@@ -10,4 +10,6 @@ public interface ILessonSessionService {
 
     void saveLessonSession(LessonSessionRequest request);
     List<LessonSessionResponse> getAllSessionOfAnAccount(UUID accountId);
+    List<LessonSessionResponse> getSessionOfAnUser(UUID viewerId, UUID accountId);
+
 }
