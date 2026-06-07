@@ -62,8 +62,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/plans/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/stripe/webhook").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/profile/files/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/contact").permitAll()
                 .requestMatchers("/ws/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/actuator/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             ).authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
