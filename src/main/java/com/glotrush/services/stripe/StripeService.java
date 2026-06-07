@@ -68,7 +68,13 @@ public class StripeService implements IStripService {
 
         try {
             Subscription subscription = Subscription.retrieve(stripeSubscriptionId);
+        
+            if("canceled".equals(subscription.getStatus())) {
+                return;
+            }
+        
             subscription.cancel();
+        
         } catch(StripeException e) {
             throw new StripeMessageException(messageSource.getMessage("error.stripe.cancel", null, LocaleUtils.getCurrentLocale()), e);
         }
