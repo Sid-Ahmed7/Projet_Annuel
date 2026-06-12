@@ -7,6 +7,15 @@ import java.util.UUID;
 import com.glotrush.enumerations.LearningType;
 import com.glotrush.enumerations.LessonType;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserMistakeRetryListResponse {
     private UUID userMistakeId;
     private LessonType lessonType;

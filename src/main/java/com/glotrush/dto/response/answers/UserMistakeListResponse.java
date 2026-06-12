@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserMistakeListResponse {
+    private boolean hasPendingQuestions;
     private long totalPendingQuestions;
     private List<UserMistakeRetryListResponse> mistakes;
 }
