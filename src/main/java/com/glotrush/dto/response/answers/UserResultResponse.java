@@ -15,6 +15,7 @@ public class UserResultResponse {
     private Integer totalAnswers;
     private Integer totalCorrectAnswers;
     private Integer totalMasteredLessons;
+    private long totalRemainingQuestions;
     private List<UserAnswerResponse> answerResults;
     
 }
