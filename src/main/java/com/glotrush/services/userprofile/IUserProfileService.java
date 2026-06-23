@@ -15,7 +15,7 @@ public interface IUserProfileService {
 
     UserProfileResponse updateProfile(UUID accountId, UpdateProfileRequest request);
     
-    UserProfileResponse getPublicProfile(UUID accountId);
+    UserProfileResponse getPublicProfile(UUID accountId, UUID viewerAccountId);
 
     void changePassword(UUID accountId, PasswordRequest request);
 

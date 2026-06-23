@@ -41,12 +41,16 @@ import com.glotrush.repositories.RefreshTokenRepository;
 import com.glotrush.repositories.SubscriptionRepository;
 import com.glotrush.repositories.TwoFactorAuthRepository;
 
+import org.springframework.jdbc.core.JdbcTemplate;
 import jakarta.servlet.http.Cookie;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class AuthControllerIntegrationTest {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private MockMvc mockMvc;
@@ -87,12 +91,7 @@ class AuthControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         Locale.setDefault(Locale.ENGLISH);
-        twoFactorAuthRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        passwordResetTokenRepository.deleteAll();
-        subscriptionRepository.deleteAll();
-        accountsRepository.deleteAll();
-        planRepository.deleteAll();
+        jdbcTemplate.execute("TRUNCATE TABLE accounts, plans CASCADE");
 
         testAccount = Accounts.builder()
                 .email(TEST_EMAIL)

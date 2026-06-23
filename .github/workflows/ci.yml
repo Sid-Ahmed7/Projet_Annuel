@@ -11,6 +11,21 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ${{ secrets.TEST_DB_NAME }}
+          POSTGRES_USER: ${{ secrets.TEST_DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout du code
         uses: actions/checkout@v4
@@ -27,6 +42,27 @@ jobs:
 
       - name: Tests unitaires
         run: mvn test -B -Dtest="com.glotrush.services.**,com.glotrush.security.**"
+
+      - name: Tests d'intégration
+        run: mvn test -B -Dtest="com.glotrush.controllers.**"
+        env:
+          SPRING_DATASOURCE_URL: ${{ secrets.TEST_DATASOURCE_URL }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.TEST_DB_USER }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.TEST_JWT_SECRET }}
+          TOTP_ENCRYPTION: ${{ secrets.TEST_TOTP_ENCRYPTION }}
+          SPRING_MAIL_USERNAME: ${{ secrets.TEST_MAIL_USERNAME }}
+          SPRING_MAIL_PASSWORD: ${{ secrets.TEST_MAIL_PASSWORD }}
+          STRIPE_SECRET_KEY: ${{ secrets.TEST_STRIPE_SECRET_KEY }}
+          STRIPE_PUBLIC_KEY: ${{ secrets.TEST_STRIPE_PUBLIC_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.TEST_STRIPE_WEBHOOK_SECRET }}
+          FLYWAY_EMAIL: ${{ secrets.TEST_FLYWAY_EMAIL }}
+          FLYWAY_FIRST_NAME: ${{ secrets.TEST_FLYWAY_FIRST_NAME }}
+          FLYWAY_LAST_NAME: ${{ secrets.TEST_FLYWAY_LAST_NAME }}
+          FLYWAY_ADMIN_PASS: ${{ secrets.TEST_FLYWAY_ADMIN_PASS }}
+          FLYWAY_SECRET_KEY: ${{ secrets.TEST_FLYWAY_SECRET_KEY }}
+          SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: true
+          SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
       - name: Upload rapports de tests
         uses: actions/upload-artifact@v4

@@ -2,7 +2,6 @@ package com.glotrush.config;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.context.properties.ConfigurationPropertiesBindException;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Configuration;
@@ -45,7 +44,6 @@ class LessonRulePropertiesTest {
     void shouldFailWhenPropertyMissing() {
         contextRunner.withPropertyValues(
                 "glotrush.lesson.rules.xp-per-flashcard=5"
-                // Other properties missing
         ).run(context -> {
             assertThat(context).hasFailed();
             assertThat(context).getFailure().hasStackTraceContaining("validation.lesson.rules");

@@ -10,14 +10,17 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -30,6 +33,7 @@ import com.glotrush.entities.Accounts;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.FriendsRepository;
 import com.glotrush.repositories.UserLanguageRepository;
 import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.services.userprofile.UserProfileService;
@@ -59,6 +63,9 @@ class UserProfileServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private FriendsRepository friendsRepository;
+
     @Autowired
     private MessageSource messageSource;
 
@@ -68,15 +75,22 @@ class UserProfileServiceTest {
     private Accounts testAccount;
     private UserProfile testProfile;
 
+    @AfterEach
+    void tearDown() {
+        LocaleContextHolder.resetLocaleContext();
+    }
+
     @BeforeEach
     void setUp() {
+        LocaleContextHolder.setLocale(Locale.ENGLISH);
         profileService = new UserProfileService(
                 messageSource,
                 userProfileRepository,
                 accountsRepository,
                 userLanguageRepository,
                 userProfileBuilder,
-                passwordEncoder
+                passwordEncoder,
+                friendsRepository
         );
         accountId = UUID.randomUUID();
 
@@ -175,6 +189,8 @@ class UserProfileServiceTest {
 
         when(accountsRepository.findById(accountId)).thenReturn(Optional.of(testAccount));
         when(userProfileRepository.findByAccount_Id(accountId)).thenReturn(Optional.of(testProfile));
+        when(accountsRepository.existsByUsername(request.getUsername())).thenReturn(false);
+        when(accountsRepository.save(any(Accounts.class))).thenReturn(testAccount);
         when(userProfileRepository.save(any(UserProfile.class))).thenReturn(testProfile);
         when(userLanguageRepository.findByAccount_Id(accountId)).thenReturn(new ArrayList<>());
         when(userProfileBuilder.mapToUserProfileResponse(any(), any(), any())).thenReturn(expectedResponse);
@@ -200,21 +216,23 @@ class UserProfileServiceTest {
         when(userLanguageRepository.findByAccount_Id(accountId)).thenReturn(new ArrayList<>());
         when(userProfileBuilder.mapToUserProfileResponse(any(), any(), any())).thenReturn(expectedResponse);
 
-        UserProfileResponse result = profileService.getPublicProfile(accountId);
+        UserProfileResponse result = profileService.getPublicProfile(accountId, null);
 
         assertThat(result).isNotNull();
         assertThat(result.getIsPublic()).isTrue();
     }
 
     @Test
-    @DisplayName("Should throw exception when profile is private")
-    void shouldThrowExceptionWhenProfileIsPrivate() {
+    @DisplayName("Should return private flag when profile is private")
+    void shouldReturnPrivateFlagWhenProfileIsPrivate() {
         testProfile.setIsPublic(false);
         when(accountsRepository.findById(accountId)).thenReturn(Optional.of(testAccount));
         when(userProfileRepository.findByAccount_Id(accountId)).thenReturn(Optional.of(testProfile));
 
-        assertThatThrownBy(() -> profileService.getPublicProfile(accountId))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("Profile is private");
+        UserProfileResponse result = profileService.getPublicProfile(accountId, null);
+
+        assertThat(result).isNotNull();
+        assertThat(result.isAccountPrivate()).isTrue();
+        assertThat(result.getIsPublic()).isFalse();
     }
 }

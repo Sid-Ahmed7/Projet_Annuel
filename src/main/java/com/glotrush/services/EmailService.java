@@ -8,6 +8,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import com.glotrush.dto.request.ContactRequest;
 import com.glotrush.exceptions.EmailSendException;
 import com.glotrush.utils.LocaleUtils;
 
@@ -204,5 +205,43 @@ public class EmailService {
     }
     
     }
+
+    public void sendFriendRequestEmail(String toEmail, String fromUsername, String toUsername) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(messageSource.getMessage("email.subject.friend_request", new Object[]{fromUsername}, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.friend_request", new Object[]{toUsername, fromUsername}, LocaleUtils.getCurrentLocale()));
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
+        }
+    }
+
+    public void sendFriendRequestAcceptedEmail(String toEmail, String fromUsername, String toUsername) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(messageSource.getMessage("email.subject.friend_request_accepted", new Object[]{fromUsername}, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.friend_request_accepted", new Object[]{toUsername, fromUsername}, LocaleUtils.getCurrentLocale()));
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
+        }
+    }
+    public void sendContactEmail(ContactRequest contactRequest) {
+        String toEmail = fromEmail; 
+        try {
+            SimpleMailMessage mail = new SimpleMailMessage();
+            mail.setTo(toEmail);
+            mail.setFrom(contactRequest.getEmail());
+            mail.setSubject(contactRequest.getSubject().toLowerCase() + " — " + contactRequest.getName());
+            mail.setText("De : " + contactRequest.getName() + " <" + contactRequest.getEmail() + ">\n\n" + contactRequest.getMessage());
+            mailSender.send(mail);
+        } catch (Exception e) {
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
+        }
 }
- 
+}

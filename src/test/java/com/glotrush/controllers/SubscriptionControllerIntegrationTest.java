@@ -27,18 +27,21 @@ import com.glotrush.entities.Plan;
 import com.glotrush.entities.Subscription;
 import com.glotrush.enumerations.SubscriptionType;
 import com.glotrush.enumerations.AccountStatus;
-import com.glotrush.enumerations.PaymentInterval;
 import com.glotrush.enumerations.UserRole;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.PlanRepository;
 import com.glotrush.repositories.SubscriptionRepository;
 
+import org.springframework.jdbc.core.JdbcTemplate;
 import jakarta.servlet.http.Cookie;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class SubscriptionControllerIntegrationTest {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private MockMvc mockMvc;
@@ -70,10 +73,7 @@ class SubscriptionControllerIntegrationTest {
 
     @BeforeEach
     void setup() {
-
-        subscriptionRepository.deleteAll();
-        accountsRepository.deleteAll();
-        planRepository.deleteAll();
+        jdbcTemplate.execute("TRUNCATE TABLE accounts, plans CASCADE");
 
         account = Accounts.builder()
                 .email(TEST_EMAIL)
