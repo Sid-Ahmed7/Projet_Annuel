@@ -3,7 +3,7 @@ package com.glotrush.controllers.admin;
 import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.dto.request.ai.AILessonGenerateRequest;
 import com.glotrush.dto.request.ai.AILessonModifyRequest;
-import com.glotrush.services.ai.AILessonGeneratorService;
+import com.glotrush.services.ai.IAILessonGeneratorService;
 import com.glotrush.utils.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AdminAILessonController {
 
-    private final AILessonGeneratorService aiLessonGeneratorService;
+    private final IAILessonGeneratorService aiLessonGeneratorService;
 
     @PostMapping("/generate")
     @PreAuthorize("hasRole('ADMIN')")

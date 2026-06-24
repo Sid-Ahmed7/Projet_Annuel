@@ -2,10 +2,12 @@ package com.glotrush.services.ai;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.glotrush.utils.LocaleUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -23,6 +25,7 @@ public class MistralAIService implements IAIService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper;
+    private final MessageSource messageSource;
 
     @Value("${ai.mistral.api-key}")
     private String apiKey;
@@ -40,7 +43,7 @@ public class MistralAIService implements IAIService {
             return objectMapper.readValue(rawResponse, responseClass);
         } catch (JsonProcessingException e) {
             log.error("Erreur lors de la désérialisation de la réponse AI en {}. Réponse brute : {}", responseClass.getSimpleName(), rawResponse, e);
-            throw new RuntimeException("Format de réponse AI invalide", e);
+            throw new RuntimeException(messageSource.getMessage("error.ai.invalid_response_format", null, LocaleUtils.getCurrentLocale()), e);
         }
     }
 
@@ -73,10 +76,10 @@ public class MistralAIService implements IAIService {
                     return (String) message.get("content");
                 }
             }
-            throw new RuntimeException("Réponse vide de l'API Mistral");
+            throw new RuntimeException(messageSource.getMessage("error.ai.empty_response", null, LocaleUtils.getCurrentLocale()));
         } catch (Exception e) {
             log.error("Erreur lors de l'appel à l'API Mistral AI", e);
-            throw new RuntimeException("Échec de la génération AI", e);
+            throw new RuntimeException(messageSource.getMessage("error.ai.generation_failed", null, LocaleUtils.getCurrentLocale()), e);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.glotrush.dto.request.ai;
 
+import com.glotrush.constants.AILessonConstants;
 import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.enumerations.LessonType;
 import jakarta.validation.Valid;
@@ -24,22 +25,23 @@ public class AILessonModifyRequest {
     @Valid
     private LessonRequest lesson;
 
-    @AssertTrue(message = "L'itemCount doit être compris entre 5 et 20 pour FLASHCARD et QCM, et entre 3 et 10 pour MATCHING_PAIR et SORTING_EXERCISE")
+    @AssertTrue(message = "{error.ai.lesson.itemcount.invalid}")
     public boolean isValidItemCount() {
         if (itemCount == null) {
             return true;
         }
+        
         if (lesson == null || lesson.getLessonType() == null) {
             return true;
         }
         
         LessonType type = lesson.getLessonType();
         if (type == LessonType.FLASHCARD || type == LessonType.QCM) {
-            return itemCount >= 5 && itemCount <= 20;
+            return itemCount >= AILessonConstants.MIN_ITEMS_FLASHCARD_QCM && itemCount <= AILessonConstants.MAX_ITEMS_FLASHCARD_QCM;
         }
         
         if (type == LessonType.MATCHING_PAIR || type == LessonType.SORTING_EXERCISE) {
-            return itemCount >= 3 && itemCount <= 10;
+            return itemCount >= AILessonConstants.MIN_ITEMS_MATCHING_SORTING && itemCount <= AILessonConstants.MAX_ITEMS_MATCHING_SORTING;
         }
         
         return false;

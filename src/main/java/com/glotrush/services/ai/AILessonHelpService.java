@@ -32,7 +32,7 @@ import java.util.UUID;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class AILessonHelpService {
+public class AILessonHelpService implements IAILessonHelpService {
 
     private final IAIService aiService;
     private final AIQuotaService aiQuotaService;
@@ -44,6 +44,7 @@ public class AILessonHelpService {
     private final SortingExerciseRepository sortingExerciseRepository;
     private final ObjectMapper objectMapper;
 
+    @Override
     @Transactional
     public AILessonHelpResponse getLessonHelp(UUID accountId, AILessonHelpRequest request) {
         aiQuotaService.verifyAndConsumeAIQuota(accountId);

@@ -63,7 +63,7 @@ class AILessonGeneratorServiceTest {
     @Mock
     private AIQuotaService aiQuotaService;
 
-    private AILessonGeneratorService aiLessonGeneratorService;
+    private IAILessonGeneratorService aiLessonGeneratorService;
 
     private UUID accountId;
     private UUID topicId;

@@ -29,7 +29,7 @@ import java.util.UUID;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class AILessonGeneratorService {
+public class AILessonGeneratorService implements IAILessonGeneratorService {
 
     private final IAIService aiService;
     private final AIGenerationLogRepository logRepository;
@@ -40,6 +40,7 @@ public class AILessonGeneratorService {
     private final ObjectMapper objectMapper;
     private final AIQuotaService aiQuotaService;
 
+    @Override
     @Transactional
     public LessonRequest generateLesson(UUID accountId, UUID topicId, LessonType lessonType, String description, Integer itemCount) {
         aiQuotaService.verifyAndConsumeAIQuota(accountId);
@@ -72,6 +73,7 @@ public class AILessonGeneratorService {
         return generatedRequest;
     }
 
+    @Override
     @Transactional
     public LessonRequest modifyLesson(UUID accountId, UUID lessonId, String prompt, Integer itemCount, LessonRequest currentLessonRequest) {
         aiQuotaService.verifyAndConsumeAIQuota(accountId);

@@ -2,7 +2,7 @@ package com.glotrush.controllers;
 
 import com.glotrush.dto.request.ai.AILessonHelpRequest;
 import com.glotrush.dto.response.ai.AILessonHelpResponse;
-import com.glotrush.services.ai.AILessonHelpService;
+import com.glotrush.services.ai.IAILessonHelpService;
 import com.glotrush.utils.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AILessonHelpController {
 
-    private final AILessonHelpService aiLessonHelpService;
+    private final IAILessonHelpService aiLessonHelpService;
 
     @PostMapping("/help")
     @PreAuthorize("hasRole('USER')")
