@@ -97,7 +97,8 @@ public class GlobalExceptionHandler {
             ReviewNotFoundException.class,
             ChallengeNotFoundException.class,
             ChallengedUserNotFoundException.class,
-            FriendsNotFoundException.class
+            FriendsNotFoundException.class,
+            QuestionNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);

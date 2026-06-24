@@ -45,6 +45,7 @@ import com.glotrush.dto.response.lesson.MatchingPairLessonResponse;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.utils.LevelUtils;
+import com.glotrush.utils.LevenshteinUtils;
 import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
@@ -67,6 +68,11 @@ import com.glotrush.repositories.exercice.FlashcardRepository;
 import com.glotrush.repositories.exercice.MatchingPairRepository;
 import com.glotrush.repositories.exercice.QcmQuestionRepository;
 import com.glotrush.repositories.exercice.SortingExerciseRepository;
+import com.glotrush.dto.request.answer.UserMistakeAddRequest;
+import com.glotrush.enumerations.LearningType;
+import com.glotrush.enumerations.LessonType;
+import com.glotrush.services.rewiewMistake.IReviewMistakeService;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,6 +91,7 @@ public class TopicService implements ITopicService {
     private final TopicMapper topicMapper;
     private final LessonEntityToLessonResponse lessonMapper;
     private final NotificationDispatcher notificationDispatcher;
+    private final IReviewMistakeService reviewMistakeService;
 
     private final FlashcardRepository flashcardRepository;
     private final QcmQuestionRepository qcmQuestionRepository;
@@ -99,8 +106,7 @@ public class TopicService implements ITopicService {
                 .map(topic -> {
                     Optional<UserProgress> progressOpt = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topic.getId());
                     return topicBuilder.mapToTopicResponse(topic, progressOpt);
-                })
-                .toList();
+                }).toList();
     }
 
     @Override
@@ -115,9 +121,7 @@ public class TopicService implements ITopicService {
         return topicRepository.findByTargetLanguage_IdAndIsActiveTrueOrderByDifficultyAscNameAsc(languageId).stream().map(topic -> {
             List<LessonResponse> lessons = lessonRepository.findByTopic_IdAndIsActiveTrueOrderByOrderIndexAsc(topic.getId()).stream()
                     .map(lesson -> {
-                        Optional<UserLessonProgress> progressOpt = accountId != null
-                                ? userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lesson.getId())
-                                : Optional.empty();
+                        Optional<UserLessonProgress> progressOpt = accountId != null ? userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lesson.getId()) : Optional.empty();
                         return lessonBuilder.mapLessonToLessonResponse(lesson, progressOpt);
                     })
                     .toList();
@@ -126,10 +130,10 @@ public class TopicService implements ITopicService {
                     .filter(l -> l.getUserProgress() != null && LessonStatus.COMPLETED.equals(l.getUserProgress().getStatus()))
                     .count();
 
-            boolean exammUnlocked = lessons.size() > 0 && completedLessons == lessons.size();
+            boolean examUnlocked = lessons.size() > 0 && completedLessons == lessons.size();
             boolean examPassed = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topic.getId()).map(UserProgress::getExamPassed).orElse(false);
                     
-            return topicBuilder.mapToTopicWithProgressResponse(topic, lessons, completedLessons, exammUnlocked, examPassed);
+            return topicBuilder.mapToTopicWithProgressResponse(topic, lessons, completedLessons, examUnlocked, examPassed);
         }).toList();
     }
 
@@ -301,6 +305,14 @@ public class TopicService implements ITopicService {
                 totalQuestions++;
                 if (validateFlashcard(ans)) {
                     calculatedCorrectAnswers++;
+                } else {
+                    reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(ans.getId())
+                        .lessonType(LessonType.FLASHCARD)
+                        .topicId(topicId)
+                        .learningType(LearningType.EXAM)
+                        .userAnswer(ans.getUserResponse())
+                        .build());
                 }
             }
         }
@@ -311,6 +323,16 @@ public class TopicService implements ITopicService {
                 totalQuestions++;
                 if (validateQcm(ans)) {
                     calculatedCorrectAnswers++;
+                } else {
+                    QcmQuestionEntity qcm = qcmQuestionRepository.findById(ans.getId()).orElse(null);
+                    String wrongAnswer = (qcm != null && ans.getSelectedOptionIndex() != null) ? qcm.getOptions().get(ans.getSelectedOptionIndex()) : null;
+                    reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(ans.getId())
+                        .lessonType(LessonType.QCM)
+                        .topicId(topicId)
+                        .learningType(LearningType.EXAM)
+                        .userAnswer(wrongAnswer)
+                        .build());
                 }
             }
         }
@@ -321,6 +343,14 @@ public class TopicService implements ITopicService {
                 totalQuestions++;
                 if (validateMatchingPair(ans)) {
                     calculatedCorrectAnswers++;
+                } else {
+                    reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(ans.getId())
+                        .lessonType(LessonType.MATCHING_PAIR)
+                        .topicId(topicId)
+                        .learningType(LearningType.EXAM)
+                        .userAnswer(ans.getItem2())
+                        .build());
                 }
             }
         }
@@ -331,6 +361,15 @@ public class TopicService implements ITopicService {
                 totalQuestions++;
                 if (validateSortingExercise(ans)) {
                     calculatedCorrectAnswers++;
+                } else {
+                    String wrongOrder = ans.getUserOrder() != null ? ans.getUserOrder().toString() : null;
+                    reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(ans.getId())
+                        .lessonType(LessonType.SORTING_EXERCISE)
+                        .topicId(topicId)
+                        .learningType(LearningType.EXAM)
+                        .userAnswer(wrongOrder)
+                        .build());
                 }
             }
         }
@@ -399,7 +438,7 @@ public class TopicService implements ITopicService {
 
         // Niveau 3 : IA (Simulé ici par Levenshtein car IA est optionnelle)
         // Si les nombres sont bons mais que le texte ne match pas exactement, on vérifie la distance
-        return calculateLevenshteinDistance(expected.toLowerCase(), actual.toLowerCase()) <= 2;
+        return LevenshteinUtils.calculateLevenshteinDistance(expected.toLowerCase(), actual.toLowerCase()) <= 2;
     }
 
     private List<String> extractNumbers(String input) {
@@ -411,20 +450,7 @@ public class TopicService implements ITopicService {
         return numbers;
     }
 
-    private int calculateLevenshteinDistance(String x, String y) {
-        int[][] dp = new int[x.length() + 1][y.length() + 1];
-        for (int i = 0; i <= x.length(); i++) {
-            for (int j = 0; j <= y.length(); j++) {
-                if (i == 0) dp[i][j] = j;
-                else if (j == 0) dp[i][j] = i;
-                else {
-                    dp[i][j] = Math.min(dp[i - 1][j - 1] + (x.charAt(i - 1) == y.charAt(j - 1) ? 0 : 1),
-                            Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1));
-                }
-            }
-        }
-        return dp[x.length()][y.length()];
-    }
+ 
 
     private boolean validateQcm(QcmAnswerRequest request) {
         QcmQuestionEntity entity = qcmQuestionRepository.findById(request.getId()).orElse(null);

@@ -69,6 +69,7 @@ import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.services.lesson.LessonService;
 import com.glotrush.services.progress.ProgressService;
+import com.glotrush.services.rewiewMistake.IReviewMistakeService;
 import com.glotrush.services.streak.StreakService;
 
 import org.springframework.context.MessageSource;
@@ -116,6 +117,9 @@ class LessonServiceTest {
     @Mock
     private ILessonSessionService lessonSessionService;
 
+    @Mock
+    private IReviewMistakeService reviewMistakeService;
+
     private LessonRuleProperties lessonRuleProperties;
 
     private LessonService lessonService;
@@ -140,7 +144,7 @@ class LessonServiceTest {
         lessonRuleProperties.setSortingFixedXp(60);
         lessonRuleProperties.setSortingFixedSeconds(360);
 
-        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, lessonSessionBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity, lessonRuleProperties, notificationDispatcher, streakService, lessonSessionService);
+        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, lessonSessionBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity, lessonRuleProperties, notificationDispatcher, streakService, lessonSessionService, reviewMistakeService);
         accountId = UUID.randomUUID();
         lessonId = UUID.randomUUID();
         topicId = UUID.randomUUID();

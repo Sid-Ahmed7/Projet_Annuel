@@ -48,6 +48,7 @@ import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.services.topic.TopicService;
 import com.glotrush.services.progress.IProgressService;
+import com.glotrush.services.rewiewMistake.IReviewMistakeService;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -108,7 +109,9 @@ class TopicServiceTest {
 
     @Mock
     private NotificationDispatcher notificationDispatcher;
-        
+
+    @Mock
+    private IReviewMistakeService reviewMistakeService;
 
     private TopicService topicService;
 
@@ -133,6 +136,7 @@ class TopicServiceTest {
                 topicMapper,
                 lessonMapper,
                 notificationDispatcher,
+                reviewMistakeService,
                 flashcardRepository,
                 qcmQuestionRepository,
                 matchingPairRepository,
