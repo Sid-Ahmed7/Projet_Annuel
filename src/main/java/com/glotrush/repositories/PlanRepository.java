@@ -19,4 +19,5 @@ public interface PlanRepository extends JpaRepository<Plan, UUID> {
     List<Plan> findAllByOrderByPriceAsc();
     List<Plan> findAllByPaymentIntervalAndIsActiveTrue(PaymentInterval paymentInterval);
     Optional<Plan> findBySubscriptionTypeAndIsActiveTrue(SubscriptionType subscriptionType);
+    boolean existsBySubscriptionType(SubscriptionType subscriptionType);
 }
