@@ -33,6 +33,9 @@ import com.glotrush.enumerations.UserRole;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.services.progress.IProgressService;
 
+import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.jdbc.core.JdbcTemplate;
 import jakarta.servlet.http.Cookie;
 
 @SpringBootTest
@@ -40,6 +43,9 @@ import jakarta.servlet.http.Cookie;
 @ActiveProfiles("test")
 @DisplayName("ProgressController Language-related Integration Tests")
 class ProgressControllerLanguageTest {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private MockMvc mockMvc;
@@ -62,7 +68,7 @@ class ProgressControllerLanguageTest {
 
     @BeforeEach
     void setUp() {
-        accountsRepository.deleteAll();
+        jdbcTemplate.execute("TRUNCATE TABLE accounts CASCADE");
 
         accountsRepository.save(Accounts.builder()
                 .email(TEST_EMAIL)

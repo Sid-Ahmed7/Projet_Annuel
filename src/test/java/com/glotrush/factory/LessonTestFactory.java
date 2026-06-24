@@ -30,7 +30,7 @@ public class LessonTestFactory {
         request.setTitle(title);
         request.setDescription("Description");
         request.setIsActive(true);
-        request.setFlashcards(new ArrayList<>());
+        request.setFlashcards(createDummyFlashcards(5));
         request.setLessonType(LessonType.FLASHCARD);
         return request;
     }
@@ -144,7 +144,7 @@ public class LessonTestFactory {
         request.setTitle(title);
         request.setDescription("Description");
         request.setIsActive(true);
-        request.setQuestions(new ArrayList<>());
+        request.setQuestions(createDummyQcmQuestions(5));
         request.setLessonType(LessonType.QCM);
         return request;
     }
@@ -154,7 +154,7 @@ public class LessonTestFactory {
         request.setTitle(title);
         request.setDescription("Description");
         request.setIsActive(true);
-        request.setMatchingPairs(new ArrayList<>());
+        request.setMatchingPairs(createDummyMatchingPairs(3));
         request.setLessonType(LessonType.MATCHING_PAIR);
         return request;
     }
@@ -164,8 +164,65 @@ public class LessonTestFactory {
         request.setTitle(title);
         request.setDescription("Description");
         request.setIsActive(true);
-        request.setSortingExercise(new ArrayList<>());
+        request.setSortingExercise(createDummySortingExercises(3));
         request.setLessonType(LessonType.SORTING_EXERCISE);
         return request;
+    }
+
+    private static java.util.List<com.glotrush.dto.request.exercice.FlashcardRequest> createDummyFlashcards(int count) {
+        java.util.List<com.glotrush.dto.request.exercice.FlashcardRequest> list = new ArrayList<>();
+        for (int index = 0; index < count; index++) {
+            com.glotrush.dto.request.exercice.FlashcardRequest request = new com.glotrush.dto.request.exercice.FlashcardRequest();
+            request.setFront("front_" + index);
+            request.setBack("back_" + index);
+            request.setFrontLanguage("English");
+            request.setBackLanguage("French");
+            list.add(request);
+        }
+        return list;
+    }
+
+    private static java.util.List<com.glotrush.dto.request.exercice.QcmQuestionRequest> createDummyQcmQuestions(int count) {
+        java.util.List<com.glotrush.dto.request.exercice.QcmQuestionRequest> list = new ArrayList<>();
+        for (int index = 0; index < count; index++) {
+            com.glotrush.dto.request.exercice.QcmQuestionRequest request = new com.glotrush.dto.request.exercice.QcmQuestionRequest();
+            request.setQuestion("question_" + index);
+            request.setExplanation("explanation_" + index);
+            request.setCorrectOptionIndex(0);
+            java.util.List<String> options = new ArrayList<>();
+            options.add("option_A");
+            options.add("option_B");
+            request.setOptions(options);
+            list.add(request);
+        }
+        return list;
+    }
+
+    private static java.util.List<com.glotrush.dto.request.exercice.MatchingPairRequest> createDummyMatchingPairs(int count) {
+        java.util.List<com.glotrush.dto.request.exercice.MatchingPairRequest> list = new ArrayList<>();
+        for (int index = 0; index < count; index++) {
+            com.glotrush.dto.request.exercice.MatchingPairRequest request = new com.glotrush.dto.request.exercice.MatchingPairRequest();
+            request.setItem1("item1_" + index);
+            request.setItem2("item2_" + index);
+            list.add(request);
+        }
+        return list;
+    }
+
+    private static java.util.List<com.glotrush.dto.request.exercice.SortingExerciseRequest> createDummySortingExercises(int count) {
+        java.util.List<com.glotrush.dto.request.exercice.SortingExerciseRequest> list = new ArrayList<>();
+        for (int index = 0; index < count; index++) {
+            com.glotrush.dto.request.exercice.SortingExerciseRequest request = new com.glotrush.dto.request.exercice.SortingExerciseRequest();
+            java.util.List<String> items = new ArrayList<>();
+            items.add("item_A");
+            items.add("item_B");
+            request.setItems(items);
+            java.util.List<Integer> correctOrder = new ArrayList<>();
+            correctOrder.add(0);
+            correctOrder.add(1);
+            request.setCorrectOrder(correctOrder);
+            list.add(request);
+        }
+        return list;
     }
 }

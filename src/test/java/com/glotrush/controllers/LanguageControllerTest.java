@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -42,6 +43,9 @@ import org.springframework.test.web.servlet.MvcResult;
 @ActiveProfiles("test")
 @DisplayName("LanguageController Integration Tests")
 class LanguageControllerTest {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private MockMvc mockMvc;
@@ -71,7 +75,7 @@ class LanguageControllerTest {
     @BeforeEach
     void setUp() {
         languageRepository.deleteAll();
-        accountsRepository.deleteAll();
+        jdbcTemplate.execute("TRUNCATE TABLE accounts CASCADE");
 
         accountsRepository.save(Accounts.builder()
                 .email(TEST_EMAIL)

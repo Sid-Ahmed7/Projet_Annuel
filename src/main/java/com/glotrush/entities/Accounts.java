@@ -64,14 +64,14 @@ public class Accounts {
     @Builder.Default
     private UserRole role = UserRole.USER;
 
-    @Column(nullable = true)
+    @Column()
     private LocalDateTime lastPasswordChange;
     
     @Column(nullable = false)
     @Builder.Default
     private Integer failedLoginAttempts = 0;
     
-    @Column(nullable = true)
+    @Column()
     private LocalDateTime accountLockedUntil;
 
     @OneToOne(mappedBy = "account",cascade = CascadeType.ALL,orphanRemoval = true,fetch = FetchType.LAZY)

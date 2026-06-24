@@ -4,9 +4,12 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.util.UUID;
 
 @Data
 public class FlashcardRequest {
+    private UUID id;
+
     @NotNull
     @NotEmpty
     private String front;

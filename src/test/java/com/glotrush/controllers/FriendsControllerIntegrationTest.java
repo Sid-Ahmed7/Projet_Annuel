@@ -37,6 +37,7 @@ import com.glotrush.enumerations.UserRole;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.services.friends.IFriendsService;
 
+import org.springframework.jdbc.core.JdbcTemplate;
 import jakarta.servlet.http.Cookie;
 
 @SpringBootTest
@@ -44,6 +45,9 @@ import jakarta.servlet.http.Cookie;
 @ActiveProfiles("test")
 @DisplayName("FriendsController Integration Tests")
 public class FriendsControllerIntegrationTest {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private MockMvc mockMvc;
@@ -76,7 +80,7 @@ public class FriendsControllerIntegrationTest {
     @BeforeEach
     void setup() {
 
-        accountsRepository.deleteAll();
+        jdbcTemplate.execute("TRUNCATE TABLE accounts CASCADE");
 
         account = Accounts.builder()
                 .email(TEST_EMAIL)
