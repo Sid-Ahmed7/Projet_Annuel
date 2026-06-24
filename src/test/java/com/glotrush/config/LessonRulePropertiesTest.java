@@ -46,7 +46,7 @@ class LessonRulePropertiesTest {
                 "glotrush.lesson.rules.xp-per-flashcard=5"
         ).run(context -> {
             assertThat(context).hasFailed();
-            assertThat(context).getFailure().hasStackTraceContaining("required");
+            assertThat(context).getFailure().hasStackTraceContaining("validation.lesson.rules");
         });
     }
 

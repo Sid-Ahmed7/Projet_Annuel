@@ -36,6 +36,7 @@ import com.glotrush.enumerations.UserRole;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.services.challenge.IChallengeService;
 
+import org.springframework.jdbc.core.JdbcTemplate;
 import jakarta.servlet.http.Cookie;
 
 @SpringBootTest
@@ -43,6 +44,9 @@ import jakarta.servlet.http.Cookie;
 @ActiveProfiles("test")
 @DisplayName("ChallengeController Integration Tests")
 public class ChallengeControllerIntegrationTest {
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -69,7 +73,7 @@ public class ChallengeControllerIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        accountsRepository.deleteAll();
+        jdbcTemplate.execute("TRUNCATE TABLE accounts CASCADE");
 
         account = Accounts.builder()
                 .email(TEST_EMAIL)

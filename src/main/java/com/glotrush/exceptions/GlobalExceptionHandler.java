@@ -185,6 +185,13 @@ public class GlobalExceptionHandler {
         return buildError("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    /* =========================
+       429 - TOO MANY REQUESTS
+       ========================= */
+    @ExceptionHandler(AILimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequests(AILimitExceededException ex) {
+        return buildError(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS);
+    }
 
     private ResponseEntity<ErrorResponse> buildError(String message, HttpStatus status) {
         ErrorResponse response = ErrorResponse.builder()

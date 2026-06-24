@@ -37,6 +37,9 @@ import com.glotrush.enumerations.UserRole;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.services.languages.IUserLanguageService;
 
+import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.jdbc.core.JdbcTemplate;
 import jakarta.servlet.http.Cookie;
 
 @SpringBootTest
@@ -44,6 +47,9 @@ import jakarta.servlet.http.Cookie;
 @ActiveProfiles("test")
 @DisplayName("UserLanguageController Integration Tests")
 class UserLanguageControllerTest {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private MockMvc mockMvc;
@@ -66,7 +72,7 @@ class UserLanguageControllerTest {
 
     @BeforeEach
     void setUp() {
-        accountsRepository.deleteAll();
+        jdbcTemplate.execute("TRUNCATE TABLE accounts CASCADE");
 
         accountsRepository.save(Accounts.builder()
                 .email(TEST_EMAIL)
