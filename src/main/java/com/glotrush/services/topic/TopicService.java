@@ -41,6 +41,7 @@ import com.glotrush.dto.response.exercice.FlashcardExamResponse;
 import com.glotrush.dto.response.exercice.MatchingPairResponse;
 import com.glotrush.dto.response.exercice.QcmQuestionExamResponse;
 import com.glotrush.dto.response.exercice.SortingExerciseExamResponse;
+import com.glotrush.dto.response.exercice.InteractiveQuestionExamResponse;
 import com.glotrush.dto.response.lesson.MatchingPairLessonResponse;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserProgressRepository;
@@ -64,6 +65,7 @@ import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.entities.lesson.MatchingPairLesson;
 import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
+import com.glotrush.entities.lesson.InteractiveLesson;
 import com.glotrush.repositories.exercice.FlashcardRepository;
 import com.glotrush.repositories.exercice.MatchingPairRepository;
 import com.glotrush.repositories.exercice.QcmQuestionRepository;
@@ -252,6 +254,7 @@ public class TopicService implements ITopicService {
         List<FlashcardExamResponse> flashcards = new ArrayList<>();
         List<MatchingPairResponse> matchingPairs = new ArrayList<>();
         List<SortingExerciseExamResponse> sortingExercises = new ArrayList<>();
+        List<InteractiveQuestionExamResponse> interactiveQuestions = new ArrayList<>();
         for (Lesson lesson : lessons) {
             if (Boolean.FALSE.equals(lesson.getIsIncludedInExam())) continue;
 
@@ -272,6 +275,10 @@ public class TopicService implements ITopicService {
                 sortingExercises.addAll(sortingLesson.getSortingExercise().stream()
                         .map(lessonMapper::mapSortingExerciseEntityToSortingExerciseExamResponse)
                         .toList());
+            } else if (lesson instanceof InteractiveLesson interactiveLesson) {
+                interactiveQuestions.addAll(interactiveLesson.getQuestions().stream()
+                        .map(lessonMapper::mapInteractiveQuestionEntityToInteractiveQuestionExamResponse)
+                        .toList());
             }
         }
 
@@ -279,6 +286,7 @@ public class TopicService implements ITopicService {
         Collections.shuffle(flashcards);
         Collections.shuffle(matchingPairs);
         Collections.shuffle(sortingExercises);
+        Collections.shuffle(interactiveQuestions);
 
         // Limiter à un certain nombre (ex: 5 de chaque pour un examen varié)
         return ExamResponse.builder()
@@ -288,6 +296,7 @@ public class TopicService implements ITopicService {
                 .flashcards(flashcards.stream().limit(TopicConstants.EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
                 .matchingPairs(matchingPairs.stream().limit(TopicConstants.EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
                 .sortingExercises(sortingExercises.stream().limit(TopicConstants.EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
+                .interactiveQuestions(interactiveQuestions.stream().limit(TopicConstants.EXAM_QUESTION_LIMIT).collect(Collectors.toList()))
                 .build();
     }
 

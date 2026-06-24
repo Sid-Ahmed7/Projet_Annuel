@@ -125,6 +125,9 @@ public class ChallengeBuilder {
                         .build()
                 ).collect(Collectors.toList()));
             }
+            case INTERACTIVE -> {
+                // Interactive lessons not supported in challenges
+            }
         }
     }
 

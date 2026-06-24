@@ -191,6 +191,7 @@ public class ChallengeService implements IChallengeService {
             case FLASHCARD -> challenge.getFlashcards().size();
             case MATCHING_PAIR -> challenge.getMatchingPairs().size();
             case SORTING_EXERCISE -> challenge.getSortingExercises().size();
+            case INTERACTIVE -> 0;
         };
 
         UUID fChallengeId = challenge.getId();

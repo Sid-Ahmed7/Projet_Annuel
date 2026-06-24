@@ -51,6 +51,7 @@ import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.entities.lesson.MatchingPairLesson;
 import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
+import com.glotrush.entities.lesson.InteractiveLesson;
 import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
 import com.glotrush.repositories.AccountsRepository;
@@ -212,6 +213,11 @@ public class LessonService implements ILessonService {
                 reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
                         .questionId(lessonSortingMistakes.getId()).lessonType(LessonType.SORTING_EXERCISE)
                         .topicId(topicId).learningType(LearningType.LESSON).userAnswer(lessonSortingMistakes.getUserAnswer()).build());
+        if (lessonRequest.getMistakeInteractiveList() != null)
+            for (LessonMistakeRequest lessonInteractiveMistakes : lessonRequest.getMistakeInteractiveList())
+                reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(lessonInteractiveMistakes.getId()).lessonType(LessonType.INTERACTIVE)
+                        .topicId(topicId).learningType(LearningType.LESSON).userAnswer(lessonInteractiveMistakes.getUserAnswer()).build());
 
         CompleteLessonResponse response = isFirstCompletion ? handleFirstCompletion(accountId, lesson) : handleRecompletion(accountId, lesson);
         lessonSessionService.saveLessonSession(lessonSessionBuilder.buildLessonSessionRequest(accountId, lesson.getId(), lessonRequest, LessonSessionStatus.COMPLETED));
@@ -303,6 +309,10 @@ public class LessonService implements ILessonService {
         } else if (lesson instanceof SortingExerciseLesson) {
             lesson.setXpReward(lessonRuleProperties.getSortingFixedXp());
             lesson.setDurationMinutes((int) Math.ceil((double) lessonRuleProperties.getSortingFixedSeconds() / 60));
+        } else if (lesson instanceof InteractiveLesson interactiveLesson) {
+            int count = interactiveLesson.getQuestions() != null ? interactiveLesson.getQuestions().size() : 0;
+            lesson.setXpReward(count * lessonRuleProperties.getXpPerQcm());
+            lesson.setDurationMinutes((int) Math.ceil((double) (count * lessonRuleProperties.getSecondsPerQcm()) / 60));
         }
 
         if (lesson.getXpReward() == null || lesson.getXpReward() < 5) lesson.setXpReward(5);

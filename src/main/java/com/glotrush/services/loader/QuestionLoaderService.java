@@ -16,12 +16,14 @@ import com.glotrush.entities.exercice.FlashcardEntity;
 import com.glotrush.entities.exercice.MatchingPairEntity;
 import com.glotrush.entities.exercice.QcmQuestionEntity;
 import com.glotrush.entities.exercice.SortingExerciseEntity;
+import com.glotrush.entities.exercice.InteractiveQuestionEntity;
 import com.glotrush.enumerations.LessonType;
 import com.glotrush.mapping.model.LessonTypeMaps;
 import com.glotrush.repositories.exercice.FlashcardRepository;
 import com.glotrush.repositories.exercice.MatchingPairRepository;
 import com.glotrush.repositories.exercice.QcmQuestionRepository;
 import com.glotrush.repositories.exercice.SortingExerciseRepository;
+import com.glotrush.repositories.exercice.InteractiveQuestionRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +35,7 @@ public class QuestionLoaderService implements IQuestionLoaderService {
     private final QcmQuestionRepository qcmQuestionRepository;
     private final MatchingPairRepository matchingPairRepository;
     private final SortingExerciseRepository sortingExerciseRepository;
+    private final InteractiveQuestionRepository interactiveQuestionRepository;
 
     @Override
     public LessonTypeMaps loadQuestionMaps(List<UserMistake> mistakes) {
@@ -45,7 +48,8 @@ public class QuestionLoaderService implements IQuestionLoaderService {
             fetchById(idsByType.get(LessonType.FLASHCARD), flashcardRepository, FlashcardEntity::getId),
             fetchById(idsByType.get(LessonType.QCM), qcmQuestionRepository, QcmQuestionEntity::getId),
             fetchById(idsByType.get(LessonType.MATCHING_PAIR), matchingPairRepository, MatchingPairEntity::getId),
-            fetchById(idsByType.get(LessonType.SORTING_EXERCISE), sortingExerciseRepository, SortingExerciseEntity::getId)
+            fetchById(idsByType.get(LessonType.SORTING_EXERCISE), sortingExerciseRepository, SortingExerciseEntity::getId),
+            fetchById(idsByType.get(LessonType.INTERACTIVE), interactiveQuestionRepository, InteractiveQuestionEntity::getId)
         );
     }
 
