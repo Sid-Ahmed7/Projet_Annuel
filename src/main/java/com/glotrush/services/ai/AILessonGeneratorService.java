@@ -7,6 +7,7 @@ import com.glotrush.dto.request.lesson.FlashcardLessonRequest;
 import com.glotrush.dto.request.lesson.MatchingPairLessonRequest;
 import com.glotrush.dto.request.lesson.QcmLessonRequest;
 import com.glotrush.dto.request.lesson.SortingExerciseLessonRequest;
+import com.glotrush.dto.request.lesson.InteractiveLessonRequest;
 import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.Lesson;
@@ -128,6 +129,7 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
             case FLASHCARD -> FlashcardLessonRequest.class;
             case MATCHING_PAIR -> MatchingPairLessonRequest.class;
             case SORTING_EXERCISE -> SortingExerciseLessonRequest.class;
+            case INTERACTIVE -> InteractiveLessonRequest.class;
         };
     }
 
@@ -238,6 +240,24 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
                   ]
                 }
                 """;
+            case INTERACTIVE -> """
+                {
+                  "lessonType": "INTERACTIVE",
+                  "title": "Titre de la leçon",
+                  "description": "Description de la leçon",
+                  "isActive": true,
+                  "questions": [
+                    {
+                      "questionText": "Écoutez et choisissez le bon mot",
+                      "imagePaths": ["image1.png"],
+                      "audioPaths": ["audio1.mp3"],
+                      "systemType": "MULTIPLE_CHOICE",
+                      "options": ["Pomme", "Poire", "Banane"],
+                      "correctOptionIndex": 0
+                    }
+                  ]
+                }
+                """;
         };
     }
 
@@ -277,6 +297,10 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
         } else if (lessonRequest instanceof SortingExerciseLessonRequest sortingExerciseLessonRequest) {
             if (sortingExerciseLessonRequest.getSortingExercise() != null && sortingExerciseLessonRequest.getSortingExercise().size() > itemCount) {
                 sortingExerciseLessonRequest.setSortingExercise(new ArrayList<>(sortingExerciseLessonRequest.getSortingExercise().subList(0, itemCount)));
+            }
+        } else if (lessonRequest instanceof InteractiveLessonRequest interactiveLessonRequest) {
+            if (interactiveLessonRequest.getQuestions() != null && interactiveLessonRequest.getQuestions().size() > itemCount) {
+                interactiveLessonRequest.setQuestions(new ArrayList<>(interactiveLessonRequest.getQuestions().subList(0, itemCount)));
             }
         }
     }

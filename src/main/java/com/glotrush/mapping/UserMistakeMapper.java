@@ -21,6 +21,8 @@ import com.glotrush.entities.exercice.FlashcardEntity;
 import com.glotrush.entities.exercice.MatchingPairEntity;
 import com.glotrush.entities.exercice.QcmQuestionEntity;
 import com.glotrush.entities.exercice.SortingExerciseEntity;
+import com.glotrush.entities.exercice.InteractiveQuestionEntity;
+import com.glotrush.enumerations.InteractiveSystemType;
 import com.glotrush.exceptions.QuestionNotFoundException;
 import com.glotrush.mapping.model.LessonTypeMaps;
 import com.glotrush.utils.LocaleUtils;
@@ -87,6 +89,25 @@ public class UserMistakeMapper {
                     .answeredQuestion(messageSource.getMessage("label.sorting_exercise", null, LocaleUtils.getCurrentLocale()) + " : " + String.join(", ", sortingExercise.getItems()))
                     .build();
             }
+
+            case INTERACTIVE -> {
+                InteractiveQuestionEntity interactiveQuestion = lessonType.interactiveQuestions().get(questionId);
+                if (interactiveQuestion == null) {
+                    throw new QuestionNotFoundException(messageSource.getMessage("error.question.not_found", null, LocaleUtils.getCurrentLocale()));
+                }
+                if (interactiveQuestion.getSystemType() == InteractiveSystemType.MULTIPLE_CHOICE) {
+                    yield builder
+                        .answeredQuestion(interactiveQuestion.getQuestionText())
+                        .options(interactiveQuestion.getOptions())
+                        .correctAnswer(interactiveQuestion.getOptions().get(interactiveQuestion.getCorrectOptionIndex()))
+                        .build();
+                } else {
+                    yield builder
+                        .answeredQuestion(interactiveQuestion.getQuestionText())
+                        .correctAnswer(interactiveQuestion.getCorrectWord())
+                        .build();
+                }
+            }
         };
     }
 
@@ -144,6 +165,13 @@ public class UserMistakeMapper {
                 }
                 yield builder.items(sortingExercise.getItems()).build();
             }
+            case INTERACTIVE -> {
+                InteractiveQuestionEntity interactiveQuestion = lessonType.interactiveQuestions().get(questionId);
+                if (interactiveQuestion == null) {
+                    throw new QuestionNotFoundException(messageSource.getMessage("error.question.not_found", null, LocaleUtils.getCurrentLocale()));
+                }
+                yield builder.question(interactiveQuestion.getQuestionText()).options(interactiveQuestion.getOptions()).build();
+            }
         };
     }
 
@@ -156,6 +184,7 @@ public class UserMistakeMapper {
             case QCM -> applyQcm(builder, lessonType.qcms().get(questionId), questionId);
             case MATCHING_PAIR -> applyMatchingPair(builder, lessonType.matchingPairs().get(questionId), questionId);
             case SORTING_EXERCISE -> applySortingExercise(builder, lessonType.sortingExercises().get(questionId), questionId);
+            case INTERACTIVE -> applyInteractive(builder, lessonType.interactiveQuestions().get(questionId), questionId);
         };
     }
 
@@ -191,5 +220,21 @@ public class UserMistakeMapper {
         return builder.questionLabel(messageSource.getMessage("label.sorting_exercise", null, LocaleUtils.getCurrentLocale()) + " : " + String.join(", ", sortingExercise.getItems()))
                  .correctAnswer(ordered)
                  .build();
+     }
+
+    private UserMistakeListAnswerResponse applyInteractive(UserMistakeListAnswerResponse.UserMistakeListAnswerResponseBuilder builder, InteractiveQuestionEntity interactiveQuestion, UUID questionId) {
+        if (interactiveQuestion == null) {
+            throw new QuestionNotFoundException(messageSource.getMessage("error.question.not_found", null, LocaleUtils.getCurrentLocale()));
+        }
+        if (interactiveQuestion.getSystemType() == InteractiveSystemType.MULTIPLE_CHOICE) {
+            return builder.questionLabel(interactiveQuestion.getQuestionText())
+                    .options(interactiveQuestion.getOptions())
+                    .correctAnswer(interactiveQuestion.getOptions().get(interactiveQuestion.getCorrectOptionIndex()))
+                    .build();
+        } else {
+            return builder.questionLabel(interactiveQuestion.getQuestionText())
+                    .correctAnswer(interactiveQuestion.getCorrectWord())
+                    .build();
+        }
     }
 }

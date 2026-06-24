@@ -4,6 +4,7 @@ import com.glotrush.dto.response.exercice.FlashcardExamResponse;
 import com.glotrush.dto.response.exercice.MatchingPairResponse;
 import com.glotrush.dto.response.exercice.QcmQuestionExamResponse;
 import com.glotrush.dto.response.exercice.SortingExerciseExamResponse;
+import com.glotrush.dto.response.exercice.InteractiveQuestionExamResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,4 +24,5 @@ public class ExamResponse {
     private List<FlashcardExamResponse> flashcards;
     private List<MatchingPairResponse> matchingPairs;
     private List<SortingExerciseExamResponse> sortingExercises;
+    private List<InteractiveQuestionExamResponse> interactiveQuestions;
 }
