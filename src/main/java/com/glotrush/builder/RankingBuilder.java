@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import org.springframework.stereotype.Component;
 
 import com.glotrush.dto.request.AccountXpRequest;
 import com.glotrush.dto.response.RankedUserResponse;
+import com.glotrush.dto.response.RankingResponse;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.utils.LevelUtils;
@@ -50,6 +52,27 @@ public class RankingBuilder {
         return rankedUsers;
     }
 
+
+    public RankingResponse buildRankingResponse(List<RankedUserResponse> rankedUsers,RankedUserResponse currentUserRanked,Long totalParticipants,Integer page,Integer size,Long currentUserRank,Long currentUserXp,Supplier<List<AccountXpRequest>> nextRankFetcher) {
+
+        Long xpToNextRank = null;
+        if (currentUserRank > 1) {
+            List<AccountXpRequest> nextRank = nextRankFetcher.get();
+            if (!nextRank.isEmpty()) {
+                long aboveXp = nextRank.get(0).getTotalXP() != null ? nextRank.get(0).getTotalXP() : 0L;
+                xpToNextRank = aboveXp - (currentUserXp != null ? currentUserXp : 0L);
+            }
+        }
+
+        return RankingResponse.builder()
+                .rankedUser(rankedUsers)
+                .currentUserRank(currentUserRanked)
+                .totalParticipants(totalParticipants)
+                .currentPage(page)
+                .pageSize(size)
+                .xpToNextRank(xpToNextRank)
+                .build();
+    }
 
     public RankedUserResponse buildSingleRankedUser(UUID accountID, int rank, Long xp, Accounts accounts, UserProfile userProfile) {
         if(accounts == null) {

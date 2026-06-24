@@ -55,4 +55,14 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, UUID
                    "JOIN topic t2 ON t2.id = up2.topic_id WHERE up2.account_id = :accountId AND t2.target_language_id = :languageId)", nativeQuery = true)
     Long findLanguageRankByAccountId(@Param("accountId") UUID accountId, @Param("languageId") UUID languageId);
 
+    @Query("SELECT up.account.id as accountId, SUM(up.totalXP) as totalXP FROM UserProgress up WHERE up.account.id IN :friendIds GROUP BY up.account.id ORDER BY SUM(up.totalXP) DESC")
+    List<AccountXpRequest> findFriendsRanking(@Param("friendIds") List<UUID> friendIds, Pageable pageable);
+
+    @Query("SELECT COUNT(DISTINCT up.account.id) FROM UserProgress up WHERE up.account.id IN :friendIds")
+    Long countFriendsParticipants(@Param("friendIds") List<UUID> friendIds);
+
+    @Query(value = "SELECT CAST(COUNT(*) + 1 AS BIGINT) FROM (SELECT account_id, SUM(total_xp) AS xp FROM user_progress WHERE account_id IN (:friendIds) GROUP BY account_id) ranked " +
+                   "WHERE xp > (SELECT COALESCE(SUM(total_xp), 0) FROM user_progress WHERE account_id = :accountId)", nativeQuery = true)
+    Long findFriendsRankByAccountId(@Param("accountId") UUID accountId, @Param("friendIds") List<UUID> friendIds);
+
 }

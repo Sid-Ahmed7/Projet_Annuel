@@ -34,4 +34,10 @@ public class RankingController {
         UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         return ResponseEntity.ok(rankingService.getLanguageRanking(accountId, languageId, page, size));
     }
+
+    @GetMapping("/friends")
+    public ResponseEntity<RankingResponse> getFriendsRanking(Authentication authentication, @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "20") Integer size) {
+    UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+    return ResponseEntity.ok(rankingService.getFriendsRanking(accountId, page, size));
+}
 }

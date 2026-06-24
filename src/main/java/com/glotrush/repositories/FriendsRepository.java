@@ -30,4 +30,8 @@ public interface FriendsRepository extends JpaRepository<Friends, UUID> {
     @Query("SELECT f FROM Friends f  WHERE (f.sender.id = :firstUser AND f.receiver.id = :secondUser) OR (f.sender.id = :secondUser AND f.receiver.id = :firstUser)")
     Optional<Friends> findBetweenTwoUsers(@Param("firstUser") UUID firstUserId, @Param("secondUser") UUID secondUserId);
 
+    @Query("SELECT CASE WHEN f.sender.id = :userId THEN f.receiver.id ELSE f.sender.id END FROM Friends f WHERE (f.sender.id = :userId OR f.receiver.id = :userId) AND f.status = 'ACCEPTED'")
+    List<UUID> findFriendIds(@Param("userId") UUID userId);
+
 }
+
