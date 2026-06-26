@@ -112,6 +112,19 @@ public class EmailService {
         }
     }
 
+    public void sendPaymentFailedEmail(String toEmail, String username) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(messageSource.getMessage("email.subject.payment_failed", null, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.payment_failed", new Object[]{username}, LocaleUtils.getCurrentLocale()));
+            mailSender.send(message);
+        } catch(Exception e) {
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
+        }
+    }
+
     public void sendSubscriptionCancellationEmail(String toEmail, String username) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
