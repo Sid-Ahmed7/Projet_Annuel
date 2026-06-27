@@ -27,6 +27,7 @@ import com.glotrush.entities.Accounts;
 import com.glotrush.entities.PasswordResetToken;
 import com.glotrush.entities.RefreshToken;
 import com.glotrush.entities.TwoFactorAuth;
+import com.glotrush.enumerations.AccountStatus;
 import com.glotrush.enumerations.UserRole;
 import com.glotrush.exceptions.AccountLockedException;
 import com.glotrush.exceptions.EmailAlreadyExistsException;
@@ -331,6 +332,12 @@ public class AuthService implements IAuthService {
     }
 
     private void checkAccountLock(Accounts account) {
+        if (account.getStatus() == AccountStatus.SUSPENDED) {
+            throw new AccountLockedException(messageSource.getMessage("error.auth.account_suspended", null, LocaleUtils.getCurrentLocale()));
+        }
+        if (account.getStatus() == AccountStatus.LOCKED) {
+            throw new AccountLockedException(messageSource.getMessage("error.auth.account_locked", null, LocaleUtils.getCurrentLocale()));
+        }
         if (account.getAccountLockedUntil() != null && account.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
             throw new AccountLockedException(messageSource.getMessage("error.auth.account_locked_until", null, LocaleUtils.getCurrentLocale()) + account.getAccountLockedUntil());
         }
