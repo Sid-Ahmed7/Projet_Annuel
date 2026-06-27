@@ -1,5 +1,6 @@
 package com.glotrush.services.admin;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -72,6 +73,7 @@ public class AdminUserService implements IAdminUserService {
     public void resetUserPassword(UUID accountId, String newPassword) {
         Accounts account = findUser(accountId);
         account.setPassword(passwordEncoder.encode(newPassword));
+        account.setLastPasswordChange(LocalDateTime.now());
         accountsRepository.save(account);
     }
 
