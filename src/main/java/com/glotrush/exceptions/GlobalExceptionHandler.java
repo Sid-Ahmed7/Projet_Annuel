@@ -114,6 +114,7 @@ public class GlobalExceptionHandler {
             SubscriptionAlreadyExistException.class,
             ReviewAlreadyExistsException.class,
             ScoreAlreadySubmittedException.class,
+            PlanAlreadyExistsException.class,
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.CONFLICT);

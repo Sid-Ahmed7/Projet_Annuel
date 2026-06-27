@@ -12,6 +12,7 @@ import com.glotrush.dto.request.UpdatePlanRequest;
 import com.glotrush.dto.response.PlanResponse;
 import com.glotrush.entities.Plan;
 import com.glotrush.enumerations.PaymentInterval;
+import com.glotrush.exceptions.PlanAlreadyExistsException;
 import com.glotrush.exceptions.PlanNotFoundException;
 import com.glotrush.repositories.PlanRepository;
 import com.glotrush.utils.LocaleUtils;
@@ -28,6 +29,10 @@ public class PlanService implements IPlanService {
 
     @Override
     public PlanResponse createPlan(CreatePlanRequest request) {
+        if (planRepository.existsBySubscriptionType(request.getSubscriptionType())) {
+            throw new PlanAlreadyExistsException(messageSource.getMessage("error.plan.already_exists", null, LocaleUtils.getCurrentLocale()));
+        }
+        
             Plan plan = Plan.builder()
             .name(request.getName())
             .description(request.getDescription())
@@ -90,14 +95,12 @@ public class PlanService implements IPlanService {
 
     @Override
     public List<PlanResponse> getPlansByPaymentInterval(PaymentInterval paymentInterval) {
-        return planRepository.findAllByPaymentIntervalAndIsActiveTrue(paymentInterval).stream().
-        map(planBuilder::mapToResponse).toList();
+        return planRepository.findAllByPaymentIntervalAndIsActiveTrue(paymentInterval).stream().map(planBuilder::mapToResponse).toList();
     }
 
     @Override
     public Plan getPlanById(UUID planId) {
-        return planRepository.findById(planId)
-        .orElseThrow(() -> new PlanNotFoundException(
+        return planRepository.findById(planId).orElseThrow(() -> new PlanNotFoundException(
             messageSource.getMessage("error.plan.notfound",null, LocaleUtils.getCurrentLocale())
         ));
     }
@@ -111,9 +114,7 @@ public class PlanService implements IPlanService {
 
     @Override
     public List<PlanResponse> getAllPlansForAdmin() {
-        return planRepository.findAllByOrderByPriceAsc().stream()
-                .map(planBuilder::mapToResponse)
-                .toList();
+        return planRepository.findAllByOrderByPriceAsc().stream().map(planBuilder::mapToResponse).toList();
     }
    
 }

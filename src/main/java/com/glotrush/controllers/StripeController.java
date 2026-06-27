@@ -1,14 +1,18 @@
 package com.glotrush.controllers;
 
 import java.io.IOException;
+import java.security.Principal;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.glotrush.config.StripeConfig;
+import com.glotrush.services.stripe.IStripService;
 import com.glotrush.services.stripe.StripeWebhookService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
@@ -29,6 +33,7 @@ public class StripeController {
 
     private final StripeConfig stripeConfig;
     private final StripeWebhookService stripeWebhookService;
+    private final IStripService stripService;
 
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(HttpServletRequest request, @RequestHeader("Stripe-Signature") String stripeHeader) {
@@ -61,10 +66,16 @@ public class StripeController {
                     stripeWebhookService.handleSubscriptionDeleted(subscription);
                 }
             }
+            case "invoice.paid" -> {
+                Invoice invoice = (Invoice) event.getDataObjectDeserializer().getObject().orElse(null);
+                if (invoice != null && invoice.getSubscription() != null) {
+                    stripeWebhookService.renewSubscription(invoice);
+                }
+            }
             case "invoice.payment_failed" -> {
                 Invoice invoice = (Invoice) event.getDataObjectDeserializer().getObject().orElse(null);
                 if (invoice != null) {
-                    stripeWebhookService.renewSubscription(invoice);
+                    stripeWebhookService.handlePaymentFailed(invoice);
                 }
             }
 
@@ -74,5 +85,13 @@ public class StripeController {
         return ResponseEntity.ok("Webhook received");
     }
 
+    @GetMapping("/verify/{sessionId}")
+    public ResponseEntity<Void> verifyCheckoutSession(@PathVariable String sessionId, Principal principal) {
+        Session session = stripService.retrieveSession(sessionId);
+        if ("paid".equals(session.getPaymentStatus())) {
+            stripeWebhookService.finalizeCheckout(session);
+        }
+        return ResponseEntity.ok().build();
+    }
 
 }
