@@ -55,6 +55,24 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, UUID
                    "JOIN topic t2 ON t2.id = up2.topic_id WHERE up2.account_id = :accountId AND t2.target_language_id = :languageId)", nativeQuery = true)
     Long findLanguageRankByAccountId(@Param("accountId") UUID accountId, @Param("languageId") UUID languageId);
 
+    @Query("SELECT COALESCE(AVG(up.accuracy), 0) FROM UserProgress up WHERE up.totalAnswers > 0")
+    Double avgAccuracyGlobal();
+
+    @Query("SELECT COALESCE(AVG(up.completionPercentage), 0) FROM UserProgress up")
+    Double avgCompletionPercentageGlobal();
+
+    @Query("SELECT COUNT(up) FROM UserProgress up WHERE up.account.id = :accountId AND up.completionPercentage >= 100")
+    Long countCompletedTopicsByAccountId(@Param("accountId") UUID accountId);
+
+    @Query("SELECT up.topic.targetLanguage.name FROM UserProgress up GROUP BY up.topic.targetLanguage.name ORDER BY SUM(up.totalXP) DESC")
+    List<String> findMostStudiedLanguages(Pageable pageable);
+
+    @Query("SELECT COALESCE(AVG(up.accuracy), 0) FROM UserProgress up WHERE up.account.id = :accountId AND up.totalAnswers > 0")
+    Double avgAccuracyByAccountId(@Param("accountId") UUID accountId);
+
+    @Query("SELECT COALESCE(SUM(up.completedLessons), 0) FROM UserProgress up WHERE up.account.id = :accountId")
+    Long sumCompletedLessonsByAccountId(@Param("accountId") UUID accountId);
+
     @Query("SELECT up.account.id as accountId, SUM(up.totalXP) as totalXP FROM UserProgress up WHERE up.account.id IN :friendIds GROUP BY up.account.id ORDER BY SUM(up.totalXP) DESC")
     List<AccountXpRequest> findFriendsRanking(@Param("friendIds") List<UUID> friendIds, Pageable pageable);
 
