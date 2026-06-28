@@ -240,6 +240,20 @@ public class ReviewMistakeService implements IReviewMistakeService {
                         .collect(Collectors.joining(" → "))
                     : null;
             }
+            case INTERACTIVE -> {
+                InteractiveQuestionEntity interactiveQuestion = lessonType.interactiveQuestions().get(questionId);
+                if (interactiveQuestion == null) {
+                    yield null;
+                }
+
+                if (interactiveQuestion.getSystemType() == InteractiveSystemType.MULTIPLE_CHOICE) {
+                    yield (answer.getSelectedResponseIndex() != null)
+                        ? interactiveQuestion.getOptions().get(answer.getSelectedResponseIndex())
+                        : null;
+                } else {
+                    yield answer.getTranslateAnswer();
+                }
+            }
         };
     }
 

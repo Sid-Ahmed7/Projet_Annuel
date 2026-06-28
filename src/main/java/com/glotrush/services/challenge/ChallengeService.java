@@ -86,7 +86,7 @@ public class ChallengeService implements IChallengeService {
                 throw new LessonNotFoundException(messageSource.getMessage("error.lesson.not_found", null, LocaleUtils.getCurrentLocale()));
             lesson = lessonRepository.findById(newChallenge.getLessonId()).orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.not_found", null, LocaleUtils.getCurrentLocale())));
 
-            if (lesson.getLessonType() != LessonType.QCM && lesson.getLessonType() != LessonType.FLASHCARD)
+            if (lesson.getLessonType() != LessonType.QCM && lesson.getLessonType() != LessonType.FLASHCARD && lesson.getLessonType() != LessonType.INTERACTIVE)
                 throw new InvalidDuelTypeException(messageSource.getMessage("error.invalid.duel.type", null, LocaleUtils.getCurrentLocale()));
 
             if (newChallenge.getChallengedId() == null)
@@ -191,7 +191,7 @@ public class ChallengeService implements IChallengeService {
             case FLASHCARD -> challenge.getFlashcards().size();
             case MATCHING_PAIR -> challenge.getMatchingPairs().size();
             case SORTING_EXERCISE -> challenge.getSortingExercises().size();
-            case INTERACTIVE -> 0;
+            case INTERACTIVE -> challenge.getInteractives().size();
         };
 
         UUID fChallengeId = challenge.getId();

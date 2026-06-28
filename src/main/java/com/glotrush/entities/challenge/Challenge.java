@@ -93,6 +93,10 @@ public class Challenge {
 
     @OneToMany(mappedBy = "challenge", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    private List<ChallengeInteractive> interactives = new ArrayList<>();
+
+    @OneToMany(mappedBy = "challenge", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<ChallengeParticipant> participants = new ArrayList<>();
     
     @CreationTimestamp
