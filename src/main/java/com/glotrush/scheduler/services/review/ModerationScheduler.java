@@ -39,7 +39,7 @@ public class ModerationScheduler implements IModerationScheduler {
     @Transactional
     public void autoRejectExpiredReviews() {
         LocalDateTime lastTwoHour = LocalDateTime.now().minusHours(2);
-        List<TopicReview> expired = topicReviewRepository.findByStatusAndUpdatedAtBefore(ReviewStatus.PENDING, lastTwoHour);
+        List<TopicReview> expired = topicReviewRepository.findByStatusAndPendingSinceBefore(ReviewStatus.PENDING, lastTwoHour);
         if(expired.isEmpty()) {
             log.info("No expired reviews found");
             return;

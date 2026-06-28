@@ -1,5 +1,6 @@
 package com.glotrush.services.review;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -88,6 +89,7 @@ public class TopicReviewService implements ITopicReviewService {
                 .comment(data.getComment())
                 .status(status)
                 .commentScore(scoreComment)
+                .pendingSince(flagged ? LocalDateTime.now() : null)
                 .build();
 
         topicReviewRepository.save(review);
@@ -117,8 +119,13 @@ public class TopicReviewService implements ITopicReviewService {
 
         review.setRating(data.getRating());
         review.setComment(data.getComment());
-        review.setStatus(status);
         review.setCommentScore(scoreComment);
+        if (flagged && review.getStatus() != ReviewStatus.PENDING) {
+            review.setPendingSince(LocalDateTime.now());
+        } else if (!flagged) {
+            review.setPendingSince(null);
+        }
+        review.setStatus(status);
         topicReviewRepository.save(review);
 
         if(flagged) {

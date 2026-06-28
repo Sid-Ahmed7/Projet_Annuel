@@ -56,7 +56,7 @@ public class UserMistakeMapper {
                 if (flashcard == null) {
                     throw new QuestionNotFoundException(messageSource.getMessage("error.question.not_found", null, LocaleUtils.getCurrentLocale()));
                 }
-                yield builder.answeredQuestion(flashcard.getFront()).correctAnswer(flashcard.getBack()).build();
+                yield builder.answeredQuestion(flashcard.getFront()).build();
             }
 
             case QCM -> {
@@ -67,27 +67,24 @@ public class UserMistakeMapper {
                 yield builder
                     .answeredQuestion(qcm.getQuestion())
                     .options(qcm.getOptions())
-                    .correctAnswer(qcm.getOptions().get(qcm.getCorrectOptionIndex()))
                     .build();
             }
-            
+
             case MATCHING_PAIR -> {
                 MatchingPairEntity matchingPair = lessonType.matchingPairs().get(questionId);
                 if (matchingPair == null){
                     throw new QuestionNotFoundException(messageSource.getMessage("error.question.not_found", null, LocaleUtils.getCurrentLocale()));
                 }
-                yield builder.answeredQuestion(matchingPair.getItem1()).correctAnswer(matchingPair.getItem2()).build();
+                yield builder.answeredQuestion(matchingPair.getItem1()).build();
             }
-            
+
             case SORTING_EXERCISE -> {
                 SortingExerciseEntity sortingExercise = lessonType.sortingExercises().get(questionId);
                 if (sortingExercise == null){
                     throw new QuestionNotFoundException(messageSource.getMessage("error.question.not_found", null, LocaleUtils.getCurrentLocale()));
                 }
-                String ordered = sortingExercise.getCorrectOrder().stream().map(i -> sortingExercise.getItems().get(i)).collect(Collectors.joining(" → "));
                 yield builder
                     .answeredQuestion(messageSource.getMessage("label.sorting_exercise", null, LocaleUtils.getCurrentLocale()) + " : " + String.join(", ", sortingExercise.getItems()))
-                    .correctAnswer(ordered)
                     .build();
             }
         };

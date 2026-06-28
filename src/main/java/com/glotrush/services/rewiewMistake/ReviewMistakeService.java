@@ -93,6 +93,9 @@ public class ReviewMistakeService implements IReviewMistakeService {
                     correctAnswers++;
                 }
 
+                if (!isCorrect) {
+                    mistake.setUserAnswer(extractUserAnswer(mistake, answer, lessonType));
+                }
                 updateMistakeProgress(mistake, isCorrect);
                 userMistakeRepository.save(mistake);
 
@@ -190,7 +193,8 @@ public class ReviewMistakeService implements IReviewMistakeService {
 
             int scheduledInterval = mistakeAnswer.getIntervalHours();
             int overdue = (int) Duration.between(mistakeAnswer.getNextReviewAt(), LocalDateTime.now()).toHours();
-            int baseInterval = scheduledInterval + Math.max(0, overdue);
+            int cappedOverdue = Math.min(Math.max(0, overdue), scheduledInterval);
+            int baseInterval = scheduledInterval + cappedOverdue;
             int newInterval = (int) Math.round(baseInterval * oldRate);
             mistakeAnswer.setIntervalHours(newInterval);
             mistakeAnswer.setNextReviewAt(LocalDateTime.now().plusHours(newInterval));
@@ -204,12 +208,33 @@ public class ReviewMistakeService implements IReviewMistakeService {
             mistakeAnswer.setConsecutiveGoodAnswers(0);
             double newRate = Math.max(MistakeQuestionConstants.MINIMUM_RATE, mistakeAnswer.getRateMultiplier() - 0.2);
             mistakeAnswer.setRateMultiplier(newRate);
-            int lapseInterval = Math.min(TimeConstants.SEVENTY_TWO_HOURS, Math.max(TimeConstants.TWENTY_FOUR_HOURS, mistakeAnswer.getIntervalHours() / 4));
-            mistakeAnswer.setIntervalHours(lapseInterval);
-            mistakeAnswer.setNextReviewAt(LocalDateTime.now().plusHours(lapseInterval));
+            mistakeAnswer.setIntervalHours(TimeConstants.TWENTY_FOUR_HOURS);
+            mistakeAnswer.setNextReviewAt(LocalDateTime.now());
         }
     }
 
+
+    private String extractUserAnswer(UserMistake mistake, UserAnswerRequest answer, LessonTypeMaps lessonType) {
+        UUID questionId = mistake.getQuestionId();
+        return switch (mistake.getLessonType()) {
+            case FLASHCARD -> answer.getTranslateAnswer();
+            case QCM -> {
+                QcmQuestionEntity qcm = lessonType.qcms().get(questionId);
+                yield (qcm != null && answer.getSelectedResponseIndex() != null)
+                    ? qcm.getOptions().get(answer.getSelectedResponseIndex())
+                    : null;
+            }
+            case MATCHING_PAIR -> answer.getItem2();
+            case SORTING_EXERCISE -> {
+                SortingExerciseEntity sortingExercise = lessonType.sortingExercises().get(questionId);
+                yield (sortingExercise != null && answer.getUserOrderedResponseIndexes() != null)
+                    ? answer.getUserOrderedResponseIndexes().stream()
+                        .map(i -> sortingExercise.getItems().get(i))
+                        .collect(Collectors.joining(" → "))
+                    : null;
+            }
+        };
+    }
 
     private boolean validateAnswer(UserMistake mistakeAnswer, UserAnswerRequest answer, LessonTypeMaps lessonType) {
         UUID questionId = mistakeAnswer.getQuestionId();
