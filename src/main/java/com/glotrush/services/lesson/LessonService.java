@@ -9,9 +9,11 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.glotrush.dto.request.LessonMistakeRequest;
 import com.glotrush.dto.request.LessonReorderRequest;
 import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.dto.request.answer.UserMistakeAddMultipleRequest;
+import com.glotrush.dto.request.answer.UserMistakeAddRequest;
 import com.glotrush.enumerations.LearningType;
 import com.glotrush.enumerations.LessonType;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
@@ -195,18 +197,21 @@ public class LessonService implements ILessonService {
             reviewMistakeService.addMultipleToMistakeList(accountId, UserMistakeAddMultipleRequest.builder()
                     .questionIds(lessonRequest.getMistakeFlashCardIds()).lessonType(LessonType.FLASHCARD)
                     .topicId(topicId).learningType(LearningType.LESSON).build());
-        if (lessonRequest.getMistakeQcmIds() != null && !lessonRequest.getMistakeQcmIds().isEmpty())
-            reviewMistakeService.addMultipleToMistakeList(accountId, UserMistakeAddMultipleRequest.builder()
-                    .questionIds(lessonRequest.getMistakeQcmIds()).lessonType(LessonType.QCM)
-                    .topicId(topicId).learningType(LearningType.LESSON).build());
-        if (lessonRequest.getMistakeMatchingPairIds() != null && !lessonRequest.getMistakeMatchingPairIds().isEmpty())
-            reviewMistakeService.addMultipleToMistakeList(accountId, UserMistakeAddMultipleRequest.builder()
-                    .questionIds(lessonRequest.getMistakeMatchingPairIds()).lessonType(LessonType.MATCHING_PAIR)
-                    .topicId(topicId).learningType(LearningType.LESSON).build());
-        if (lessonRequest.getMistakeSortingIds() != null && !lessonRequest.getMistakeSortingIds().isEmpty())
-            reviewMistakeService.addMultipleToMistakeList(accountId, UserMistakeAddMultipleRequest.builder()
-                    .questionIds(lessonRequest.getMistakeSortingIds()).lessonType(LessonType.SORTING_EXERCISE)
-                    .topicId(topicId).learningType(LearningType.LESSON).build());
+        if (lessonRequest.getMistakeQcmList() != null)
+            for (LessonMistakeRequest lessonQcmMistakes : lessonRequest.getMistakeQcmList())
+                reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(lessonQcmMistakes.getId()).lessonType(LessonType.QCM)
+                        .topicId(topicId).learningType(LearningType.LESSON).userAnswer(lessonQcmMistakes.getUserAnswer()).build());
+        if (lessonRequest.getMistakeMatchingList() != null)
+            for (LessonMistakeRequest lessonMatchingMistakes : lessonRequest.getMistakeMatchingList())
+                reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(lessonMatchingMistakes.getId()).lessonType(LessonType.MATCHING_PAIR)
+                        .topicId(topicId).learningType(LearningType.LESSON).userAnswer(lessonMatchingMistakes.getUserAnswer()).build());
+        if (lessonRequest.getMistakeSortingList() != null)
+            for (LessonMistakeRequest lessonSortingMistakes : lessonRequest.getMistakeSortingList())
+                reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(lessonSortingMistakes.getId()).lessonType(LessonType.SORTING_EXERCISE)
+                        .topicId(topicId).learningType(LearningType.LESSON).userAnswer(lessonSortingMistakes.getUserAnswer()).build());
 
         CompleteLessonResponse response = isFirstCompletion ? handleFirstCompletion(accountId, lesson) : handleRecompletion(accountId, lesson);
         lessonSessionService.saveLessonSession(lessonSessionBuilder.buildLessonSessionRequest(accountId, lesson.getId(), lessonRequest, LessonSessionStatus.COMPLETED));

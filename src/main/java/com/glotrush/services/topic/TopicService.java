@@ -362,7 +362,13 @@ public class TopicService implements ITopicService {
                 if (validateSortingExercise(ans)) {
                     calculatedCorrectAnswers++;
                 } else {
-                    String wrongOrder = ans.getUserOrder() != null ? ans.getUserOrder().toString() : null;
+                    String wrongOrder = null;
+                    if (ans.getUserOrder() != null) {
+                        SortingExerciseEntity sortingEntity = sortingExerciseRepository.findById(ans.getId()).orElse(null);
+                        if (sortingEntity != null) {
+                            wrongOrder = ans.getUserOrder().stream().map(i -> sortingEntity.getItems().get(i)).collect(Collectors.joining(" → "));
+                        }
+                    }
                     reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
                         .questionId(ans.getId())
                         .lessonType(LessonType.SORTING_EXERCISE)
@@ -459,9 +465,9 @@ public class TopicService implements ITopicService {
 
     private boolean validateMatchingPair(MatchingPairAnswerRequest request) {
         MatchingPairEntity entity = matchingPairRepository.findById(request.getId()).orElse(null);
-        if (entity == null) return false;
-        // Vérification exacte
-        return entity.getItem1() != null && entity.getItem2() != null && entity.getItem1().equals(request.getItem1()) && entity.getItem2().equals(request.getItem2());
+        if (entity == null || entity.getItem1() == null || entity.getItem2() == null) return false;
+        return (entity.getItem1().equals(request.getItem1()) && entity.getItem2().equals(request.getItem2()))
+            || (entity.getItem1().equals(request.getItem2()) && entity.getItem2().equals(request.getItem1()));
     }
 
     private boolean validateSortingExercise(SortingExerciseAnswerRequest request) {
