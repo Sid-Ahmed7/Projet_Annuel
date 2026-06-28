@@ -81,4 +81,33 @@ class AILessonGenerateRequestValidationTest {
         violations = validator.validate(request);
         assertThat(violations).isNotEmpty();
     }
+
+    @Test
+    @DisplayName("Should validate Interactive count boundaries (3-10)")
+    void shouldValidateInteractiveBoundaries() {
+        AILessonGenerateRequest request = new AILessonGenerateRequest();
+        request.setTopicId(UUID.randomUUID());
+        request.setDescription("Valid description");
+        request.setLessonType(LessonType.INTERACTIVE);
+
+        // Under min (2)
+        request.setItemCount(2);
+        Set<ConstraintViolation<AILessonGenerateRequest>> violations = validator.validate(request);
+        assertThat(violations).isNotEmpty();
+
+        // Valid min (3)
+        request.setItemCount(3);
+        violations = validator.validate(request);
+        assertThat(violations).isEmpty();
+
+        // Valid max (10)
+        request.setItemCount(10);
+        violations = validator.validate(request);
+        assertThat(violations).isEmpty();
+
+        // Over max (11)
+        request.setItemCount(11);
+        violations = validator.validate(request);
+        assertThat(violations).isNotEmpty();
+    }
 }

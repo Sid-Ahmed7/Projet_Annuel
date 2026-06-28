@@ -14,6 +14,6 @@ import java.util.List;
 public class InteractiveLessonRequest extends LessonRequest {
 
     @NotNull
-    @Size(min = 5, max = 20)
+    @Size(min = 3, max = 10)
     private List<InteractiveQuestionRequest> questions;
 }
