@@ -22,7 +22,7 @@ public interface TopicReviewRepository extends JpaRepository<TopicReview, UUID> 
     Optional<TopicReview> findByIdAndAccount_Id(UUID reviewId, UUID accountId);
     Optional<TopicReview> findByAccount_IdAndTopic_Id(UUID accountId, UUID topicId);
 
-    List<TopicReview> findByStatusAndUpdatedAtBefore(ReviewStatus status, LocalDateTime lastDelay);
+    List<TopicReview> findByStatusAndPendingSinceBefore(ReviewStatus status, LocalDateTime threshold);
 
 }
     

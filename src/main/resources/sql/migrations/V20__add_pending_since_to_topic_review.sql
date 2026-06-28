@@ -1,0 +1,1 @@
+ALTER TABLE topic_review ADD COLUMN IF NOT EXISTS pending_since TIMESTAMP;

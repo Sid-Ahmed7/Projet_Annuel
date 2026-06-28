@@ -64,6 +64,9 @@ public class TopicReview {
     @Column(name = "comment_score")
     private Double commentScore;
 
+    @Column(name = "pending_since")
+    private LocalDateTime pendingSince;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -72,16 +75,9 @@ public class TopicReview {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     @PrePersist
-        protected void onCreate() {
-            this.createdAt = LocalDateTime.now();
-            this.updatedAt = LocalDateTime.now();
-            if(this.createdAt == null) {
-                this.createdAt = LocalDateTime.now();
-            }
-            if(this.updatedAt == null) {
-                this.updatedAt = LocalDateTime.now();
-            }
-
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
