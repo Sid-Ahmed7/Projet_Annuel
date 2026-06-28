@@ -237,6 +237,11 @@ public class ProgressService implements IProgressService {
       Topic lastTopic = lastAttempt.get().getLesson().getTopic();
       UUID languageId = lastTopic.getTargetLanguage().getId();
 
+      boolean stillLearning = userLanguageRepository.findByAccount_IdAndLanguageType(accountId, LanguageType.LEARNING).stream().anyMatch(userLanguage -> userLanguage.getLanguage().getId().equals(languageId));
+      if (!stillLearning) {
+          return Optional.empty();
+      }
+
       Optional<Lesson> nextLessonUnCompleted = lessonRepository.findFirstUncompletedLessonInTopic(accountId, lastTopic.getId());
       Lesson nextLesson = null;
 
