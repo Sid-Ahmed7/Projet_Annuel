@@ -28,6 +28,7 @@ import com.glotrush.constants.TopicConstants;
 import com.glotrush.dispatcher.notifications.NotificationDispatcher;
 import com.glotrush.dto.request.ExamResultRequest;
 import com.glotrush.dto.request.FlashcardAnswerRequest;
+import com.glotrush.dto.request.InteractiveAnswerRequest;
 import com.glotrush.dto.request.MatchingPairAnswerRequest;
 import com.glotrush.dto.request.QcmAnswerRequest;
 import com.glotrush.dto.request.SortingExerciseAnswerRequest;
@@ -58,15 +59,18 @@ import java.util.stream.Collectors;
 
 
 import com.glotrush.entities.exercice.FlashcardEntity;
+import com.glotrush.entities.exercice.InteractiveQuestionEntity;
 import com.glotrush.entities.exercice.MatchingPairEntity;
 import com.glotrush.entities.exercice.QcmQuestionEntity;
 import com.glotrush.entities.exercice.SortingExerciseEntity;
+import com.glotrush.enumerations.InteractiveSystemType;
 import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.entities.lesson.MatchingPairLesson;
 import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
 import com.glotrush.entities.lesson.InteractiveLesson;
 import com.glotrush.repositories.exercice.FlashcardRepository;
+import com.glotrush.repositories.exercice.InteractiveQuestionRepository;
 import com.glotrush.repositories.exercice.MatchingPairRepository;
 import com.glotrush.repositories.exercice.QcmQuestionRepository;
 import com.glotrush.repositories.exercice.SortingExerciseRepository;
@@ -99,6 +103,7 @@ public class TopicService implements ITopicService {
     private final QcmQuestionRepository qcmQuestionRepository;
     private final MatchingPairRepository matchingPairRepository;
     private final SortingExerciseRepository sortingExerciseRepository;
+    private final InteractiveQuestionRepository interactiveQuestionRepository;
 
     private static final Pattern NUMBER_PATTERN = Pattern.compile(TopicConstants.REGEX_PATTERN);
   
@@ -389,6 +394,34 @@ public class TopicService implements ITopicService {
             }
         }
 
+        if (examRequest.getInteractiveAnswers() != null) {
+            for (InteractiveAnswerRequest ans : examRequest.getInteractiveAnswers()) {
+                totalQuestions++;
+                if (validateInteractiveQuestion(ans)) {
+                    calculatedCorrectAnswers++;
+                } else {
+                    InteractiveQuestionEntity interactive = interactiveQuestionRepository.findById(ans.getId()).orElse(null);
+                    String wrongAnswer = null;
+                    if (interactive != null) {
+                        if (interactive.getSystemType() == InteractiveSystemType.MULTIPLE_CHOICE && ans.getSelectedOptionIndex() != null) {
+                            if (ans.getSelectedOptionIndex() >= 0 && ans.getSelectedOptionIndex() < interactive.getOptions().size()) {
+                                wrongAnswer = interactive.getOptions().get(ans.getSelectedOptionIndex());
+                            }
+                        } else {
+                            wrongAnswer = ans.getUserResponse();
+                        }
+                    }
+                    reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(ans.getId())
+                        .lessonType(LessonType.INTERACTIVE)
+                        .topicId(topicId)
+                        .learningType(LearningType.EXAM)
+                        .userAnswer(wrongAnswer)
+                        .build());
+                }
+            }
+        }
+
         double finalScore = totalQuestions > 0 ? (double) calculatedCorrectAnswers / totalQuestions * 100 : 0;
         boolean isSuccessful = finalScore >= TopicConstants.MIN_SUCCESS_SCORE;
 
@@ -484,5 +517,30 @@ public class TopicService implements ITopicService {
         if (entity == null || request.getUserOrder() == null) return false;
         // Vérification exacte de l'ordre
         return entity.getCorrectOrder() != null && entity.getCorrectOrder().equals(request.getUserOrder());
+    }
+
+    private boolean validateInteractiveQuestion(InteractiveAnswerRequest request) {
+        InteractiveQuestionEntity entity = interactiveQuestionRepository.findById(request.getId()).orElse(null);
+        if (entity == null) return false;
+
+        if (entity.getSystemType() == InteractiveSystemType.MULTIPLE_CHOICE) {
+            return entity.getCorrectOptionIndex() != null && entity.getCorrectOptionIndex().equals(request.getSelectedOptionIndex());
+        } else {
+            if (request.getUserResponse() == null) return false;
+            String expected = entity.getCorrectWord().trim();
+            String actual = request.getUserResponse().trim();
+
+            if (expected.equalsIgnoreCase(actual)) {
+                return true;
+            }
+
+            List<String> expectedNumbers = extractNumbers(expected);
+            List<String> actualNumbers = extractNumbers(actual);
+            if (!expectedNumbers.equals(actualNumbers)) {
+                return false;
+            }
+
+            return LevenshteinUtils.calculateLevenshteinDistance(expected.toLowerCase(), actual.toLowerCase()) <= 2;
+        }
     }
 }

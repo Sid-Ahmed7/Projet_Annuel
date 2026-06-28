@@ -6,10 +6,12 @@ import com.glotrush.dto.request.exercice.FlashcardRequest;
 import com.glotrush.dto.request.exercice.MatchingPairRequest;
 import com.glotrush.dto.request.exercice.QcmQuestionRequest;
 import com.glotrush.dto.request.exercice.SortingExerciseRequest;
+import com.glotrush.dto.request.exercice.InteractiveQuestionRequest;
 import com.glotrush.dto.request.lesson.FlashcardLessonRequest;
 import com.glotrush.dto.request.lesson.MatchingPairLessonRequest;
 import com.glotrush.dto.request.lesson.QcmLessonRequest;
 import com.glotrush.dto.request.lesson.SortingExerciseLessonRequest;
+import com.glotrush.dto.request.lesson.InteractiveLessonRequest;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.Topic;
 import com.glotrush.enumerations.LessonType;
@@ -305,5 +307,45 @@ class AILessonGeneratorServiceTest {
         MatchingPairLessonRequest truncatedResult = (MatchingPairLessonRequest) result;
         
         assertThat(truncatedResult.getMatchingPairs()).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Should generate interactive lesson with empty media lists and respect itemCount")
+    void shouldGenerateInteractiveLessonWithEmptyMediaListsAndRespectItemCount() {
+        when(topicRepository.findById(topicId)).thenReturn(Optional.of(testTopic));
+
+        InteractiveLessonRequest aiResponse = new InteractiveLessonRequest();
+        List<InteractiveQuestionRequest> questions = new ArrayList<>();
+        
+        for (int index = 0; index < 8; index++) {
+            InteractiveQuestionRequest question = new InteractiveQuestionRequest();
+            question.setQuestionText("Question " + index);
+            question.setImagePaths(List.of("mock_image.jpg"));
+            question.setAudioPaths(List.of("mock_audio.mp3"));
+            questions.add(question);
+        }
+        
+        aiResponse.setQuestions(questions);
+
+        when(aiService.generateJsonContent(any(String.class), eq(InteractiveLessonRequest.class)))
+                .thenReturn(aiResponse);
+
+        LessonRequest result = aiLessonGeneratorService.generateLesson(
+                accountId,
+                topicId,
+                LessonType.INTERACTIVE,
+                "Test description",
+                5
+        );
+
+        assertThat(result).isInstanceOf(InteractiveLessonRequest.class);
+        
+        InteractiveLessonRequest interactiveResult = (InteractiveLessonRequest) result;
+        
+        assertThat(interactiveResult.getQuestions()).hasSize(5);
+        for (InteractiveQuestionRequest question : interactiveResult.getQuestions()) {
+            assertThat(question.getImagePaths()).isEmpty();
+            assertThat(question.getAudioPaths()).isEmpty();
+        }
     }
 }

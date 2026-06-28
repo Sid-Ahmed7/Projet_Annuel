@@ -18,6 +18,9 @@ import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.ai.AIGenerationLogRepository;
 import com.glotrush.repositories.exercice.FlashcardRepository;
 import com.glotrush.repositories.exercice.MatchingPairRepository;
+import com.glotrush.entities.exercice.InteractiveQuestionEntity;
+import com.glotrush.enumerations.InteractiveSystemType;
+import com.glotrush.repositories.exercice.InteractiveQuestionRepository;
 import com.glotrush.repositories.exercice.QcmQuestionRepository;
 import com.glotrush.repositories.exercice.SortingExerciseRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +45,7 @@ public class AILessonHelpService implements IAILessonHelpService {
     private final FlashcardRepository flashcardRepository;
     private final MatchingPairRepository matchingPairRepository;
     private final SortingExerciseRepository sortingExerciseRepository;
+    private final InteractiveQuestionRepository interactiveQuestionRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -122,6 +126,26 @@ public class AILessonHelpService implements IAILessonHelpService {
             return "Type d'exercice: Ordonnancement de phrase (Sorting Exercise)\n" +
                     "Mots a trier (melanges): " + String.join(", ", sorting.getItems()) + "\n" +
                     "Phrase correcte ordonnee (Reponse): " + correctSentence;
+        }
+
+        if (exerciseType == LessonType.INTERACTIVE) {
+            InteractiveQuestionEntity question = interactiveQuestionRepository.findById(exerciseId)
+                    .orElseThrow(() -> new RuntimeException("Interactive question not found: " + exerciseId));
+
+            String correctAnswer = "Non definie";
+            if (question.getSystemType() == InteractiveSystemType.MULTIPLE_CHOICE) {
+                if (question.getCorrectOptionIndex() != null && question.getCorrectOptionIndex() >= 0 && question.getCorrectOptionIndex() < question.getOptions().size()) {
+                    correctAnswer = question.getOptions().get(question.getCorrectOptionIndex());
+                }
+                return "Type d'exercice: Question interactive (Choix multiples)\n" +
+                        "Question: " + question.getQuestionText() + "\n" +
+                        "Options: " + String.join(", ", question.getOptions()) + "\n" +
+                        "Bonne reponse: " + correctAnswer;
+            } else {
+                return "Type d'exercice: Question interactive (Saisie textuelle)\n" +
+                        "Question: " + question.getQuestionText() + "\n" +
+                        "Mot correct attendu: " + question.getCorrectWord();
+            }
         }
 
         throw new IllegalArgumentException("Unknown exercise type: " + exerciseType);
