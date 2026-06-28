@@ -26,7 +26,7 @@ public class CompleteLessonRequest {
     private Integer totalAnswers;
 
     private List<UUID> mistakeFlashCardIds;
-    private List<UUID> mistakeMatchingPairIds;
-    private List<UUID> mistakeQcmIds;
-    private List<UUID> mistakeSortingIds;
+    private List<LessonMistakeRequest> mistakeQcmList;
+    private List<LessonMistakeRequest> mistakeMatchingList;
+    private List<LessonMistakeRequest> mistakeSortingList;
 }

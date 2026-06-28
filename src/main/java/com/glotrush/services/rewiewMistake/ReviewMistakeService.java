@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -146,14 +147,18 @@ public class ReviewMistakeService implements IReviewMistakeService {
 
     @Override
     public void addToMistakeList(UUID accountId, UserMistakeAddRequest request) {
-        
-        if (userMistakeRepository.findByAccount_IdAndQuestionIdAndIsResolvedFalse(accountId, request.getQuestionId()).isPresent()) {
+        Optional<UserMistake> existing = userMistakeRepository.findByAccount_IdAndQuestionIdAndIsResolvedFalse(accountId, request.getQuestionId());
+        if (existing.isPresent()) {
+            UserMistake mistake = existing.get();
+            if (request.getUserAnswer() != null) {
+                mistake.setUserAnswer(request.getUserAnswer());
+                userMistakeRepository.save(mistake);
+            }
             return;
         }
 
         Accounts account = accountsRepository.getReferenceById(accountId);
         Topic topic = request.getTopicId() != null ? topicRepository.getReferenceById(request.getTopicId()) : null;
-
 
         UserMistake mistakes = UserMistake.builder()
             .account(account)
