@@ -36,6 +36,7 @@ import com.glotrush.dto.request.challenge.CreateChallengeRequest;
 import com.glotrush.dto.response.challenge.ChallengeResponse;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.Lesson;
+import com.glotrush.entities.lesson.InteractiveLesson;
 import com.glotrush.entities.challenge.Challenge;
 import com.glotrush.entities.challenge.ChallengeParticipant;
 import com.glotrush.enumerations.ChallengeStatus;
@@ -141,6 +142,38 @@ public class ChallengeServiceTest {
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
         when(accountsRepository.findById(challengedId)).thenReturn(Optional.of(challenged));
         when(challengeBuilder.buildChallenge(any(), any(), any(), any(), any(), any())).thenReturn(challenge);
+        when(challengeBuilder.buildParticipant(any(), any())).thenReturn(mockParticipant);
+        when(challengeRepository.save(any())).thenReturn(challenge);
+        when(userProfileRepository.findByAccount_Id(any())).thenReturn(Optional.empty());
+        when(challengeBuilder.toResponse(any(), any(), any(), any(), any())).thenReturn(ChallengeResponse.builder().build());
+
+        ChallengeResponse result = challengeService.createChallenge(challengerId, request);
+
+        assertThat(result).isNotNull();
+        verify(challengeRepository).save(any());
+    }
+    
+    @Test
+    @DisplayName("Should create DUEL challenge successfully with interactive lesson")
+    void createChallenge_duelInteractiveSuccess() {
+        InteractiveLesson interactiveLesson = mock(InteractiveLesson.class);
+        when(interactiveLesson.getLessonType()).thenReturn(LessonType.INTERACTIVE);
+        when(interactiveLesson.getTitle()).thenReturn("Interactive Lesson");
+        when(challenge.getId()).thenReturn(challengeId);
+        when(challenge.getExpiresAt()).thenReturn(LocalDateTime.now().plusHours(1));
+
+        CreateChallengeRequest request = new CreateChallengeRequest();
+        request.setChallengeType(ChallengeType.DUEL);
+        request.setLessonId(lessonId);
+        request.setChallengedId(challengedId);
+
+        ChallengeParticipant mockParticipant = mock(ChallengeParticipant.class);
+        when(mockParticipant.getAccount()).thenReturn(challenger);
+
+        when(accountsRepository.findById(challengerId)).thenReturn(Optional.of(challenger));
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(interactiveLesson));
+        when(accountsRepository.findById(challengedId)).thenReturn(Optional.of(challenged));
+        when(challengeBuilder.buildChallenge(any(), any(), any(), any(), any())).thenReturn(challenge);
         when(challengeBuilder.buildParticipant(any(), any())).thenReturn(mockParticipant);
         when(challengeRepository.save(any())).thenReturn(challenge);
         when(userProfileRepository.findByAccount_Id(any())).thenReturn(Optional.empty());

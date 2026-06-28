@@ -37,4 +37,5 @@ public class CreateChallengeRequest {
     private List<ChallengeFlashCardRequest> flashcards;
     private List<ChallengeMatchingPairRequest> matchingPairs;
     private List<ChallengeSortingExerciseRequest> sortingExercises;
+    private List<ChallengeInteractiveRequest> interactives;
 }
