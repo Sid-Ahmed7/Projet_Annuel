@@ -47,6 +47,7 @@ import com.glotrush.repositories.ChallengeParticipantsRepository;
 import com.glotrush.repositories.ChallengeRepository;
 import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.LessonRepository;
+import com.glotrush.repositories.UserLanguageRepository;
 import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.services.challenge.ChallengeService;
@@ -77,6 +78,8 @@ public class ChallengeServiceTest {
     @Mock
     private LanguageRepository languageRepository;
     @Mock
+    private UserLanguageRepository userLanguageRepository;
+    @Mock
     private IProgressService progressService;
     @Mock
     private IChallengeWsService challengeWsService;
@@ -99,7 +102,7 @@ public class ChallengeServiceTest {
     void setUp() {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
 
-        challengeService = new ChallengeService(challengeRepository, challengeParticipantsRepository, accountsRepository, userProfileRepository, userProgressRepository, challengeWsService, messageSource, lessonRepository, languageRepository, challengeBuilder, progressService);
+        challengeService = new ChallengeService(challengeRepository, challengeParticipantsRepository, accountsRepository, userProfileRepository, userProgressRepository, challengeWsService, messageSource, lessonRepository, languageRepository, userLanguageRepository, challengeBuilder, progressService);
 
         challengerId = UUID.randomUUID();
         challengedId = UUID.randomUUID();
@@ -137,7 +140,7 @@ public class ChallengeServiceTest {
         when(accountsRepository.findById(challengerId)).thenReturn(Optional.of(challenger));
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
         when(accountsRepository.findById(challengedId)).thenReturn(Optional.of(challenged));
-        when(challengeBuilder.buildChallenge(any(), any(), any(), any(), any())).thenReturn(challenge);
+        when(challengeBuilder.buildChallenge(any(), any(), any(), any(), any(), any())).thenReturn(challenge);
         when(challengeBuilder.buildParticipant(any(), any())).thenReturn(mockParticipant);
         when(challengeRepository.save(any())).thenReturn(challenge);
         when(userProfileRepository.findByAccount_Id(any())).thenReturn(Optional.empty());
