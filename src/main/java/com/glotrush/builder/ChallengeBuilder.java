@@ -18,6 +18,7 @@ import com.glotrush.dto.response.challenge.ChallengeQcmResponse;
 import com.glotrush.dto.response.challenge.ChallengeResponse;
 import com.glotrush.dto.response.challenge.ChallengeSortingExerciseResponse;
 import com.glotrush.dto.response.challenge.ChallengeUserResponse;
+import com.glotrush.dto.response.challenge.ChallengeProgress;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.Lesson;
@@ -314,6 +315,32 @@ public class ChallengeBuilder {
                 .options(interactive.getOptions())
                 .correctOptionIndex(interactive.getCorrectOptionIndex())
                 .correctWord(interactive.getCorrectWord())
+                .build();
+    }
+
+    public ChallengeProgress toProgressResponse(ChallengeParticipant participant, UUID challengeId, UserProfile profile) {
+        return ChallengeProgress.builder()
+                .challengeId(challengeId)
+                .accountId(participant.getAccount().getId())
+                .username(participant.getAccount().getUsername())
+                .photoUrl(profile != null ? profile.getPhotoUrl() : null)
+                .score(participant.getScore())
+                .timePassed(participant.getTimePassed())
+                .finalRank(participant.getFinalRank())
+                .xpGained(participant.getXpGained() != null ? participant.getXpGained().intValue() : null)
+                .build();
+    }
+
+    public ChallengeProgress toProgressResponse(UUID challengeId, Accounts account, UserProfile profile, Double score, Integer questionsAnswered, Long timePassed, Integer totalQuestions) {
+        return ChallengeProgress.builder()
+                .challengeId(challengeId)
+                .accountId(account.getId())
+                .username(account.getUsername())
+                .photoUrl(profile != null ? profile.getPhotoUrl() : null)
+                .score(score)
+                .questionAnswered(questionsAnswered)
+                .timePassed(timePassed)
+                .totalQuestions(totalQuestions)
                 .build();
     }
 }

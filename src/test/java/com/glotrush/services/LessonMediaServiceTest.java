@@ -70,7 +70,7 @@ class LessonMediaServiceTest {
     @Test
     @DisplayName("Should throw exception when file is too large")
     void shouldThrowExceptionWhenFileIsTooLarge() {
-        byte[] largeBytes = new byte[3 * 1024 * 1024]; // 3MB (limit is 2MB for images)
+        byte[] largeBytes = new byte[3 * 1024 * 1024];
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png", largeBytes);
         when(messageSource.getMessage(eq("image.tooLarge"), any(), any(Locale.class))).thenReturn("File too large");
 

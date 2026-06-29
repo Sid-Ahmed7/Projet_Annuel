@@ -293,7 +293,6 @@ public class TopicService implements ITopicService {
         Collections.shuffle(sortingExercises);
         Collections.shuffle(interactiveQuestions);
 
-        // Limiter à un certain nombre (ex: 5 de chaque pour un examen varié)
         return ExamResponse.builder()
                 .topicId(topicId)
                 .topicName(topic.getName())
@@ -515,7 +514,6 @@ public class TopicService implements ITopicService {
     private boolean validateSortingExercise(SortingExerciseAnswerRequest request) {
         SortingExerciseEntity entity = sortingExerciseRepository.findById(request.getId()).orElse(null);
         if (entity == null || request.getUserOrder() == null) return false;
-        // Vérification exacte de l'ordre
         return entity.getCorrectOrder() != null && entity.getCorrectOrder().equals(request.getUserOrder());
     }
 
