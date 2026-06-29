@@ -23,6 +23,7 @@ import com.glotrush.enumerations.InteractiveSystemType;
 import com.glotrush.repositories.exercice.InteractiveQuestionRepository;
 import com.glotrush.repositories.exercice.QcmQuestionRepository;
 import com.glotrush.repositories.exercice.SortingExerciseRepository;
+import com.glotrush.exceptions.InteractiveQuestionNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -130,7 +131,7 @@ public class AILessonHelpService implements IAILessonHelpService {
 
         if (exerciseType == LessonType.INTERACTIVE) {
             InteractiveQuestionEntity question = interactiveQuestionRepository.findById(exerciseId)
-                    .orElseThrow(() -> new RuntimeException("Interactive question not found: " + exerciseId));
+                    .orElseThrow(() -> new InteractiveQuestionNotFoundException("Interactive question not found: " + exerciseId));
 
             String correctAnswer = "Non definie";
             if (question.getSystemType() == InteractiveSystemType.MULTIPLE_CHOICE) {

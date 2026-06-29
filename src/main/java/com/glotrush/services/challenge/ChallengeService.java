@@ -195,16 +195,15 @@ public class ChallengeService implements IChallengeService {
         };
 
         UUID fChallengeId = challenge.getId();
-        ChallengeProgress progressToSend = ChallengeProgress.builder()
-            .challengeId(fChallengeId)
-            .accountId(accountId)
-            .username(account.getUsername())
-            .photoUrl(userProfile != null ? userProfile.getPhotoUrl() : null)
-            .score(challenge.getChallengeType() == ChallengeType.DUEL ? null : response.getScore())
-            .questionAnswered(totalQuestions)
-            .timePassed(response.getTimePassed())
-            .totalQuestions(totalQuestions)
-            .build();
+        ChallengeProgress progressToSend = challengeBuilder.toProgressResponse(
+            fChallengeId,
+            account,
+            userProfile,
+            challenge.getChallengeType() == ChallengeType.DUEL ? null : response.getScore(),
+            totalQuestions,
+            response.getTimePassed(),
+            totalQuestions
+        );
         TransactionSynchronizationManager.registerSynchronization(
             new ChallengeSynchronization(() -> challengeWsService.sendChallengeProgress(fChallengeId, progressToSend))
         );
@@ -370,16 +369,7 @@ public class ChallengeService implements IChallengeService {
        List<ChallengeProgress> results = participants.stream().map(participant -> {
             Accounts account = participant.getAccount();
             UserProfile prof = userProfileRepository.findByAccount_Id(account.getId()).orElse(null);
-            return ChallengeProgress.builder()
-                .challengeId(challengeId)
-                .accountId(account.getId())
-                .username(account.getUsername())
-                .photoUrl(prof != null ? prof.getPhotoUrl() : null)
-                .score(participant.getScore())
-                .timePassed(participant.getTimePassed())
-                .finalRank(participant.getFinalRank())
-                .xpGained(participant.getXpGained() != null ? participant.getXpGained().intValue() : null)
-                .build();
+            return challengeBuilder.toProgressResponse(participant, challengeId, prof);
         }).collect(Collectors.toList());
        TransactionSynchronizationManager.registerSynchronization(
            new ChallengeSynchronization(() -> results.forEach(result -> challengeWsService.sendChallengeResult(challengeId, result)))

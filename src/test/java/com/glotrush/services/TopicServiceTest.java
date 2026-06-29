@@ -601,8 +601,8 @@ class TopicServiceTest {
 
         ExamResultRequest request = ExamResultRequest.builder()
                 .interactiveAnswers(List.of(
-                        new InteractiveAnswerRequest(qcmQuestion.getId(), 2, null), // Correct
-                        new InteractiveAnswerRequest(openTextQuestion.getId(), null, "hous") // Correct (Levenshtein <= 2)
+                        new InteractiveAnswerRequest(qcmQuestion.getId(), 2, null),
+                        new InteractiveAnswerRequest(openTextQuestion.getId(), null, "hous")
                 ))
                 .build();
 
