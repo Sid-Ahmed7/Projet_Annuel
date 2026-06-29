@@ -14,7 +14,7 @@ public interface IChallengeService {
     ChallengeResponse createChallenge(UUID accountId, CreateChallengeRequest newChallenge);
     ChallengeResponse getChallenge(UUID challengeId, UUID accountId);
     List<ChallengeResponse> getUserChallenge(UUID accountId);
-    List<ChallengeResponse> getPublicChallenges();
+    List<ChallengeResponse> getPublicChallenges(UUID accountId);
     ChallengeResponse acceptChallenge(UUID challengeId, UUID accountId);
     ChallengeResponse submitChallenge(UUID challengeId, UUID accountId, ChallengeResponseRequest response);
     ChallengeResponse declineChallenge(UUID challengeId, UUID accountId);

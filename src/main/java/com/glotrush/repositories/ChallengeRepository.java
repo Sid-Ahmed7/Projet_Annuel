@@ -19,6 +19,9 @@ public interface ChallengeRepository extends JpaRepository<Challenge, UUID> {
 
     List<Challenge> findByChallengeTypeAndChallengeStatus(ChallengeType challengeType, ChallengeStatus challengeStatus);
 
+    @Query("SELECT c FROM Challenge c WHERE c.challengeType = 'PUBLIC' AND c.challengeStatus = 'ACTIVE' AND (:activeLanguageId IS NULL OR c.language.id = :activeLanguageId) AND (:nativeLanguageId IS NULL OR c.sourceLanguage.id = :nativeLanguageId)")
+    List<Challenge> findPublicChallengesWithFilters(@Param("activeLanguageId") UUID activeLanguageId,@Param("nativeLanguageId") UUID nativeLanguageId);
+
     @Query("SELECT c FROM Challenge c WHERE c.challengeStatus IN ('PENDING', 'ACTIVE') AND c.expiresAt <= :now")
     List<Challenge> findExpiredChallenges(@Param("now") LocalDateTime now);
 } 

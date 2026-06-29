@@ -43,7 +43,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ChallengeBuilder {
 
-    public Challenge buildChallenge(CreateChallengeRequest newChallenge, Lesson lesson, Language language, Accounts challenger, Accounts challenged) {
+    public Challenge buildChallenge(CreateChallengeRequest newChallenge, Lesson lesson, Language language, Language sourceLanguage, Accounts challenger, Accounts challenged) {
         ChallengeStatus status = newChallenge.getChallengeType() == ChallengeType.PUBLIC ? ChallengeStatus.ACTIVE : ChallengeStatus.PENDING;
         LocalDateTime expiresAt = newChallenge.getChallengeType() == ChallengeType.DUEL ? LocalDateTime.now().plusMinutes(10) : LocalDateTime.now().plusHours(24);
 
@@ -54,6 +54,7 @@ public class ChallengeBuilder {
                 .challenger(challenger)
                 .challenged(challenged)
                 .language(languages)
+                .sourceLanguage(sourceLanguage)
                 .challengeType(newChallenge.getChallengeType())
                 .lessonType(lessonType)
                 .challengeStatus(status)
@@ -191,6 +192,9 @@ public class ChallengeBuilder {
                 .lessonType(challenge.getLessonType())
                 .challengeStatus(challenge.getChallengeStatus())
                 .languageId(challenge.getLanguage().getId())
+                .sourceLanguageId(challenge.getSourceLanguage() != null ? challenge.getSourceLanguage().getId() : null)
+                .sourceLanguageCode(challenge.getSourceLanguage() != null ? challenge.getSourceLanguage().getCode() : null)
+                .sourceLanguageName(challenge.getSourceLanguage() != null ? challenge.getSourceLanguage().getName() : null)
                 .challenger(toUserResponse(challenge.getChallenger(), challengerProfile))
                 .challenged(challenge.getChallenged() != null ? toUserResponse(challenge.getChallenged(), challengedProfile) : null)
                 .qcm(challenge.getQcm().stream().map(this::toQcmResponse).collect(Collectors.toList()))

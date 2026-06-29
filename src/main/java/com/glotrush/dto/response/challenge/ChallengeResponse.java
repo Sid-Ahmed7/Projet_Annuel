@@ -21,6 +21,9 @@ public class ChallengeResponse {
     private LessonType lessonType;
     private ChallengeStatus challengeStatus;
     private UUID languageId;
+    private UUID sourceLanguageId;
+    private String sourceLanguageCode;
+    private String sourceLanguageName;
     private ChallengeUserResponse challenger;
     private ChallengeUserResponse challenged;
     private List<ChallengeQcmResponse> qcm;

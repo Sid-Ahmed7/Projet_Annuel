@@ -45,8 +45,10 @@ import com.glotrush.repositories.ChallengeParticipantsRepository;
 import com.glotrush.repositories.ChallengeRepository;
 import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.LessonRepository;
+import com.glotrush.repositories.UserLanguageRepository;
 import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.repositories.UserProgressRepository;
+import com.glotrush.enumerations.LanguageType;
 import com.glotrush.services.progress.IProgressService;
 import com.glotrush.utils.LocaleUtils;
 import com.glotrush.websocket.challenge.IChallengeWsService;
@@ -69,6 +71,7 @@ public class ChallengeService implements IChallengeService {
     private final MessageSource messageSource;
     private final LessonRepository lessonRepository;
     private final LanguageRepository languageRepository;
+    private final UserLanguageRepository userLanguageRepository;
     private final ChallengeBuilder challengeBuilder;
     private final IProgressService progressService;
 
@@ -98,7 +101,14 @@ public class ChallengeService implements IChallengeService {
             language = languageRepository.findById(newChallenge.getLanguageId()).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
         }
 
-        Challenge challenge = challengeBuilder.buildChallenge(newChallenge, lesson, language, challenger, challenged);
+        Language sourceLanguage = null;
+        if (lesson != null && lesson.getTopic() != null) {
+            sourceLanguage = lesson.getTopic().getSourceLanguage();
+        } else if (newChallenge.getSourceLanguageId() != null) {
+            sourceLanguage = languageRepository.findById(newChallenge.getSourceLanguageId()).orElse(null);
+        }
+
+        Challenge challenge = challengeBuilder.buildChallenge(newChallenge, lesson, language, sourceLanguage, challenger, challenged);
         challenge.getParticipants().add(challengeBuilder.buildParticipant(challenge, challenger));
 
         Challenge savedChallenge = challengeRepository.save(challenge);
@@ -131,8 +141,11 @@ public class ChallengeService implements IChallengeService {
     }
 
     @Override
-    public List<ChallengeResponse> getPublicChallenges() {
-        return challengeRepository.findByChallengeTypeAndChallengeStatus(ChallengeType.PUBLIC, ChallengeStatus.ACTIVE).stream().map(challenge -> mapToChallengeResponse(challenge, null)).collect(Collectors.toList());
+    public List<ChallengeResponse> getPublicChallenges(UUID accountId) {
+        UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElse(null);
+        UUID activeLanguageId = (profile != null && profile.getActiveLanguage() != null) ? profile.getActiveLanguage().getId() : null;
+        UUID nativeLanguageId = userLanguageRepository.findByAccount_IdAndLanguageType(accountId, LanguageType.NATIVE).stream().findFirst().map(ul -> ul.getLanguage().getId()).orElse(null);
+        return challengeRepository.findPublicChallengesWithFilters(activeLanguageId, nativeLanguageId).stream().map(challenge -> mapToChallengeResponse(challenge, null)).collect(Collectors.toList());
     }
 
     @Override

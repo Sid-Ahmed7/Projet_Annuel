@@ -170,7 +170,7 @@ public class ChallengeControllerIntegrationTest {
     @DisplayName("Should return all public challenges")
     void getAllPublicChallenges_ok() throws Exception {
         Cookie cookie = logAndGetCookie();
-        when(challengeService.getPublicChallenges()).thenReturn(List.of());
+        when(challengeService.getPublicChallenges(any())).thenReturn(List.of());
         mockMvc.perform(get("/api/v1/challenges/all-public-challenges")
                 .cookie(cookie))
                 .andExpect(status().isOk());
