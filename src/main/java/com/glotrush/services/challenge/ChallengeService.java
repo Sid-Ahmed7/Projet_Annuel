@@ -102,7 +102,7 @@ public class ChallengeService implements IChallengeService {
         }
 
         Language sourceLanguage = null;
-        if (lesson != null) {
+        if (lesson != null && lesson.getTopic() != null) {
             sourceLanguage = lesson.getTopic().getSourceLanguage();
         } else if (newChallenge.getSourceLanguageId() != null) {
             sourceLanguage = languageRepository.findById(newChallenge.getSourceLanguageId()).orElse(null);
