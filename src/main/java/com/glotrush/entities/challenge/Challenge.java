@@ -56,6 +56,10 @@ public class Challenge {
     @JoinColumn(name = "language_id", nullable = false)
     private Language language;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_language_id")
+    private Language sourceLanguage;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "challenge_type", nullable = false)
     private ChallengeType challengeType;

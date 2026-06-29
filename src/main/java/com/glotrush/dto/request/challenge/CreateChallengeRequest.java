@@ -26,6 +26,8 @@ public class CreateChallengeRequest {
     private UUID challengedId;
 
     private UUID languageId;
+    private UUID sourceLanguageId;
+
     private LessonType lessonType;
 
     @Min(1)

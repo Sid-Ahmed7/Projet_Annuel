@@ -76,8 +76,9 @@ public class ChallengeController {
 
     @GetMapping("/all-public-challenges")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<ChallengeResponse>> getAllPublicChallenges() {
-        List<ChallengeResponse> response = challengeService.getPublicChallenges();
+    public ResponseEntity<List<ChallengeResponse>> getAllPublicChallenges(Authentication authentication) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        List<ChallengeResponse> response = challengeService.getPublicChallenges(accountId);
         return ResponseEntity.ok(response);
     }
 
