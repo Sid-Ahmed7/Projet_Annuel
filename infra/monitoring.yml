@@ -20,8 +20,6 @@ services:
 
   grafana:
     image: grafana/grafana:11.1.0
-    ports:
-      - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
     environment:
@@ -32,6 +30,7 @@ services:
       - grafana_admin_password
     networks:
       - monitoring_net
+      - proxy
     deploy:
       replicas: 1
       restart_policy:
@@ -39,6 +38,13 @@ services:
       placement:
         constraints:
           - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.grafana.rule=Host(`grafana.skaldly.fr`)"
+        - "traefik.http.routers.grafana.entrypoints=websecure"
+        - "traefik.http.routers.grafana.tls=true"
+        - "traefik.http.routers.grafana.tls.certresolver=myresolver"
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
 configs:
   prometheus_config:
@@ -55,6 +61,8 @@ networks:
     driver: overlay
     attachable: true
     name: monitoring_net
+  proxy:
+    external: true
 
 volumes:
   prometheus_data:
