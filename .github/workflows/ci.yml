@@ -61,6 +61,11 @@ jobs:
           FLYWAY_LAST_NAME: ${{ secrets.TEST_FLYWAY_LAST_NAME }}
           FLYWAY_ADMIN_PASS: ${{ secrets.TEST_FLYWAY_ADMIN_PASS }}
           FLYWAY_SECRET_KEY: ${{ secrets.TEST_FLYWAY_SECRET_KEY }}
+          VAPID_PUBLIC_KEY: ${{ secrets.TEST_VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.TEST_VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.TEST_VAPID_SUBJECT }}
+          HUGGINGFACE_API_KEY: ${{ secrets.TEST_HUGGINGFACE_API_KEY }}
+          MISTRAL_API_KEY: ${{ secrets.TEST_MISTRAL_API_KEY }}
           SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: true
           SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 

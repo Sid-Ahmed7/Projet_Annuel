@@ -13,8 +13,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 COPY --from=build /app/target/*.jar app.jar
 
 USER root
-RUN mkdir -p uploads/images && chown -R spring:spring uploads
-
+RUN mkdir -p uploads/images uploads/lessons/audios uploads/lessons/images && chown -R spring:spring uploads
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
