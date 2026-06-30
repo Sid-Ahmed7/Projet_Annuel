@@ -39,6 +39,17 @@ jobs:
           push: true
           tags: arthurbrd/glotrush-back:latest
 
+      - name: Copy monitoring configs to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          source: "infra/monitoring.yml,infra/prometheus.yml"
+          target: "infra"
+          strip_components: 1
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -49,3 +60,7 @@ jobs:
           script: |
             docker pull arthurbrd/glotrush-back:latest
             docker service update --image arthurbrd/glotrush-back:latest --force skaldly_back
+            docker network create --driver overlay --attachable monitoring_net || true
+            docker service update --network-add monitoring_net skaldly_back || true
+            cd infra
+            docker stack deploy -c monitoring.yml monitoring
