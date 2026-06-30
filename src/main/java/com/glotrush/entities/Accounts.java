@@ -1,5 +1,6 @@
 package com.glotrush.entities;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -63,14 +64,14 @@ public class Accounts {
     @Builder.Default
     private UserRole role = UserRole.USER;
 
-    @Column(nullable = true)
+    @Column()
     private LocalDateTime lastPasswordChange;
     
     @Column(nullable = false)
     @Builder.Default
     private Integer failedLoginAttempts = 0;
     
-    @Column(nullable = true)
+    @Column()
     private LocalDateTime accountLockedUntil;
 
     @OneToOne(mappedBy = "account",cascade = CascadeType.ALL,orphanRemoval = true,fetch = FetchType.LAZY)
@@ -90,6 +91,45 @@ public class Accounts {
 
     @Column(name="auth_key", nullable = true)
     private String authKey;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer rejectedReviewCount = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isBannedOfReview = false;
+
+    @Column(name = "current_streak")
+    @Builder.Default
+    private int currentStreak = 0;
+
+    @Column(name = "longest_streak")
+    @Builder.Default
+    private int longestStreak = 0;
+
+    @Column(name = "last_activity_date")
+    private LocalDate lastActivityDate;
+
+    @Column(name = "notif_lesson_reminder")
+    @Builder.Default
+    private boolean notifLessonReminder = true;
+
+    @Column(name = "notif_streak_urgency")
+    @Builder.Default
+    private boolean notifStreakUrgency = true;
+
+    @Column(name = "notif_inactivity")
+    @Builder.Default
+    private boolean notifInactivity = true;
+
+    @Column(name = "notif_weekly_goal")
+    @Builder.Default
+    private boolean notifWeeklyGoal = true;
+
+    @Column(name = "notif_review_reminder")
+    @Builder.Default
+    private boolean notifReviewReminder = true;
 
 
     @Column(nullable = false)

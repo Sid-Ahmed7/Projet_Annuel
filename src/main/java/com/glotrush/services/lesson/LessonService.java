@@ -9,15 +9,28 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.glotrush.dto.request.LessonMistakeRequest;
 import com.glotrush.dto.request.LessonReorderRequest;
 import com.glotrush.dto.request.LessonRequest;
+import com.glotrush.dto.request.answer.UserMistakeAddMultipleRequest;
+import com.glotrush.dto.request.answer.UserMistakeAddRequest;
+import com.glotrush.enumerations.LearningType;
+import com.glotrush.enumerations.LessonType;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.services.progress.IProgressService;
+import com.glotrush.services.rewiewMistake.IReviewMistakeService;
+import com.glotrush.services.streak.IStreakService;
+
+import com.glotrush.services.session.ILessonSessionService;
+
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.builder.LessonBuilder;
+import com.glotrush.dispatcher.notifications.NotificationDispatcher;
+import com.glotrush.builder.LessonSessionBuilder;
+import com.glotrush.enumerations.LessonSessionStatus;
 import com.glotrush.dto.request.CompleteLessonRequest;
 import com.glotrush.dto.response.CompleteLessonResponse;
 import com.glotrush.dto.response.LessonResponse;
@@ -33,12 +46,12 @@ import com.glotrush.enumerations.LessonStatus;
 import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.config.LessonRuleProperties;
-import com.glotrush.enumerations.LessonType;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.entities.lesson.MatchingPairLesson;
 import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
+import com.glotrush.entities.lesson.InteractiveLesson;
 import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
 import com.glotrush.repositories.AccountsRepository;
@@ -62,10 +75,15 @@ public class LessonService implements ILessonService {
     private final AccountsRepository accountsRepository;
     private final IProgressService progressService;
     private final LessonBuilder lessonBuilder;
+    private final LessonSessionBuilder lessonSessionBuilder;
     private final TopicRepository topicRepository;
     private final LessonEntityToLessonResponse lessonEntityToLessonResponse;
     private final LessonRequestToLessonEntity lessonRequestToLessonEntity;
     private final LessonRuleProperties lessonRuleProperties;
+    private final NotificationDispatcher notificationDispatcher;
+    private final IStreakService streakService;
+    private final ILessonSessionService lessonSessionService;
+    private final IReviewMistakeService reviewMistakeService;
 
     @Override
     public List<LessonSummaryResponse> getLessonsByTopic(UUID topicId, UUID accountId) {
@@ -151,6 +169,8 @@ public class LessonService implements ILessonService {
             double score = (double) lessonRequest.getCorrectAnswers() / lessonRequest.getTotalAnswers() * 100;
             if (lesson.getMinScoreRequired() != null && score < lesson.getMinScoreRequired()) {
                 userLessonProgressRepository.save(progress);
+
+                lessonSessionService.saveLessonSession(lessonSessionBuilder.buildLessonSessionRequest(accountId, lessonId, lessonRequest, LessonSessionStatus.FAILED));
                 UserProgress topicProgress = progressService.getOrCreateProgress(accountId, lesson.getTopic().getId());
                 UserProgressResponse progressResponse = progressService.getProgressByTopic(accountId, lesson.getTopic().getId());
                 Integer currentLevel = LevelUtils.calculateLevel(topicProgress.getTotalXP());
@@ -169,14 +189,39 @@ public class LessonService implements ILessonService {
 
         boolean isFirstCompletion = progress.getStatus() != LessonStatus.COMPLETED;
         progress.setStatus(LessonStatus.COMPLETED);
+        progress.setCompletedAt(LocalDateTime.now());
 
         userLessonProgressRepository.save(progress);
 
-        if (isFirstCompletion) {
-            return handleFirstCompletion(accountId, lesson);
-        } else {
-            return handleRecompletion(accountId, lesson);
-        }
+        UUID topicId = lesson.getTopic().getId();
+        if (lessonRequest.getMistakeFlashCardIds() != null && !lessonRequest.getMistakeFlashCardIds().isEmpty())
+            reviewMistakeService.addMultipleToMistakeList(accountId, UserMistakeAddMultipleRequest.builder()
+                    .questionIds(lessonRequest.getMistakeFlashCardIds()).lessonType(LessonType.FLASHCARD)
+                    .topicId(topicId).learningType(LearningType.LESSON).build());
+        if (lessonRequest.getMistakeQcmList() != null)
+            for (LessonMistakeRequest lessonQcmMistakes : lessonRequest.getMistakeQcmList())
+                reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(lessonQcmMistakes.getId()).lessonType(LessonType.QCM)
+                        .topicId(topicId).learningType(LearningType.LESSON).userAnswer(lessonQcmMistakes.getUserAnswer()).build());
+        if (lessonRequest.getMistakeMatchingList() != null)
+            for (LessonMistakeRequest lessonMatchingMistakes : lessonRequest.getMistakeMatchingList())
+                reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(lessonMatchingMistakes.getId()).lessonType(LessonType.MATCHING_PAIR)
+                        .topicId(topicId).learningType(LearningType.LESSON).userAnswer(lessonMatchingMistakes.getUserAnswer()).build());
+        if (lessonRequest.getMistakeSortingList() != null)
+            for (LessonMistakeRequest lessonSortingMistakes : lessonRequest.getMistakeSortingList())
+                reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(lessonSortingMistakes.getId()).lessonType(LessonType.SORTING_EXERCISE)
+                        .topicId(topicId).learningType(LearningType.LESSON).userAnswer(lessonSortingMistakes.getUserAnswer()).build());
+        if (lessonRequest.getMistakeInteractiveList() != null)
+            for (LessonMistakeRequest lessonInteractiveMistakes : lessonRequest.getMistakeInteractiveList())
+                reviewMistakeService.addToMistakeList(accountId, UserMistakeAddRequest.builder()
+                        .questionId(lessonInteractiveMistakes.getId()).lessonType(LessonType.INTERACTIVE)
+                        .topicId(topicId).learningType(LearningType.LESSON).userAnswer(lessonInteractiveMistakes.getUserAnswer()).build());
+
+        CompleteLessonResponse response = isFirstCompletion ? handleFirstCompletion(accountId, lesson) : handleRecompletion(accountId, lesson);
+        lessonSessionService.saveLessonSession(lessonSessionBuilder.buildLessonSessionRequest(accountId, lesson.getId(), lessonRequest, LessonSessionStatus.COMPLETED));
+        return response;
     }
 
 
@@ -189,6 +234,7 @@ public class LessonService implements ILessonService {
         topicProgress = progressService.addXP(accountId, lesson.getTopic().getId(), xpEarned);
         topicProgress = progressService.incrementLessonCompletion(accountId, lesson.getTopic().getId());
         topicProgress = progressService.updateLastStudiedAt(accountId, lesson.getTopic().getId());
+        streakService.updateStreakForUser(accountId);
         Integer newLevel = LevelUtils.calculateLevel(topicProgress.getTotalXP());
         boolean leveledUp = !oldLevel.equals(newLevel);
 
@@ -244,6 +290,7 @@ public class LessonService implements ILessonService {
         recalculateRewards(lesson);
 
         lessonRepository.save(lesson);
+        notificationDispatcher.sendNotificationWhenNewLesson(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
     }
 
@@ -262,6 +309,10 @@ public class LessonService implements ILessonService {
         } else if (lesson instanceof SortingExerciseLesson) {
             lesson.setXpReward(lessonRuleProperties.getSortingFixedXp());
             lesson.setDurationMinutes((int) Math.ceil((double) lessonRuleProperties.getSortingFixedSeconds() / 60));
+        } else if (lesson instanceof InteractiveLesson interactiveLesson) {
+            int count = interactiveLesson.getQuestions() != null ? interactiveLesson.getQuestions().size() : 0;
+            lesson.setXpReward(count * lessonRuleProperties.getXpPerQcm());
+            lesson.setDurationMinutes((int) Math.ceil((double) (count * lessonRuleProperties.getSecondsPerQcm()) / 60));
         }
 
         if (lesson.getXpReward() == null || lesson.getXpReward() < 5) lesson.setXpReward(5);
@@ -277,11 +328,15 @@ public class LessonService implements ILessonService {
                 .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
 
         lesson.setIsActive(!lesson.getIsActive());
+      
         
         lessonRepository.save(lesson);
+        notificationDispatcher.sendNotificationWhenNewLesson(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
     }
 
+
+    
     @Override
     public List<LessonSummaryResponse> getLessonsByTopicForAdmin(UUID topicId, UUID accountId) {
         return lessonRepository.findByTopic_IdOrderByOrderIndexAsc(topicId).stream()

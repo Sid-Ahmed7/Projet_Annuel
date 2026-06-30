@@ -5,11 +5,13 @@ import com.glotrush.dto.request.lesson.FlashcardLessonRequest;
 import com.glotrush.dto.request.lesson.MatchingPairLessonRequest;
 import com.glotrush.dto.request.lesson.QcmLessonRequest;
 import com.glotrush.dto.request.lesson.SortingExerciseLessonRequest;
+import com.glotrush.dto.request.lesson.InteractiveLessonRequest;
 import com.glotrush.entities.Lesson;
 import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.entities.lesson.MatchingPairLesson;
 import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
+import com.glotrush.entities.lesson.InteractiveLesson;
 import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.utils.LocaleUtils;
 
@@ -48,6 +50,13 @@ public abstract class LessonRequestToLessonEntity {
         }
     }
 
+    @AfterMapping
+    protected void linkInteractiveQuestions(@MappingTarget InteractiveLesson lesson) {
+        if (lesson.getQuestions() != null) {
+            lesson.getQuestions().forEach(q -> q.setLesson(lesson));
+        }
+    }
+
 
     public Lesson lessonRequestToLessonEntity(LessonRequest request, @Context MessageSource messageSource) {
         return switch (request){
@@ -55,6 +64,7 @@ public abstract class LessonRequestToLessonEntity {
             case MatchingPairLessonRequest matchingPairLessonRequest -> mapMatchingPairLessonRequestToMatchingPairLessonEntity(matchingPairLessonRequest);
             case QcmLessonRequest qcmLessonRequest -> mapQcmLessonRequestToQcmLessonEntity(qcmLessonRequest);
             case SortingExerciseLessonRequest sortingExerciseLessonRequest -> mapSortingExerciseLessonRequestToSortingExerciseLessonEntity(sortingExerciseLessonRequest);
+            case InteractiveLessonRequest interactiveLessonRequest -> mapInteractiveLessonRequestToInteractiveLessonEntity(interactiveLessonRequest);
             case null, default -> throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale()));
         };
     }
@@ -65,6 +75,7 @@ public abstract class LessonRequestToLessonEntity {
             case MatchingPairLessonRequest matchingPairLessonRequest -> updateMatchingPairLessonFromRequest(matchingPairLessonRequest, (MatchingPairLesson) lesson);
             case QcmLessonRequest qcmLessonRequest -> updateQcmLessonFromRequest(qcmLessonRequest, (QcmLesson) lesson);
             case SortingExerciseLessonRequest sortingExerciseLessonRequest -> updateSortingExerciseLessonFromRequest(sortingExerciseLessonRequest, (SortingExerciseLesson) lesson);
+            case InteractiveLessonRequest interactiveLessonRequest -> updateInteractiveLessonFromRequest(interactiveLessonRequest, (InteractiveLesson) lesson);
             case null, default -> throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale()));
         }
     }
@@ -78,6 +89,8 @@ public abstract class LessonRequestToLessonEntity {
 
     protected abstract SortingExerciseLesson mapSortingExerciseLessonRequestToSortingExerciseLessonEntity(SortingExerciseLessonRequest request);
 
+    protected abstract InteractiveLesson mapInteractiveLessonRequestToInteractiveLessonEntity(InteractiveLessonRequest request);
+
     // ALL UPDATE MAPPING TYPE OF LESSON
     protected abstract void updateFlashcardLessonFromRequest(FlashcardLessonRequest request, @MappingTarget FlashcardLesson lesson);
 
@@ -86,4 +99,6 @@ public abstract class LessonRequestToLessonEntity {
     protected abstract void updateQcmLessonFromRequest(QcmLessonRequest request, @MappingTarget QcmLesson lesson);
 
     protected abstract void updateSortingExerciseLessonFromRequest(SortingExerciseLessonRequest request, @MappingTarget SortingExerciseLesson lesson);
+
+    protected abstract void updateInteractiveLessonFromRequest(InteractiveLessonRequest request, @MappingTarget InteractiveLesson lesson);
 }

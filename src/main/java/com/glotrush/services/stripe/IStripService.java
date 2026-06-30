@@ -1,5 +1,7 @@
 package com.glotrush.services.stripe;
 
+import com.stripe.model.checkout.Session;
+
 public interface IStripService {
 
     String createCustomer(String email, String name);
@@ -8,5 +10,6 @@ public interface IStripService {
     void cancelSubscriptionAtPeriodEnd(String stripeSubscriptionId);
     void reactivateSubscription(String stripeSubscriptionId);
     void schedulePlanChange(String stripeSubscriptionId, String newPriceId);
-    
+    Session retrieveSession(String sessionId);
+
 }

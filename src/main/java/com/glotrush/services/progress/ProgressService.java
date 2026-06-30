@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.glotrush.builder.ProgressBuilder;
 import com.glotrush.dto.response.LanguageLevelResponse;
@@ -23,7 +24,9 @@ import com.glotrush.entities.UserLessonProgress;
 import com.glotrush.entities.UserProgress;
 import com.glotrush.enumerations.LanguageType;
 import com.glotrush.exceptions.ResourceNotFoundException;
+import com.glotrush.enumerations.ChallengeType;
 import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.ChallengeParticipantsRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserLanguageRepository;
@@ -32,6 +35,8 @@ import com.glotrush.repositories.UserProgressRepository;
 
 import com.glotrush.utils.LevelUtils;
 import com.glotrush.utils.LocaleUtils;
+import com.glotrush.websocket.IRankingWsService;
+import com.glotrush.websocket.RankingSynchronization;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -48,6 +53,8 @@ public class ProgressService implements IProgressService {
     private final LessonRepository lessonRepository;
     private final UserLessonProgressRepository userLessonProgressRepository;
     private final UserLanguageRepository userLanguageRepository;
+    private final IRankingWsService rankingWsService;
+    private final ChallengeParticipantsRepository challengeParticipantsRepository;
 
 
 
@@ -55,7 +62,9 @@ public class ProgressService implements IProgressService {
     public ProgressOverviewResponse getProgressOverview(UUID accountId) {
         List<UserProgress> allProgress = userProgressRepository.findByAccount_Id(accountId);
 
-        Long totalXP = allProgress.stream().mapToLong(UserProgress::getTotalXP).sum();
+        Long topicXP = allProgress.stream().mapToLong(UserProgress::getTotalXP).sum();
+        Long publicChallengeXP = challengeParticipantsRepository.sumXpGained(accountId, ChallengeType.PUBLIC);
+        Long totalXP = topicXP + publicChallengeXP;
         Integer overallLevel = LevelUtils.calculateLevel(totalXP);
         Integer totalTopicsStarted = allProgress.size();
 
@@ -115,29 +124,35 @@ public class ProgressService implements IProgressService {
 
     @Override
     public UserProgress getOrCreateProgress(UUID accountId, UUID topicId) {
-        return userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)
-                .orElseGet(() -> {
-                    Accounts account = accountsRepository.findById(accountId)
-                            .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
-                    Topic topic = topicRepository.findById(topicId)
-                            .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
+        Optional<UserProgress> existing = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        Accounts account = accountsRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
+        Topic topic = topicRepository.findById(topicId)
+                .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
 
-                    UserProgress newProgress = UserProgress.builder()
-                            .account(account)
-                            .topic(topic)
-                            .totalXP(0L)
-                            .completedLessons(0)
-                            .completionPercentage(0.0)
-                            .correctAnswers(0)
-                            .totalAnswers(0)
-                            .accuracy(0.0)
-                            .studyStreak(0)
-                            .examPassed(false)
-                            .examAttempts(0)
-                            .build();
+        UserProgress newProgress = UserProgress.builder()
+                .account(account)
+                .topic(topic)
+                .totalXP(0L)
+                .completedLessons(0)
+                .completionPercentage(0.0)
+                .correctAnswers(0)
+                .totalAnswers(0)
+                .accuracy(0.0)
+                .studyStreak(0)
+                .examPassed(false)
+                .examAttempts(0)
+                .build();
 
-                    return userProgressRepository.save(newProgress);
-                });
+        try {
+            return userProgressRepository.save(newProgress);
+        } catch (Exception e) {
+            return userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)
+                    .orElseThrow(() -> new RuntimeException(e));
+        }
     }
 
     @Override
@@ -146,7 +161,12 @@ public class ProgressService implements IProgressService {
 
         progress.setTotalXP(progress.getTotalXP() + xpToAdd);
 
-        return userProgressRepository.save(progress);
+        UserProgress userProgress = userProgressRepository.save(progress);
+        UUID languageId = progress.getTopic().getTargetLanguage().getId();
+        TransactionSynchronizationManager.registerSynchronization(
+            new RankingSynchronization(rankingWsService, languageId)
+        );
+        return userProgress;
     }
 
     @Override
@@ -217,6 +237,11 @@ public class ProgressService implements IProgressService {
       Topic lastTopic = lastAttempt.get().getLesson().getTopic();
       UUID languageId = lastTopic.getTargetLanguage().getId();
 
+      boolean stillLearning = userLanguageRepository.findByAccount_IdAndLanguageType(accountId, LanguageType.LEARNING).stream().anyMatch(userLanguage -> userLanguage.getLanguage().getId().equals(languageId));
+      if (!stillLearning) {
+          return Optional.empty();
+      }
+
       Optional<Lesson> nextLessonUnCompleted = lessonRepository.findFirstUncompletedLessonInTopic(accountId, lastTopic.getId());
       Lesson nextLesson = null;
 
@@ -265,4 +290,4 @@ public class ProgressService implements IProgressService {
             .build());
 
         }
-}
+    }

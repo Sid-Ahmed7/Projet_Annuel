@@ -4,6 +4,7 @@ package com.glotrush.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -32,12 +33,17 @@ import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
 import com.glotrush.exceptions.ResourceNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.ChallengeParticipantsRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserLanguageRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.services.progress.ProgressService;
+import com.glotrush.websocket.IRankingWsService;
+import org.mockito.MockedStatic;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.test.context.ContextConfiguration;
@@ -70,9 +76,15 @@ class ProgressServiceTest {
     @Mock    
     private UserLanguageRepository userLanguageRepository;
 
+    @Mock
+    private ChallengeParticipantsRepository challengeParticipantsRepository;
+
 
     @Mock
     private UserLessonProgressRepository userLessonProgressRepository;
+
+    @Mock
+    private IRankingWsService rankingWsService;
 
     private UUID accountId;
     private UUID topicId;
@@ -84,7 +96,7 @@ class ProgressServiceTest {
 
      @BeforeEach
     void setUp() {
-        progressService = new ProgressService(messageSource, userProgressRepository, topicRepository, accountsRepository, progressBuilder, lessonRepository, userLessonProgressRepository, userLanguageRepository);
+        progressService = new ProgressService(messageSource, userProgressRepository, topicRepository, accountsRepository, progressBuilder, lessonRepository, userLessonProgressRepository, userLanguageRepository, rankingWsService, challengeParticipantsRepository);
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
         languageId = UUID.randomUUID();
@@ -291,12 +303,16 @@ class ProgressServiceTest {
                 .thenReturn(Optional.of(testProgress));
         when(userProgressRepository.save(any(UserProgress.class))).thenAnswer(i -> i.getArgument(0));
 
-        UserProgress result = progressService.addXP(accountId, topicId, 50);
+        try (MockedStatic<TransactionSynchronizationManager> mocked = mockStatic(TransactionSynchronizationManager.class)) {
+            mocked.when(() -> TransactionSynchronizationManager.registerSynchronization(any(TransactionSynchronization.class)))
+                  .thenAnswer(inv -> null);
 
-        assertThat(result.getTotalXP()).isEqualTo(550L);
-        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(3);
+            UserProgress result = progressService.addXP(accountId, topicId, 50);
 
-        verify(userProgressRepository).save(any(UserProgress.class));
+            assertThat(result.getTotalXP()).isEqualTo(550L);
+            assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(3);
+            verify(userProgressRepository).save(any(UserProgress.class));
+        }
     }
 
     @Test
@@ -308,11 +324,16 @@ class ProgressServiceTest {
                 .thenReturn(Optional.of(testProgress));
         when(userProgressRepository.save(any(UserProgress.class))).thenAnswer(i -> i.getArgument(0));
 
-        UserProgress result = progressService.addXP(accountId, topicId, 100);
+        try (MockedStatic<TransactionSynchronizationManager> mocked = mockStatic(TransactionSynchronizationManager.class)) {
+            mocked.when(() -> TransactionSynchronizationManager.registerSynchronization(any(TransactionSynchronization.class)))
+                  .thenAnswer(inv -> null);
 
-        assertThat(result.getTotalXP()).isEqualTo(1050L);
-        assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(5);
-        assertThat(LevelUtils.calculateCurrentLevelXP(result.getTotalXP())).isEqualTo(50L);
+            UserProgress result = progressService.addXP(accountId, topicId, 100);
+
+            assertThat(result.getTotalXP()).isEqualTo(1050L);
+            assertThat(LevelUtils.calculateLevel(result.getTotalXP())).isEqualTo(5);
+            assertThat(LevelUtils.calculateCurrentLevelXP(result.getTotalXP())).isEqualTo(50L);
+        }
     }
 
     @Test

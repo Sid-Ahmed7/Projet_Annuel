@@ -60,7 +60,8 @@ public class StripeWebhookService {
             return;
         }
 
-        Plan plan = planRepository.findById(UUID.fromString(planId)).orElse(null);
+        Plan plan = planRepository.findById(UUID.fromString(planId))
+                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.plan.notfound", null, LocaleUtils.getCurrentLocale())));
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime periodEnd = calculatePeriodEnd(now, plan.getPaymentInterval());
@@ -79,9 +80,7 @@ public class StripeWebhookService {
         subscription.setStripeCustomerId(stripeCustomerId);
 
         subscriptionRepository.save(subscription);
-        subscriptionSchedulerService.scheduleExpiration(subscription);
-        subscriptionSchedulerService.scheduleReminder(subscription);
-        
+
         BigDecimal amount = BigDecimal.valueOf(session.getAmountTotal()).divide(BigDecimal.valueOf(100));
 
         PaymentHistory payment = PaymentHistory.builder()
@@ -97,25 +96,39 @@ public class StripeWebhookService {
                 .build();
 
         paymentHistoryRepository.save(payment);
+
         Accounts account = subscription.getAccount();
-        emailService.sendPremiumUpgratedEmail(account.getEmail(), account.getUsername(), periodEnd);
+
+        try {
+            subscriptionSchedulerService.scheduleExpiration(subscription);
+            subscriptionSchedulerService.scheduleReminder(subscription);
+        } catch (Exception e) {
+            log.error("Failed to schedule expiration/reminder for subscription {}", subscription.getId(), e);
+        }
+
+        try {
+            emailService.sendPremiumUpgratedEmail(account.getEmail(), account.getUsername(), periodEnd);
+        } catch (Exception e) {
+            log.error("Failed to send premium upgrade email to {}", account.getEmail(), e);
+        }
 
     }
         @Transactional
         public void handleSubscriptionDeleted(com.stripe.model.Subscription stripeSubscription) {
-        Subscription subscription = subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId()).orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound.stripe", new Object[]{stripeSubscription.getId()}, LocaleUtils.getCurrentLocale())));
-        if (subscription == null){
-            return;
-        }
+        Subscription subscription = subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
+                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.subscription.notfound.stripe", new Object[]{stripeSubscription.getId()}, LocaleUtils.getCurrentLocale())));
         subscriptionSchedulerService.cancelAllSchedulesForSubscription(subscription.getId());
 
-        Plan freePlan = planRepository.findBySubscriptionTypeAndIsActiveTrue(SubscriptionType.FREE).orElse(null);
+        Plan freePlan = planRepository.findBySubscriptionTypeAndIsActiveTrue(SubscriptionType.FREE)
+                .orElseThrow(() -> new SubscriptionNotFoundException(messageSource.getMessage("error.plan.notfound", null, LocaleUtils.getCurrentLocale())));
 
+        LocalDateTime now = LocalDateTime.now();
         subscription.setStatus(SubscriptionStatus.ACTIVE);
         subscription.setPlan(freePlan);
         subscription.setIsActive(true);
-        subscription.setCanceledAt(LocalDateTime.now());
-        subscription.setStartDate(LocalDateTime.now());
+        subscription.setCancelAtPeriodEnd(false);
+        subscription.setCanceledAt(now);
+        subscription.setStartDate(now);
         subscription.setEndDate(null);
         subscription.setStripeSubscriptionId(null);
         subscription.setCurrentPeriodEnd(null);
@@ -129,14 +142,12 @@ public class StripeWebhookService {
             if (subscription == null){
                 return;
             }
-            subscription.setCurrentPeriodStart(LocalDateTime.now());
-            subscription.setCurrentPeriodEnd(calculatePeriodEnd(LocalDateTime.now(), subscription.getPlan().getPaymentInterval()));
-            subscription.setEndDate(calculatePeriodEnd(LocalDateTime.now(), subscription.getPlan().getPaymentInterval()));
+            LocalDateTime now = LocalDateTime.now();
+            subscription.setCurrentPeriodStart(now);
+            subscription.setCurrentPeriodEnd(calculatePeriodEnd(now, subscription.getPlan().getPaymentInterval()));
+            subscription.setEndDate(calculatePeriodEnd(now, subscription.getPlan().getPaymentInterval()));
 
             subscriptionRepository.save(subscription);
-            subscriptionSchedulerService.cancelAllSchedulesForSubscription(subscription.getId());
-            subscriptionSchedulerService.scheduleExpiration(subscription);
-            subscriptionSchedulerService.scheduleReminder(subscription);
 
             BigDecimal amount = BigDecimal.valueOf(invoice.getAmountPaid()).divide(BigDecimal.valueOf(100));
             
@@ -149,13 +160,30 @@ public class StripeWebhookService {
                     .paymentStatus(PaymentStatus.SUCCEEDED)
                     .paymentMethod("stripe")
                     .paymentInterval(subscription.getPlan().getPaymentInterval())
-                    .paymentAt(LocalDateTime.now())
+                    .paymentAt(now)
                     .build();
         
             paymentHistoryRepository.save(payment);
-        
+
+            try {
+                subscriptionSchedulerService.cancelAllSchedulesForSubscription(subscription.getId());
+                subscriptionSchedulerService.scheduleExpiration(subscription);
+                subscriptionSchedulerService.scheduleReminder(subscription);
+            } catch (Exception e) {
+                log.error("Failed to reschedule expiration/reminder for subscription {}", subscription.getId(), e);
+            }
         }
 
+
+    @Transactional
+    public void handlePaymentFailed(Invoice invoice) {
+        Subscription subscription = subscriptionRepository.findByStripeSubscriptionId(invoice.getSubscription()).orElse(null);
+        if (subscription == null) {
+            return;
+        }
+        Accounts account = subscription.getAccount();
+        emailService.sendPaymentFailedEmail(account.getEmail(), account.getUsername());
+    }
 
     private LocalDateTime calculatePeriodEnd(LocalDateTime start, PaymentInterval interval) {
         return switch (interval) {

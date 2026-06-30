@@ -67,6 +67,9 @@ public class UserLessonProgress {
     @Column(name = "last_attempt_at")
     private LocalDateTime lastAttemptAt;
 
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

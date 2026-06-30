@@ -10,6 +10,6 @@ public final class SecurityConstants {
     public  static final String REGEX_DIGIT = ".*\\d.*";
     public  static final String REGEX_SPECIAL = ".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*";
     public static final int MAX_LOGIN_ATTEMPTS = 5;
-    public static final int ACCOUNT_LOCK_DURATION_MINUTES = 1;
+    public static final int ACCOUNT_LOCK_DURATION_MINUTES = 15;
 
 }

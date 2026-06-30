@@ -38,6 +38,15 @@ public class GlobalExceptionHandler {
             InvalidPathException.class,
             LanguageException.class,
             UserLanguageException.class,
+            ReviewNotAllowedException.class,
+            ReviewBannedException.class,
+            MissingChallengedIdException.class,
+            InvalidDuelTypeException.class,
+            ChallengeCannotAcceptException.class,
+            ChallengeNotActiveException.class,
+            ChallengeExpiredException.class,
+            CannotAddYourselfException.class,
+            FriendsAlreadyExistsException.class,
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -64,6 +73,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             PasswordExpiredException.class,
             ProfilePrivateException.class,
+            ChallengeAccessDeniedException.class,
     })
     public ResponseEntity<ErrorResponse> handleForbidden(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
@@ -84,6 +94,12 @@ public class GlobalExceptionHandler {
             PlanNotFoundException.class,
             LessonNotFoundException.class,
             TopicNotFoundException.class,
+            ReviewNotFoundException.class,
+            ChallengeNotFoundException.class,
+            ChallengedUserNotFoundException.class,
+            FriendsNotFoundException.class,
+            QuestionNotFoundException.class,
+            InteractiveQuestionNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
@@ -96,7 +112,10 @@ public class GlobalExceptionHandler {
             EmailAlreadyExistsException.class,
             UsernameAlreadyExistsException.class,
             TwoFactorAlreadyEnabledException.class,
-            SubscriptionAlreadyExistException.class
+            SubscriptionAlreadyExistException.class,
+            ReviewAlreadyExistsException.class,
+            ScoreAlreadySubmittedException.class,
+            PlanAlreadyExistsException.class,
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex) {
         return buildError(ex.getMessage(), HttpStatus.CONFLICT);
@@ -168,6 +187,13 @@ public class GlobalExceptionHandler {
         return buildError("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    /* =========================
+       429 - TOO MANY REQUESTS
+       ========================= */
+    @ExceptionHandler(AILimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequests(AILimitExceededException ex) {
+        return buildError(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS);
+    }
 
     private ResponseEntity<ErrorResponse> buildError(String message, HttpStatus status) {
         ErrorResponse response = ErrorResponse.builder()

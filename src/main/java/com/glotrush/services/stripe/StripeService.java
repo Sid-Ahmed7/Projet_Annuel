@@ -44,7 +44,7 @@ public class StripeService implements IStripService {
             SessionCreateParams params = SessionCreateParams.builder()
                     .setCustomer(customerId)
                     .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
-                    .setSuccessUrl(stripeConfig.getSuccessUrl())
+                    .setSuccessUrl(stripeConfig.getSuccessUrl() + "?session_id={CHECKOUT_SESSION_ID}")
                     .setCancelUrl(stripeConfig.getCancelUrl())
                     .addLineItem(
                         SessionCreateParams.LineItem.builder()
@@ -68,7 +68,13 @@ public class StripeService implements IStripService {
 
         try {
             Subscription subscription = Subscription.retrieve(stripeSubscriptionId);
+        
+            if("canceled".equals(subscription.getStatus())) {
+                return;
+            }
+        
             subscription.cancel();
+        
         } catch(StripeException e) {
             throw new StripeMessageException(messageSource.getMessage("error.stripe.cancel", null, LocaleUtils.getCurrentLocale()), e);
         }
@@ -107,6 +113,15 @@ public class StripeService implements IStripService {
             throw new StripeMessageException(messageSource.getMessage("error.stripe.schedule.subscription", null, LocaleUtils.getCurrentLocale()), e);
         }
     
+    }
+
+    @Override
+    public Session retrieveSession(String sessionId) {
+        try {
+            return Session.retrieve(sessionId);
+        } catch (StripeException e) {
+            throw new StripeMessageException(messageSource.getMessage("error.stripe.retrieve.session", null, LocaleUtils.getCurrentLocale()), e);
+        }
     }
 
     @Override

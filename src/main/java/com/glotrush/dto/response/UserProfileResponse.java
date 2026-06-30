@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.glotrush.enumerations.CountryCode;
+import com.glotrush.enumerations.FriendsViewStatus;
 import com.glotrush.enumerations.TimeZone;
 
 import lombok.AllArgsConstructor;
@@ -34,4 +35,11 @@ public class UserProfileResponse {
     private boolean hasCompletedOnboarding;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Boolean isAccountPrivate;
+    private FriendsViewStatus friendsViewStatus;
+    private UUID friendRequestId;
+
+    public boolean isAccountPrivate() {
+        return Boolean.TRUE.equals(isAccountPrivate);
+    }
 }

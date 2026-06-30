@@ -1,5 +1,8 @@
 package com.glotrush.dto.request;
 
+import java.util.List;
+import java.util.UUID;
+
 import com.glotrush.enumerations.DifficultyFeedback;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -21,4 +24,10 @@ public class CompleteLessonRequest {
 
     private Integer correctAnswers;
     private Integer totalAnswers;
+
+    private List<UUID> mistakeFlashCardIds;
+    private List<LessonMistakeRequest> mistakeQcmList;
+    private List<LessonMistakeRequest> mistakeMatchingList;
+    private List<LessonMistakeRequest> mistakeSortingList;
+    private List<LessonMistakeRequest> mistakeInteractiveList;
 }

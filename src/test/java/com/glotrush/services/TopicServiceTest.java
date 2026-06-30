@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
+import com.glotrush.dispatcher.notifications.NotificationDispatcher;
 import com.glotrush.enumerations.ProficiencyLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,11 +34,14 @@ import com.glotrush.entities.Language;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
 import com.glotrush.entities.exercice.FlashcardEntity;
+import com.glotrush.entities.exercice.InteractiveQuestionEntity;
 import com.glotrush.entities.exercice.QcmQuestionEntity;
 import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.dto.request.ExamResultRequest;
 import com.glotrush.dto.request.FlashcardAnswerRequest;
+import com.glotrush.dto.request.InteractiveAnswerRequest;
 import com.glotrush.dto.request.QcmAnswerRequest;
+import com.glotrush.enumerations.InteractiveSystemType;
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.mapping.TopicMapper;
 import com.glotrush.repositories.LanguageRepository;
@@ -47,6 +51,7 @@ import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.repositories.UserProgressRepository;
 import com.glotrush.services.topic.TopicService;
 import com.glotrush.services.progress.IProgressService;
+import com.glotrush.services.rewiewMistake.IReviewMistakeService;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -55,6 +60,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.glotrush.entities.Accounts;
 import com.glotrush.repositories.exercice.FlashcardRepository;
+import com.glotrush.repositories.exercice.InteractiveQuestionRepository;
 import com.glotrush.repositories.exercice.MatchingPairRepository;
 import com.glotrush.repositories.exercice.QcmQuestionRepository;
 import com.glotrush.repositories.exercice.SortingExerciseRepository;
@@ -101,10 +107,17 @@ class TopicServiceTest {
     private MatchingPairRepository matchingPairRepository;
     @Mock
     private SortingExerciseRepository sortingExerciseRepository;
+    @Mock
+    private InteractiveQuestionRepository interactiveQuestionRepository;
 
     @Mock
     private LessonBuilder lessonBuilder;
-        
+
+    @Mock
+    private NotificationDispatcher notificationDispatcher;
+
+    @Mock
+    private IReviewMistakeService reviewMistakeService;
 
     private TopicService topicService;
 
@@ -128,10 +141,13 @@ class TopicServiceTest {
                 topicBuilder,
                 topicMapper,
                 lessonMapper,
+                notificationDispatcher,
+                reviewMistakeService,
                 flashcardRepository,
                 qcmQuestionRepository,
                 matchingPairRepository,
-                sortingExerciseRepository
+                sortingExerciseRepository,
+                interactiveQuestionRepository
         );
         accountId = UUID.randomUUID();
         topicId = UUID.randomUUID();
@@ -563,5 +579,42 @@ class TopicServiceTest {
 
         assertThat(result.getSuccess()).isTrue();
         assertThat(progress.getCorrectAnswers()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Should validate interactive question answers during exam")
+    void shouldValidateInteractiveQuestionAnswersDuringExam() {
+        UserProgress progress = new UserProgress();
+        progress.setCorrectAnswers(0);
+        progress.setTotalAnswers(0);
+        progress.setTotalXP(0L);
+
+        InteractiveQuestionEntity qcmQuestion = new InteractiveQuestionEntity();
+        qcmQuestion.setId(UUID.randomUUID());
+        qcmQuestion.setSystemType(InteractiveSystemType.MULTIPLE_CHOICE);
+        qcmQuestion.setCorrectOptionIndex(2);
+
+        InteractiveQuestionEntity openTextQuestion = new InteractiveQuestionEntity();
+        openTextQuestion.setId(UUID.randomUUID());
+        openTextQuestion.setSystemType(InteractiveSystemType.OPEN_TEXT);
+        openTextQuestion.setCorrectWord("House");
+
+        ExamResultRequest request = ExamResultRequest.builder()
+                .interactiveAnswers(List.of(
+                        new InteractiveAnswerRequest(qcmQuestion.getId(), 2, null),
+                        new InteractiveAnswerRequest(openTextQuestion.getId(), null, "hous")
+                ))
+                .build();
+
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)).thenReturn(Optional.of(progress));
+        when(interactiveQuestionRepository.findById(qcmQuestion.getId())).thenReturn(Optional.of(qcmQuestion));
+        when(interactiveQuestionRepository.findById(openTextQuestion.getId())).thenReturn(Optional.of(openTextQuestion));
+        when(userProgressRepository.save(any())).thenReturn(progress);
+
+        CompleteExamResponse result = topicService.completeTopicExam(accountId, topicId, request);
+
+        assertThat(result.getSuccess()).isTrue();
+        assertThat(result.getCorrectAnswers()).isEqualTo(2);
+        assertThat(progress.getCorrectAnswers()).isEqualTo(2);
     }
 }
