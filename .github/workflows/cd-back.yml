@@ -62,5 +62,6 @@ jobs:
             docker service update --image arthurbrd/glotrush-back:latest --force skaldly_back
             docker network inspect monitoring_net >/dev/null 2>&1 || docker network create --driver overlay --attachable monitoring_net
             docker service update --network-add monitoring_net skaldly_back || true
+            docker service rm monitoring_prometheus monitoring_grafana || true
             cd infra
             docker stack deploy -c monitoring.yml monitoring
