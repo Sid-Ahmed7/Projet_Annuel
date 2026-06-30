@@ -5,8 +5,11 @@ global:
 scrape_configs:
   - job_name: 'glotrush-backend'
     metrics_path: '/actuator/prometheus'
-    static_configs:
-      - targets: ['skaldly_back:8081']
+    dns_sd_configs:
+      - names:
+          - 'tasks.skaldly_back'
+        type: 'A'
+        port: 8081
 
   - job_name: 'node-exporter'
     dns_sd_configs:

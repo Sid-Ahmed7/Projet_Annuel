@@ -6,7 +6,7 @@ services:
     volumes:
       - prometheus_data:/prometheus
     configs:
-      - source: prometheus_config_v2
+      - source: prometheus_config_v3
         target: /etc/prometheus/prometheus.yml
     networks:
       - monitoring_net
@@ -83,7 +83,7 @@ services:
         condition: on-failure
 
 configs:
-  prometheus_config_v2:
+  prometheus_config_v3:
     file: ./prometheus.yml
 
 secrets:
