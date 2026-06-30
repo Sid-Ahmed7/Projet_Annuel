@@ -63,7 +63,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/stripe/webhook").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/profile/files/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/contact").permitAll()
-                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/api/ws/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/prometheus").permitAll()
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
