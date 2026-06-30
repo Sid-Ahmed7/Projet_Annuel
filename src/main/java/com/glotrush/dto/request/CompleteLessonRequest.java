@@ -29,4 +29,5 @@ public class CompleteLessonRequest {
     private List<LessonMistakeRequest> mistakeQcmList;
     private List<LessonMistakeRequest> mistakeMatchingList;
     private List<LessonMistakeRequest> mistakeSortingList;
+    private List<LessonMistakeRequest> mistakeInteractiveList;
 }

@@ -3,10 +3,12 @@ package com.glotrush.services.ai;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glotrush.dto.request.LessonRequest;
+import com.glotrush.dto.request.exercice.InteractiveQuestionRequest;
 import com.glotrush.dto.request.lesson.FlashcardLessonRequest;
 import com.glotrush.dto.request.lesson.MatchingPairLessonRequest;
 import com.glotrush.dto.request.lesson.QcmLessonRequest;
 import com.glotrush.dto.request.lesson.SortingExerciseLessonRequest;
+import com.glotrush.dto.request.lesson.InteractiveLessonRequest;
 import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.Lesson;
@@ -60,6 +62,7 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
         LessonRequest generatedRequest = aiService.generateJsonContent(fullPrompt, targetClass);
         
         limitLessonRequestItemCountToRequestedSize(generatedRequest, itemCount);
+        enforceEmptyMediaLists(generatedRequest);
         
         generatedRequest.setTopicId(topicId);
         generatedRequest.setLessonType(lessonType);
@@ -109,6 +112,7 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
         LessonRequest modifiedRequest = aiService.generateJsonContent(fullPrompt, targetClass);
 
         limitLessonRequestItemCountToRequestedSize(modifiedRequest, itemCount);
+        enforceEmptyMediaLists(modifiedRequest);
 
         modifiedRequest.setTopicId(topic.getId());
         modifiedRequest.setLessonType(lessonType);
@@ -128,6 +132,7 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
             case FLASHCARD -> FlashcardLessonRequest.class;
             case MATCHING_PAIR -> MatchingPairLessonRequest.class;
             case SORTING_EXERCISE -> SortingExerciseLessonRequest.class;
+            case INTERACTIVE -> InteractiveLessonRequest.class;
         };
     }
 
@@ -156,9 +161,19 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
                 elementsDescription = "paires à associer";
             } else if (lessonType == LessonType.SORTING_EXERCISE) {
                 elementsDescription = "phrases à ordonner";
+            } else if (lessonType == LessonType.INTERACTIVE) {
+                elementsDescription = "questions interactives";
             }
             promptBuilder.append("Quantité : Tu dois générer exactement ").append(itemCount).append(" ").append(elementsDescription).append(".\n");
             promptBuilder.append("ATTENTION : La liste d'éléments générés doit contenir STRICTEMENT ").append(itemCount).append(" ").append(elementsDescription).append(". C'est une contrainte absolue.\n\n");
+        }
+
+        if (lessonType == LessonType.INTERACTIVE) {
+            promptBuilder.append("Consignes de structure pour le type INTERACTIVE :\n");
+            promptBuilder.append("- Pour chaque question, le champ \"systemType\" doit valoir SOIT \"MULTIPLE_CHOICE\", SOIT \"OPEN_TEXT\". Ne jamais utiliser de valeur comme \"MATCHING\" ou tout autre nom.\n");
+            promptBuilder.append("- Si \"systemType\" est \"MULTIPLE_CHOICE\" : tu dois fournir un tableau de 2 à 4 choix dans \"options\", et l'index de la bonne réponse dans \"correctOptionIndex\" (de 0 à 3). Le champ \"correctWord\" doit être null.\n");
+            promptBuilder.append("- Si \"systemType\" est \"OPEN_TEXT\" : tu dois fournir le mot attendu dans \"correctWord\". Le champ \"options\" doit être vide ou null, et \"correctOptionIndex\" doit être null.\n");
+            promptBuilder.append("- Les listes \"imagePaths\" et \"audioPaths\" DOIVENT impérativement être vides (c'est-à-dire []). Ne génère aucun nom de fichier image ou audio.\n\n");
         }
 
         promptBuilder.append("Voici un exemple du format JSON attendu pour ce type :\n");
@@ -238,6 +253,24 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
                   ]
                 }
                 """;
+            case INTERACTIVE -> """
+                {
+                  "lessonType": "INTERACTIVE",
+                  "title": "Titre de la leçon",
+                  "description": "Description de la leçon",
+                  "isActive": true,
+                  "questions": [
+                    {
+                      "questionText": "Écoutez et choisissez le bon mot",
+                      "imagePaths": [],
+                      "audioPaths": [],
+                      "systemType": "MULTIPLE_CHOICE",
+                      "options": ["Pomme", "Poire", "Banane"],
+                      "correctOptionIndex": 0
+                    }
+                  ]
+                }
+                """;
         };
     }
 
@@ -277,6 +310,21 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
         } else if (lessonRequest instanceof SortingExerciseLessonRequest sortingExerciseLessonRequest) {
             if (sortingExerciseLessonRequest.getSortingExercise() != null && sortingExerciseLessonRequest.getSortingExercise().size() > itemCount) {
                 sortingExerciseLessonRequest.setSortingExercise(new ArrayList<>(sortingExerciseLessonRequest.getSortingExercise().subList(0, itemCount)));
+            }
+        } else if (lessonRequest instanceof InteractiveLessonRequest interactiveLessonRequest) {
+            if (interactiveLessonRequest.getQuestions() != null && interactiveLessonRequest.getQuestions().size() > itemCount) {
+                interactiveLessonRequest.setQuestions(new ArrayList<>(interactiveLessonRequest.getQuestions().subList(0, itemCount)));
+            }
+        }
+    }
+
+    private void enforceEmptyMediaLists(LessonRequest lessonRequest) {
+        if (lessonRequest instanceof InteractiveLessonRequest interactiveLessonRequest) {
+            if (interactiveLessonRequest.getQuestions() != null) {
+                for (InteractiveQuestionRequest question : interactiveLessonRequest.getQuestions()) {
+                    question.setImagePaths(new ArrayList<>());
+                    question.setAudioPaths(new ArrayList<>());
+                }
             }
         }
     }

@@ -9,14 +9,19 @@ import com.glotrush.dto.response.lesson.FlashcardLessonResponse;
 import com.glotrush.dto.response.lesson.MatchingPairLessonResponse;
 import com.glotrush.dto.response.lesson.QcmLessonResponse;
 import com.glotrush.dto.response.lesson.SortingExerciseLessonResponse;
+import com.glotrush.dto.response.lesson.InteractiveLessonResponse;
 import com.glotrush.entities.Lesson;
 import com.glotrush.entities.exercice.FlashcardEntity;
 import com.glotrush.entities.exercice.QcmQuestionEntity;
 import com.glotrush.entities.exercice.SortingExerciseEntity;
+import com.glotrush.entities.exercice.InteractiveQuestionEntity;
+import com.glotrush.dto.response.exercice.InteractiveQuestionResponse;
+import com.glotrush.dto.response.exercice.InteractiveQuestionExamResponse;
 import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.entities.lesson.MatchingPairLesson;
 import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
+import com.glotrush.entities.lesson.InteractiveLesson;
 import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.utils.LocaleUtils;
 import org.mapstruct.Context;
@@ -37,6 +42,7 @@ public abstract class LessonEntityToLessonResponse {
             case MatchingPairLesson matchingPairLesson -> mapMatchingPairLessonEntityToMatchingPairLessonResponse(matchingPairLesson);
             case QcmLesson qcmLesson -> mapQcmLessonEntityToQcmLessonResponse(qcmLesson);
             case SortingExerciseLesson sortingExerciseLesson -> mapSortingExerciseLessonEntityToSortingExerciseLessonResponse(sortingExerciseLesson);
+            case InteractiveLesson interactiveLesson -> mapInteractiveLessonEntityToInteractiveLessonResponse(interactiveLesson);
             default -> throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale()));
         };
     }
@@ -65,6 +71,11 @@ public abstract class LessonEntityToLessonResponse {
     @Mapping(source = "sortingExercise", target = "sortingExercise")
     protected abstract SortingExerciseLessonResponse mapSortingExerciseLessonEntityToSortingExerciseLessonResponse(SortingExerciseLesson request);
 
+    @Mapping(source = "topic.id", target = "topicId")
+    @Mapping(source = "topic.name", target = "topicName")
+    @Mapping(source = "questions", target = "questions")
+    protected abstract InteractiveLessonResponse mapInteractiveLessonEntityToInteractiveLessonResponse(InteractiveLesson request);
+
     // EXAM SPECIFIC MAPPINGS
     public abstract QcmQuestionExamResponse mapQcmQuestionEntityToQcmQuestionExamResponse(QcmQuestionEntity entity);
 
@@ -72,4 +83,6 @@ public abstract class LessonEntityToLessonResponse {
 
     @Mapping(target = "items", source = "items")
     public abstract SortingExerciseExamResponse mapSortingExerciseEntityToSortingExerciseExamResponse(SortingExerciseEntity entity);
+
+    public abstract InteractiveQuestionExamResponse mapInteractiveQuestionEntityToInteractiveQuestionExamResponse(InteractiveQuestionEntity entity);
 }

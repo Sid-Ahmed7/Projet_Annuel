@@ -8,6 +8,7 @@ import com.glotrush.dto.response.lesson.FlashcardLessonResponse;
 import com.glotrush.dto.response.lesson.MatchingPairLessonResponse;
 import com.glotrush.dto.response.lesson.QcmLessonResponse;
 import com.glotrush.dto.response.lesson.SortingExerciseLessonResponse;
+import com.glotrush.dto.response.lesson.InteractiveLessonResponse;
 import com.glotrush.enumerations.LessonType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,7 +29,8 @@ import lombok.experimental.SuperBuilder;
         @JsonSubTypes.Type(value = FlashcardLessonResponse.class, name = "FLASHCARD"),
         @JsonSubTypes.Type(value = MatchingPairLessonResponse.class, name = "MATCHING_PAIR"),
         @JsonSubTypes.Type(value = QcmLessonResponse.class, name = "QCM"),
-        @JsonSubTypes.Type(value = SortingExerciseLessonResponse.class, name = "SORTING_EXERCISE")
+        @JsonSubTypes.Type(value = SortingExerciseLessonResponse.class, name = "SORTING_EXERCISE"),
+        @JsonSubTypes.Type(value = InteractiveLessonResponse.class, name = "INTERACTIVE")
 })
 public class LessonResponse {
     private UUID id;

@@ -7,5 +7,6 @@ public enum LessonType {
     FLASHCARD,
     MATCHING_PAIR,
     SORTING_EXERCISE,
-    QCM
+    QCM,
+    INTERACTIVE
 }

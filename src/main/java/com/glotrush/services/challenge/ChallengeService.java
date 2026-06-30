@@ -89,7 +89,7 @@ public class ChallengeService implements IChallengeService {
                 throw new LessonNotFoundException(messageSource.getMessage("error.lesson.not_found", null, LocaleUtils.getCurrentLocale()));
             lesson = lessonRepository.findById(newChallenge.getLessonId()).orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.not_found", null, LocaleUtils.getCurrentLocale())));
 
-            if (lesson.getLessonType() != LessonType.QCM && lesson.getLessonType() != LessonType.FLASHCARD)
+            if (lesson.getLessonType() != LessonType.QCM && lesson.getLessonType() != LessonType.FLASHCARD && lesson.getLessonType() != LessonType.INTERACTIVE)
                 throw new InvalidDuelTypeException(messageSource.getMessage("error.invalid.duel.type", null, LocaleUtils.getCurrentLocale()));
 
             if (newChallenge.getChallengedId() == null)
@@ -204,19 +204,19 @@ public class ChallengeService implements IChallengeService {
             case FLASHCARD -> challenge.getFlashcards().size();
             case MATCHING_PAIR -> challenge.getMatchingPairs().size();
             case SORTING_EXERCISE -> challenge.getSortingExercises().size();
+            case INTERACTIVE -> challenge.getInteractives().size();
         };
 
         UUID fChallengeId = challenge.getId();
-        ChallengeProgress progressToSend = ChallengeProgress.builder()
-            .challengeId(fChallengeId)
-            .accountId(accountId)
-            .username(account.getUsername())
-            .photoUrl(userProfile != null ? userProfile.getPhotoUrl() : null)
-            .score(challenge.getChallengeType() == ChallengeType.DUEL ? null : response.getScore())
-            .questionAnswered(totalQuestions)
-            .timePassed(response.getTimePassed())
-            .totalQuestions(totalQuestions)
-            .build();
+        ChallengeProgress progressToSend = challengeBuilder.toProgressResponse(
+            fChallengeId,
+            account,
+            userProfile,
+            challenge.getChallengeType() == ChallengeType.DUEL ? null : response.getScore(),
+            totalQuestions,
+            response.getTimePassed(),
+            totalQuestions
+        );
         TransactionSynchronizationManager.registerSynchronization(
             new ChallengeSynchronization(() -> challengeWsService.sendChallengeProgress(fChallengeId, progressToSend))
         );
@@ -382,16 +382,7 @@ public class ChallengeService implements IChallengeService {
        List<ChallengeProgress> results = participants.stream().map(participant -> {
             Accounts account = participant.getAccount();
             UserProfile prof = userProfileRepository.findByAccount_Id(account.getId()).orElse(null);
-            return ChallengeProgress.builder()
-                .challengeId(challengeId)
-                .accountId(account.getId())
-                .username(account.getUsername())
-                .photoUrl(prof != null ? prof.getPhotoUrl() : null)
-                .score(participant.getScore())
-                .timePassed(participant.getTimePassed())
-                .finalRank(participant.getFinalRank())
-                .xpGained(participant.getXpGained() != null ? participant.getXpGained().intValue() : null)
-                .build();
+            return challengeBuilder.toProgressResponse(participant, challengeId, prof);
         }).collect(Collectors.toList());
        TransactionSynchronizationManager.registerSynchronization(
            new ChallengeSynchronization(() -> results.forEach(result -> challengeWsService.sendChallengeResult(challengeId, result)))

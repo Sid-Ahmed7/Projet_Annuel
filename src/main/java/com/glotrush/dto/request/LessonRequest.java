@@ -6,6 +6,7 @@ import com.glotrush.dto.request.lesson.FlashcardLessonRequest;
 import com.glotrush.dto.request.lesson.MatchingPairLessonRequest;
 import com.glotrush.dto.request.lesson.QcmLessonRequest;
 import com.glotrush.dto.request.lesson.SortingExerciseLessonRequest;
+import com.glotrush.dto.request.lesson.InteractiveLessonRequest;
 import com.glotrush.enumerations.LessonType;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -25,7 +26,8 @@ import java.util.UUID;
         @JsonSubTypes.Type(value = FlashcardLessonRequest.class, name = "FLASHCARD"),
         @JsonSubTypes.Type(value = MatchingPairLessonRequest.class, name = "MATCHING_PAIR"),
         @JsonSubTypes.Type(value = QcmLessonRequest.class, name = "QCM"),
-        @JsonSubTypes.Type(value = SortingExerciseLessonRequest.class, name = "SORTING_EXERCISE")
+        @JsonSubTypes.Type(value = SortingExerciseLessonRequest.class, name = "SORTING_EXERCISE"),
+        @JsonSubTypes.Type(value = InteractiveLessonRequest.class, name = "INTERACTIVE")
 })
 @Data
 public abstract class LessonRequest {

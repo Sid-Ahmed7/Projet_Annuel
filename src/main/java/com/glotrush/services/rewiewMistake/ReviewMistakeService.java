@@ -31,6 +31,8 @@ import com.glotrush.entities.exercice.FlashcardEntity;
 import com.glotrush.entities.exercice.MatchingPairEntity;
 import com.glotrush.entities.exercice.QcmQuestionEntity;
 import com.glotrush.entities.exercice.SortingExerciseEntity;
+import com.glotrush.entities.exercice.InteractiveQuestionEntity;
+import com.glotrush.enumerations.InteractiveSystemType;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.UserMistakeRepository;
@@ -238,6 +240,20 @@ public class ReviewMistakeService implements IReviewMistakeService {
                         .collect(Collectors.joining(" → "))
                     : null;
             }
+            case INTERACTIVE -> {
+                InteractiveQuestionEntity interactiveQuestion = lessonType.interactiveQuestions().get(questionId);
+                if (interactiveQuestion == null) {
+                    yield null;
+                }
+
+                if (interactiveQuestion.getSystemType() == InteractiveSystemType.MULTIPLE_CHOICE) {
+                    yield (answer.getSelectedResponseIndex() != null)
+                        ? interactiveQuestion.getOptions().get(answer.getSelectedResponseIndex())
+                        : null;
+                } else {
+                    yield answer.getTranslateAnswer();
+                }
+            }
         };
     }
 
@@ -269,6 +285,24 @@ public class ReviewMistakeService implements IReviewMistakeService {
             case SORTING_EXERCISE -> {
                 SortingExerciseEntity sortingExercise = lessonType.sortingExercises().get(questionId);
                 yield sortingExercise != null && sortingExercise.getCorrectOrder().equals(answer.getUserOrderedResponseIndexes());
+            }
+
+            case INTERACTIVE -> {
+                InteractiveQuestionEntity interactiveQuestion = lessonType.interactiveQuestions().get(questionId);
+                if (interactiveQuestion == null) {
+                    yield false;
+                }
+                if (interactiveQuestion.getSystemType() == InteractiveSystemType.MULTIPLE_CHOICE) {
+                    yield answer.getSelectedResponseIndex() != null &&
+                            interactiveQuestion.getCorrectOptionIndex().equals(answer.getSelectedResponseIndex());
+                } else {
+                    if (answer.getTranslateAnswer() == null) {
+                        yield false;
+                    }
+                    String expected = interactiveQuestion.getCorrectWord().trim().toLowerCase();
+                    String actual = answer.getTranslateAnswer().trim().toLowerCase();
+                    yield expected.equals(actual) || LevenshteinUtils.calculateLevenshteinDistance(expected, actual) <= 2;
+                }
             }
         };
     }

@@ -32,22 +32,18 @@ class AILessonGenerateRequestValidationTest {
         request.setDescription("Valid description");
         request.setLessonType(LessonType.FLASHCARD);
 
-        // Under min (4)
         request.setItemCount(4);
         Set<ConstraintViolation<AILessonGenerateRequest>> violations = validator.validate(request);
         assertThat(violations).isNotEmpty();
 
-        // Valid min (5)
         request.setItemCount(5);
         violations = validator.validate(request);
         assertThat(violations).isEmpty();
 
-        // Valid max (20)
         request.setItemCount(20);
         violations = validator.validate(request);
         assertThat(violations).isEmpty();
 
-        // Over max (21)
         request.setItemCount(21);
         violations = validator.validate(request);
         assertThat(violations).isNotEmpty();
@@ -61,22 +57,43 @@ class AILessonGenerateRequestValidationTest {
         request.setDescription("Valid description");
         request.setLessonType(LessonType.SORTING_EXERCISE);
 
-        // Under min (2)
         request.setItemCount(2);
         Set<ConstraintViolation<AILessonGenerateRequest>> violations = validator.validate(request);
         assertThat(violations).isNotEmpty();
 
-        // Valid min (3)
         request.setItemCount(3);
         violations = validator.validate(request);
         assertThat(violations).isEmpty();
 
-        // Valid max (10)
         request.setItemCount(10);
         violations = validator.validate(request);
         assertThat(violations).isEmpty();
 
-        // Over max (11)
+        request.setItemCount(11);
+        violations = validator.validate(request);
+        assertThat(violations).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("Should validate Interactive count boundaries (3-10)")
+    void shouldValidateInteractiveBoundaries() {
+        AILessonGenerateRequest request = new AILessonGenerateRequest();
+        request.setTopicId(UUID.randomUUID());
+        request.setDescription("Valid description");
+        request.setLessonType(LessonType.INTERACTIVE);
+
+        request.setItemCount(2);
+        Set<ConstraintViolation<AILessonGenerateRequest>> violations = validator.validate(request);
+        assertThat(violations).isNotEmpty();
+
+        request.setItemCount(3);
+        violations = validator.validate(request);
+        assertThat(violations).isEmpty();
+
+        request.setItemCount(10);
+        violations = validator.validate(request);
+        assertThat(violations).isEmpty();
+
         request.setItemCount(11);
         violations = validator.validate(request);
         assertThat(violations).isNotEmpty();

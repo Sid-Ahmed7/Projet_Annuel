@@ -36,7 +36,7 @@ public class AILessonGenerateRequest {
             return itemCount >= AILessonConstants.MIN_ITEMS_FLASHCARD_QCM && itemCount <= AILessonConstants.MAX_ITEMS_FLASHCARD_QCM;
         }
         
-        if (lessonType == LessonType.MATCHING_PAIR || lessonType == LessonType.SORTING_EXERCISE) {
+        if (lessonType == LessonType.MATCHING_PAIR || lessonType == LessonType.SORTING_EXERCISE || lessonType == LessonType.INTERACTIVE) {
             return itemCount >= AILessonConstants.MIN_ITEMS_MATCHING_SORTING && itemCount <= AILessonConstants.MAX_ITEMS_MATCHING_SORTING;
         }
         

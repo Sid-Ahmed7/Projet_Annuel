@@ -17,4 +17,5 @@ public class ExamResultRequest {
     private List<QcmAnswerRequest> qcmAnswers;
     private List<MatchingPairAnswerRequest> matchingPairAnswers;
     private List<SortingExerciseAnswerRequest> sortingExerciseAnswers;
+    private List<InteractiveAnswerRequest> interactiveAnswers;
 }

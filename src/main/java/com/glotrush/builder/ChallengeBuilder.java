@@ -8,29 +8,35 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.glotrush.dto.request.challenge.ChallengeInteractiveRequest;
 import com.glotrush.dto.request.challenge.CreateChallengeRequest;
 import com.glotrush.dto.response.challenge.ChallengeFlashCardResponse;
+import com.glotrush.dto.response.challenge.ChallengeInteractiveResponse;
 import com.glotrush.dto.response.challenge.ChallengeMatchingPairResponse;
 import com.glotrush.dto.response.challenge.ChallengeParticipantResponse;
 import com.glotrush.dto.response.challenge.ChallengeQcmResponse;
 import com.glotrush.dto.response.challenge.ChallengeResponse;
 import com.glotrush.dto.response.challenge.ChallengeSortingExerciseResponse;
 import com.glotrush.dto.response.challenge.ChallengeUserResponse;
+import com.glotrush.dto.response.challenge.ChallengeProgress;
 import com.glotrush.entities.Accounts;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.Lesson;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.entities.challenge.Challenge;
 import com.glotrush.entities.challenge.ChallengeFlashCard;
+import com.glotrush.entities.challenge.ChallengeInteractive;
 import com.glotrush.entities.challenge.ChallengeMatchingPair;
 import com.glotrush.entities.challenge.ChallengeParticipant;
 import com.glotrush.entities.challenge.ChallengeQcm;
 import com.glotrush.entities.challenge.ChallengeSortingExercise;
 import com.glotrush.entities.exercice.FlashcardEntity;
+import com.glotrush.entities.exercice.InteractiveQuestionEntity;
 import com.glotrush.entities.exercice.MatchingPairEntity;
 import com.glotrush.entities.exercice.QcmQuestionEntity;
 import com.glotrush.entities.exercice.SortingExerciseEntity;
 import com.glotrush.entities.lesson.FlashcardLesson;
+import com.glotrush.entities.lesson.InteractiveLesson;
 import com.glotrush.entities.lesson.MatchingPairLesson;
 import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
@@ -126,6 +132,23 @@ public class ChallengeBuilder {
                         .build()
                 ).collect(Collectors.toList()));
             }
+            case INTERACTIVE -> {
+                List<InteractiveQuestionEntity> questions = new ArrayList<>(((InteractiveLesson) lesson).getQuestions());
+                Collections.shuffle(questions);
+                int nbQuestions = (questionCount != null && questionCount > 0) ? questionCount : questions.size();
+                challenge.setInteractives(questions.stream().limit(nbQuestions).map(question ->
+                    ChallengeInteractive.builder()
+                        .challenge(challenge)
+                        .questionText(question.getQuestionText())
+                        .imagePaths(new ArrayList<>(question.getImagePaths()))
+                        .audioPaths(new ArrayList<>(question.getAudioPaths()))
+                        .systemType(question.getSystemType())
+                        .options(new ArrayList<>(question.getOptions()))
+                        .correctOptionIndex(question.getCorrectOptionIndex())
+                        .correctWord(question.getCorrectWord())
+                        .build()
+                ).collect(Collectors.toList()));
+            }
         }
     }
 
@@ -171,6 +194,20 @@ public class ChallengeBuilder {
                     .build()
             ).collect(Collectors.toList()));
         }
+        if (request.getInteractives() != null) {
+            challenge.setInteractives(request.getInteractives().stream().map(interactive ->
+                ChallengeInteractive.builder()
+                    .challenge(challenge)
+                    .questionText(interactive.getQuestionText())
+                    .imagePaths(interactive.getImagePaths() != null ? new ArrayList<>(interactive.getImagePaths()) : new ArrayList<>())
+                    .audioPaths(interactive.getAudioPaths() != null ? new ArrayList<>(interactive.getAudioPaths()) : new ArrayList<>())
+                    .systemType(interactive.getSystemType())
+                    .options(interactive.getOptions() != null ? new ArrayList<>(interactive.getOptions()) : new ArrayList<>())
+                    .correctOptionIndex(interactive.getCorrectOptionIndex())
+                    .correctWord(interactive.getCorrectWord())
+                    .build()
+            ).collect(Collectors.toList()));
+        }
     }
 
     public ChallengeParticipant buildParticipant(Challenge challenge, Accounts account) {
@@ -201,6 +238,7 @@ public class ChallengeBuilder {
                 .flashcards(challenge.getFlashcards().stream().map(this::toFlashCardResponse).collect(Collectors.toList()))
                 .matchingPairs(challenge.getMatchingPairs().stream().map(this::toMatchingPairResponse).collect(Collectors.toList()))
                 .sortingExercises(challenge.getSortingExercises().stream().map(this::toSortingExerciseResponse).collect(Collectors.toList()))
+                .interactives(challenge.getInteractives().stream().map(this::toInteractiveResponse).collect(Collectors.toList()))
                 .participants(participants)
                 .expiresAt(challenge.getExpiresAt())
                 .createdAt(challenge.getCreatedAt())
@@ -264,6 +302,45 @@ public class ChallengeBuilder {
                 .id(sortingExercise.getId())
                 .items(sortingExercise.getItems())
                 .correctOrder(sortingExercise.getCorrectOrder())
+                .build();
+    }
+
+    private ChallengeInteractiveResponse toInteractiveResponse(ChallengeInteractive interactive) {
+        return ChallengeInteractiveResponse.builder()
+                .id(interactive.getId())
+                .questionText(interactive.getQuestionText())
+                .imagePaths(interactive.getImagePaths())
+                .audioPaths(interactive.getAudioPaths())
+                .systemType(interactive.getSystemType())
+                .options(interactive.getOptions())
+                .correctOptionIndex(interactive.getCorrectOptionIndex())
+                .correctWord(interactive.getCorrectWord())
+                .build();
+    }
+
+    public ChallengeProgress toProgressResponse(ChallengeParticipant participant, UUID challengeId, UserProfile profile) {
+        return ChallengeProgress.builder()
+                .challengeId(challengeId)
+                .accountId(participant.getAccount().getId())
+                .username(participant.getAccount().getUsername())
+                .photoUrl(profile != null ? profile.getPhotoUrl() : null)
+                .score(participant.getScore())
+                .timePassed(participant.getTimePassed())
+                .finalRank(participant.getFinalRank())
+                .xpGained(participant.getXpGained() != null ? participant.getXpGained().intValue() : null)
+                .build();
+    }
+
+    public ChallengeProgress toProgressResponse(UUID challengeId, Accounts account, UserProfile profile, Double score, Integer questionsAnswered, Long timePassed, Integer totalQuestions) {
+        return ChallengeProgress.builder()
+                .challengeId(challengeId)
+                .accountId(account.getId())
+                .username(account.getUsername())
+                .photoUrl(profile != null ? profile.getPhotoUrl() : null)
+                .score(score)
+                .questionAnswered(questionsAnswered)
+                .timePassed(timePassed)
+                .totalQuestions(totalQuestions)
                 .build();
     }
 }
