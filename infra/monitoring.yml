@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    volumes:
+      - prometheus_data:/prometheus
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
+    networks:
+      - monitoring_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      GF_SECURITY_ADMIN_USER_FILE: /run/secrets/grafana_admin_user
+      GF_SECURITY_ADMIN_PASSWORD_FILE: /run/secrets/grafana_admin_password
+    secrets:
+      - grafana_admin_user
+      - grafana_admin_password
+    networks:
+      - monitoring_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+
+configs:
+  prometheus_config:
+    file: ./prometheus.yml
+
+secrets:
+  grafana_admin_user:
+    external: true
+  grafana_admin_password:
+    external: true
+
+networks:
+  monitoring_net:
+    driver: overlay
+    attachable: true
+    name: monitoring_net
+
+volumes:
+  prometheus_data:
+  grafana_data:
