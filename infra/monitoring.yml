@@ -58,9 +58,7 @@ secrets:
 
 networks:
   monitoring_net:
-    driver: overlay
-    attachable: true
-    name: monitoring_net
+    external: true
   skaldly_proxy:
     external: true
 

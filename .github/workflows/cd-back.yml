@@ -60,7 +60,7 @@ jobs:
           script: |
             docker pull arthurbrd/glotrush-back:latest
             docker service update --image arthurbrd/glotrush-back:latest --force skaldly_back
-            docker network create --driver overlay --attachable monitoring_net || true
+            docker network inspect monitoring_net >/dev/null 2>&1 || docker network create --driver overlay --attachable monitoring_net
             docker service update --network-add monitoring_net skaldly_back || true
             cd infra
             docker stack deploy -c monitoring.yml monitoring
