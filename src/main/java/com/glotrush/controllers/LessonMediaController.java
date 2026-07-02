@@ -1,12 +1,11 @@
 package com.glotrush.controllers;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
 
 import org.springframework.context.MessageSource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.glotrush.constants.LessonMediaConstants;
 import com.glotrush.dto.response.UploadResponse;
 import com.glotrush.services.images.ILessonMediaService;
+import com.glotrush.storage.FileStorageService;
 import com.glotrush.utils.LocaleUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -32,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 public class LessonMediaController {
 
     private final ILessonMediaService lessonMediaService;
+    private final FileStorageService fileStorageService;
     private final MessageSource messageSource;
 
     @PostMapping(value = "/images/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -39,7 +40,6 @@ public class LessonMediaController {
     public ResponseEntity<UploadResponse> uploadLessonImage(@RequestParam("file") MultipartFile file) throws IOException {
         String filename = lessonMediaService.uploadLessonImage(file);
         String imageUrl = LessonMediaConstants.IMAGE_BASE_URL + filename;
-
         return ResponseEntity.ok(UploadResponse.builder()
                 .message(messageSource.getMessage("success.image.uploaded", null, LocaleUtils.getCurrentLocale()))
                 .pathFile(imageUrl)
@@ -51,9 +51,8 @@ public class LessonMediaController {
     public ResponseEntity<UploadResponse> uploadLessonAudio(@RequestParam("file") MultipartFile file) throws IOException {
         String filename = lessonMediaService.uploadLessonAudio(file);
         String audioUrl = LessonMediaConstants.AUDIO_BASE_URL + filename;
-
         return ResponseEntity.ok(UploadResponse.builder()
-                .message(messageSource.getMessage("success.image.uploaded", null, LocaleUtils.getCurrentLocale()))
+                .message(messageSource.getMessage("success.audio.uploaded", null, LocaleUtils.getCurrentLocale()))
                 .pathFile(audioUrl)
                 .build());
     }
@@ -61,42 +60,43 @@ public class LessonMediaController {
     @GetMapping("/images/{filename:.+}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<Resource> getLessonImage(@PathVariable String filename) throws IOException {
-        Path filePath = lessonMediaService.getLessonImagePath(filename);
-
-        if (!Files.exists(filePath) || !Files.isReadable(filePath)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Resource resource = new UrlResource(filePath.toUri());
-        String contentType = Files.probeContentType(filePath);
-        if (contentType == null) {
-            contentType = "image/png";
-        }
-
+        String imageKey = lessonMediaService.getLessonImageKey(filename);
+        InputStream stream = fileStorageService.download(imageKey);
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
+                .contentType(MediaType.parseMediaType(detectImageContentType(filename)))
                 .header(HttpHeaders.CACHE_CONTROL, "max-age=31536000")
-                .body(resource);
+                .body(new InputStreamResource(stream));
     }
 
     @GetMapping("/audios/{filename:.+}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<Resource> getLessonAudio(@PathVariable String filename) throws IOException {
-        Path filePath = lessonMediaService.getLessonAudioPath(filename);
-
-        if (!Files.exists(filePath) || !Files.isReadable(filePath)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Resource resource = new UrlResource(filePath.toUri());
-        String contentType = Files.probeContentType(filePath);
-        if (contentType == null) {
-            contentType = "audio/mpeg";
-        }
-
+        String audioKey = lessonMediaService.getLessonAudioKey(filename);
+        InputStream stream = fileStorageService.download(audioKey);
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
+                .contentType(MediaType.parseMediaType(detectAudioContentType(filename)))
                 .header(HttpHeaders.CACHE_CONTROL, "max-age=31536000")
-                .body(resource);
+                .body(new InputStreamResource(stream));
+    }
+
+    private String detectImageContentType(String filename) {
+        String extension = filename.contains(".") ? filename.substring(filename.lastIndexOf('.') + 1).toLowerCase() : "";
+        return switch (extension) {
+            case "jpg", "jpeg" -> "image/jpeg";
+            case "png" -> "image/png";
+            case "webp" -> "image/webp";
+            default -> "image/png";
+        };
+    }
+
+    private String detectAudioContentType(String filename) {
+        String extension = filename.contains(".") ? filename.substring(filename.lastIndexOf('.') + 1).toLowerCase() : "";
+        return switch (extension) {
+            case "mp3" -> "audio/mpeg";
+            case "wav" -> "audio/wav";
+            case "ogg" -> "audio/ogg";
+            case "m4a" -> "audio/mp4";
+            default -> "audio/mpeg";
+        };
     }
 }

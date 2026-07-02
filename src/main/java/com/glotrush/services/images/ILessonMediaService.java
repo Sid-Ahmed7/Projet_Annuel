@@ -2,7 +2,6 @@ package com.glotrush.services.images;
 
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
-import java.nio.file.Path;
 
 public interface ILessonMediaService {
 
@@ -10,9 +9,9 @@ public interface ILessonMediaService {
 
     String uploadLessonAudio(MultipartFile file) throws IOException;
 
-    Path getLessonImagePath(String filename);
+    String getLessonImageKey(String filename);
 
-    Path getLessonAudioPath(String filename);
+    String getLessonAudioKey(String filename);
 
     void deleteLessonImage(String filename);
 
