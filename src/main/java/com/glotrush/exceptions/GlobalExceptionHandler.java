@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.glotrush.dto.response.ErrorResponse;
+import com.glotrush.storage.StorageFileNotFoundException;
 import com.stripe.exception.StripeException;
 
 import java.io.IOException;
@@ -99,7 +100,8 @@ public class GlobalExceptionHandler {
             ChallengedUserNotFoundException.class,
             FriendsNotFoundException.class,
             QuestionNotFoundException.class,
-            InteractiveQuestionNotFoundException.class
+            InteractiveQuestionNotFoundException.class,
+            StorageFileNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
