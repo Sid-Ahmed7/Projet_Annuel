@@ -1,13 +1,12 @@
 package com.glotrush.controllers;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
 import java.util.UUID;
 
 import org.springframework.context.MessageSource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +33,7 @@ import com.glotrush.dto.response.UploadResponse;
 import com.glotrush.dto.response.UserProfileResponse;
 import com.glotrush.services.images.IProfileService;
 import com.glotrush.services.userprofile.IUserProfileService;
+import com.glotrush.storage.FileStorageService;
 import com.glotrush.utils.LocaleUtils;
 import com.glotrush.utils.SecurityUtils;
 
@@ -46,6 +46,7 @@ import lombok.RequiredArgsConstructor;
 public class ProfileController {
     private final IUserProfileService profileService;
     private final IProfileService profileImageService;
+    private final FileStorageService fileStorageService;
     private final MessageSource messageSource;
 
     @GetMapping
@@ -56,7 +57,7 @@ public class ProfileController {
     }
 
     @PutMapping
-    public ResponseEntity<UserProfileResponse> updateMyProfile(Authentication authentication,@Valid @RequestBody UpdateProfileRequest request) {
+    public ResponseEntity<UserProfileResponse> updateMyProfile(Authentication authentication, @Valid @RequestBody UpdateProfileRequest request) {
         UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         UserProfileResponse profile = profileService.updateProfile(accountId, request);
         return ResponseEntity.ok(profile);
@@ -64,7 +65,6 @@ public class ProfileController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable UUID userId, Authentication authentication) {
-        
         UUID viewerAccountId = authentication != null ? SecurityUtils.extractUserIdFromAuth(authentication) : null;
         UserProfileResponse profile = profileService.getPublicProfile(userId, viewerAccountId);
         return ResponseEntity.ok(profile);
@@ -80,35 +80,22 @@ public class ProfileController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UploadResponse> uploadProfileImage(Authentication authentication, @RequestParam("file") MultipartFile file) throws IOException {
         UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
-        String imageUrl =  ImageConstants.IMAGE_BASE_URL + profileImageService.uploadImage(accountId, file);
-
+        String imageUrl = ImageConstants.IMAGE_BASE_URL + profileImageService.uploadImage(accountId, file);
         return ResponseEntity.ok(UploadResponse.builder()
-            .message(messageSource.getMessage("success.image.uploaded", null, LocaleUtils.getCurrentLocale()))
-            .pathFile(imageUrl)
-            .build());
+                .message(messageSource.getMessage("success.image.uploaded", null, LocaleUtils.getCurrentLocale()))
+                .pathFile(imageUrl)
+                .build());
     }
 
     @GetMapping("/files/{filename:.+}")
     public ResponseEntity<Resource> getProfileImage(@PathVariable String filename) throws IOException {
-        Path filePath = profileImageService.getImagePath(filename);
-
-        if (!Files.exists(filePath) || !Files.isReadable(filePath)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Resource resource = new UrlResource(filePath.toUri());
-
-        String contentType = Files.probeContentType(filePath);
-        if (contentType == null) {
-            contentType = "application/octet-stream";
-        }
-
+        String imageKey = profileImageService.getImageKey(filename);
+        InputStream stream = fileStorageService.download(imageKey);
         return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(contentType))
-            .header(HttpHeaders.CACHE_CONTROL, "max-age=31536000")
-            .body(resource);
+                .contentType(MediaType.parseMediaType(detectContentType(filename)))
+                .header(HttpHeaders.CACHE_CONTROL, "max-age=31536000")
+                .body(new InputStreamResource(stream));
     }
-
 
     @PutMapping("/active-language/{languageId}")
     public ResponseEntity<UserProfileResponse> setActiveLanguage(Authentication authentication, @PathVariable UUID languageId) {
@@ -130,6 +117,7 @@ public class ProfileController {
         StreakResponse streakResponse = profileService.getStreak(accountId);
         return ResponseEntity.ok(streakResponse);
     }
+
     @GetMapping("/notification-preferences")
     public ResponseEntity<NotificationPreferencesResponse> getNotificationPreferences(Authentication authentication) {
         UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
@@ -142,5 +130,14 @@ public class ProfileController {
         NotificationPreferencesResponse response = profileService.updateNotificationPreferences(accountId, request);
         return ResponseEntity.ok(response);
     }
-}
 
+    private String detectContentType(String filename) {
+        String extension = filename.contains(".") ? filename.substring(filename.lastIndexOf('.') + 1).toLowerCase() : "";
+        return switch (extension) {
+            case "jpg", "jpeg" -> "image/jpeg";
+            case "png" -> "image/png";
+            case "webp" -> "image/webp";
+            default -> "application/octet-stream";
+        };
+    }
+}
