@@ -13,7 +13,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 @Service
-@Profile("dev")
+@Profile("dev | test")
 public class LocalFileStorageService implements FileStorageService {
 
     private final Path rootPath;

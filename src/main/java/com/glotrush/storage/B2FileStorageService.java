@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @Service
-@Profile("!dev")
+@Profile("!dev & !test")
 public class B2FileStorageService implements FileStorageService {
 
     private final S3Client s3Client;

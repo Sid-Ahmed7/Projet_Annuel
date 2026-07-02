@@ -12,7 +12,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import java.net.URI;
 
 @Configuration
-@Profile("!dev")
+@Profile("!dev & !test")
 public class B2Config {
 
     @Value("${b2.endpoint}")
