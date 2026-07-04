@@ -61,8 +61,7 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
     @Query("SELECT ulp.account, COUNT(ulp) FROM UserLessonProgress ulp WHERE ulp.completedAt >= :startOfWeek AND ulp.status = 'COMPLETED' AND ulp.account.notifWeeklyGoal = true GROUP BY ulp.account HAVING COUNT(ulp) >= :goal")
     List<Object[]> findAccountsWhoReachedWeeklyGoal(@Param("startOfWeek") LocalDateTime startOfWeek,@Param("goal") int goal);
 
-
-
+    void deleteByAccount_Id(UUID accountId);
 
 }
 

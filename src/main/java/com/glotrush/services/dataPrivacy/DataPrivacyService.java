@@ -1,0 +1,133 @@
+package com.glotrush.services.dataPrivacy;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import org.springframework.context.MessageSource;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.glotrush.entities.Accounts;
+import com.glotrush.exceptions.InvalidPasswordException;
+import com.glotrush.exceptions.UserNotFoundException;
+import com.glotrush.mapping.ExportDataMapper;
+import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.ChallengeParticipantsRepository;
+import com.glotrush.repositories.ChallengeRepository;
+import com.glotrush.repositories.FriendsRepository;
+import com.glotrush.repositories.LessonSessionRepository;
+import com.glotrush.repositories.PasswordResetTokenRepository;
+import com.glotrush.repositories.PaymentHistoryRepository;
+import com.glotrush.repositories.PushNotificationSubscriptionRepository;
+import com.glotrush.repositories.SubscriptionRepository;
+import com.glotrush.repositories.TopicReviewRepository;
+import com.glotrush.repositories.UserLanguageRepository;
+import com.glotrush.repositories.UserLessonProgressRepository;
+import com.glotrush.repositories.UserMistakeRepository;
+import com.glotrush.repositories.UserProfileRepository;
+import com.glotrush.repositories.UserProgressRepository;
+import com.glotrush.repositories.ai.AIGenerationLogRepository;
+import com.glotrush.services.EmailService;
+import com.glotrush.services.stripe.IStripService;
+import com.glotrush.storage.FileStorageService;
+import com.glotrush.utils.LocaleUtils;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
+public class DataPrivacyService implements IDataPrivacyService {
+
+    private final AccountsRepository accountsRepository;
+    private final ExportDataMapper exportDataMapper;
+    private final UserProfileRepository userProfileRepository;
+    private final MessageSource messageSource;
+    private final UserLanguageRepository userLanguageRepository;
+    private final UserProgressRepository userProgressRepository;
+    private final UserLessonProgressRepository userLessonProgressRepository;
+    private final LessonSessionRepository lessonSessionRepository;
+    private final UserMistakeRepository userMistakeRepository;
+    private final FriendsRepository friendsRepository;
+    private final ChallengeRepository challengeRepository;
+    private final ChallengeParticipantsRepository challengeParticipantsRepository;
+    private final SubscriptionRepository subscriptionRepository;
+    private final PaymentHistoryRepository paymentHistoryRepository;
+    private final AIGenerationLogRepository aiGenerationLogRepository;
+    private final PushNotificationSubscriptionRepository pushNotificationSubscriptionRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final TopicReviewRepository topicReviewRepository;
+    private final FileStorageService fileStorageService;
+    private final ObjectMapper objectMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final IStripService stripeService;
+    private final EmailService emailService;
+
+
+    @Override
+    public byte[] exportUserData(UUID accountId) throws Exception {
+        Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
+
+        Map<String, Object> data = new LinkedHashMap<>();
+
+        data.put("account", exportDataMapper.mapAccount(account));
+        userProfileRepository.findByAccount_Id(accountId).ifPresent(userProfile -> data.put("profile", exportDataMapper.mapProfile(userProfile)));
+        data.put("languages", exportDataMapper.mapLanguages(userLanguageRepository.findByAccount_Id(accountId)));
+        data.put("progress", exportDataMapper.mapProgress(userProgressRepository.findByAccount_Id(accountId)));
+        data.put("lessonProgress", exportDataMapper.mapLessonProgress(userLessonProgressRepository.findByAccount_Id(accountId)));
+        data.put("sessions", exportDataMapper.mapSessions(lessonSessionRepository.findByAccount_IdOrderByCompletedAtDesc(accountId)));
+        data.put("mistakes", exportDataMapper.mapMistakes(userMistakeRepository.findByAccount_IdAndIsResolvedFalseOrderByCreatedAtAsc(accountId)));
+        data.put("friends", exportDataMapper.mapFriends(friendsRepository.findAcceptedRequests(accountId), accountId));
+        data.put("challenges", exportDataMapper.mapChallenges(challengeRepository.findAllByAccountId(accountId)));
+        data.put("reviews", exportDataMapper.mapTopicReviews(topicReviewRepository.findByAccount_Id(accountId)));
+        subscriptionRepository.findByAccount_Id(accountId).ifPresent(subscription -> data.put("subscription", exportDataMapper.mapSubscription(subscription)));
+        data.put("payments", exportDataMapper.mapPayments(paymentHistoryRepository.findAllByAccount_IdOrderByCreatedAtDesc(accountId)));
+
+        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(data);
+    }
+
+    @Override
+    public void deleteAccount(UUID accountId, String confirmPassword) {
+        Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
+
+        if (!passwordEncoder.matches(confirmPassword, account.getPassword())) {
+            throw new InvalidPasswordException(messageSource.getMessage("error.password.mismatch", null, LocaleUtils.getCurrentLocale()));
+        }
+
+        subscriptionRepository.findByAccount_Id(accountId).ifPresent(subscription -> {
+            if (subscription.getStripeSubscriptionId() == null || !subscription.getIsActive()) return;
+            long refundAmount = stripeService.cancelWithProrationRefund(subscription.getStripeSubscriptionId(),subscription.getCurrentPeriodStart(),subscription.getCurrentPeriodEnd());
+            if (refundAmount > 0) {
+                emailService.sendRefundEmail(account.getEmail(), account.getUsername(), refundAmount);
+            }
+        });
+
+        userProfileRepository.findByAccount_Id(accountId).ifPresent(profile -> {
+            if (profile.getPhotoUrl() != null) {
+                fileStorageService.delete("profiles/" + profile.getPhotoUrl());
+            }
+        });
+
+        aiGenerationLogRepository.deleteByAccountId(accountId);
+        pushNotificationSubscriptionRepository.deleteByAccount_Id(accountId);
+        passwordResetTokenRepository.deleteByAccount_Id(accountId);
+        topicReviewRepository.deleteByAccount_Id(accountId);
+        userMistakeRepository.deleteByAccount_Id(accountId);
+        lessonSessionRepository.deleteByAccount_Id(accountId);
+        userLessonProgressRepository.deleteByAccount_Id(accountId);
+        paymentHistoryRepository.deleteByAccount_Id(accountId);
+        subscriptionRepository.deleteByAccount_Id(accountId);
+        friendsRepository.deleteAllByAccountId(accountId);
+
+        challengeRepository.nullifyChallenged(accountId);
+        challengeParticipantsRepository.deleteByAccount_Id(accountId);
+        challengeRepository.deleteByChallenger_Id(accountId);
+
+        accountsRepository.deleteById(accountId);
+    }
+}

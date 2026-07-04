@@ -244,6 +244,21 @@ public class EmailService {
             throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
         }
     }
+    public void sendRefundEmail(String toEmail, String username, long refundCents) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(messageSource.getMessage("email.subject.refund", null, LocaleUtils.getCurrentLocale()));
+            String amount = String.format("%.2f", refundCents / 100.0);
+            message.setText(messageSource.getMessage("email.body.refund", new Object[]{username, amount}, LocaleUtils.getCurrentLocale()));
+            mailSender.send(message);
+            log.info("Refund email sent to: {}", toEmail);
+        } catch (Exception e) {
+            log.error("Error sending refund email to: {}", toEmail, e);
+        }
+    }
+
     public void sendContactEmail(ContactRequest contactRequest) {
         String toEmail = fromEmail; 
         try {
