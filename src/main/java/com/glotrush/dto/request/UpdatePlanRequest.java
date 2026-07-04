@@ -1,10 +1,12 @@
 package com.glotrush.dto.request;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.glotrush.enumerations.PaymentInterval;
 import com.glotrush.enumerations.SubscriptionType;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -18,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdatePlanRequest {
-    
+
     @NotBlank
     @Size(max = 100)
     private String name;
@@ -39,4 +41,9 @@ public class UpdatePlanRequest {
     private String stripePriceId;
 
     private Boolean isActive;
+
+    @Min(5)
+    private Integer aiQuota;
+
+    private List<PlanFeatureRequest> features;
 }
