@@ -80,15 +80,15 @@ public class DataPrivacyService implements IDataPrivacyService {
         data.put("account", exportDataMapper.mapAccount(account));
         userProfileRepository.findByAccount_Id(accountId).ifPresent(p -> data.put("profile", exportDataMapper.mapProfile(p)));
         data.put("languages", exportDataMapper.mapLanguages(userLanguageRepository.findByAccount_Id(accountId)));
-        data.put("progress", exportDataMapper.mapProgress(userProgressRepository.findByAccount_Id(accountId)));
-        data.put("lessonProgress", exportDataMapper.mapLessonProgress(userLessonProgressRepository.findByAccount_Id(accountId)));
-        data.put("sessions", exportDataMapper.mapSessions(lessonSessionRepository.findByAccount_IdOrderByCompletedAtDesc(accountId)));
-        data.put("mistakes", exportDataMapper.mapMistakes(userMistakeRepository.findByAccount_IdAndIsResolvedFalseOrderByCreatedAtAsc(accountId)));
+        data.put("progress", exportDataMapper.mapProgressList(userProgressRepository.findByAccount_Id(accountId)));
+        data.put("lessonProgress", exportDataMapper.mapLessonProgressList(userLessonProgressRepository.findByAccount_Id(accountId)));
+        data.put("sessions", exportDataMapper.mapLessonSessions(lessonSessionRepository.findByAccount_IdOrderByCompletedAtDesc(accountId)));
+        data.put("mistakes", exportDataMapper.mapUserMistakes(userMistakeRepository.findByAccount_IdAndIsResolvedFalseOrderByCreatedAtAsc(accountId)));
         data.put("friends", exportDataMapper.mapFriends(friendsRepository.findAcceptedRequests(accountId), accountId));
         data.put("challenges", exportDataMapper.mapChallenges(challengeRepository.findAllByAccountId(accountId)));
         data.put("reviews", exportDataMapper.mapTopicReviews(topicReviewRepository.findByAccount_Id(accountId)));
         subscriptionRepository.findByAccount_Id(accountId).ifPresent(s -> data.put("subscription", exportDataMapper.mapSubscription(s)));
-        data.put("payments", exportDataMapper.mapPayments(paymentHistoryRepository.findAllByAccount_IdOrderByCreatedAtDesc(accountId)));
+        data.put("payments", exportDataMapper.mapPaymentHistoryList(paymentHistoryRepository.findAllByAccount_IdOrderByCreatedAtDesc(accountId)));
 
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(data);
     }
