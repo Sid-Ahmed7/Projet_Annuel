@@ -3,6 +3,7 @@ package com.glotrush.controllers.data;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,10 +37,17 @@ public class DataPrivacyController {
                 .body(dataJsonFile);
     }
 
+    @PostMapping("/generate-code")
+    public ResponseEntity<Void> generateCode(Authentication authentication) {
+        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
+        dataPrivacyService.generateAccountDeletionCode(accountId);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteAccount(@Valid @RequestBody DeleteAccountRequest request, Authentication authentication) {
         UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
-        dataPrivacyService.deleteAccount(accountId, request.getPassword());
+        dataPrivacyService.deleteAccount(accountId, request.getCode());
         return ResponseEntity.noContent().build();
     }
 }

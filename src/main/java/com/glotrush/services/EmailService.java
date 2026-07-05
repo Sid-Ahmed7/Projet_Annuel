@@ -259,8 +259,22 @@ public class EmailService {
         }
     }
 
+    public void sendAccountDeletionEmail(String toEmail, String username, String code) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(messageSource.getMessage("email.subject.account.deletion", null, LocaleUtils.getCurrentLocale()));
+            message.setText(messageSource.getMessage("email.body.account.deletion", new Object[]{username, code}, LocaleUtils.getCurrentLocale()));
+            mailSender.send(message);
+        } catch (Exception e) {
+            log.error("Error sending account deletion email to: {}", toEmail, e);
+            throw new EmailSendException(messageSource.getMessage("error.email.failed_to_send", null, LocaleUtils.getCurrentLocale()), e);
+        }
+    }
+
     public void sendContactEmail(ContactRequest contactRequest) {
-        String toEmail = fromEmail; 
+        String toEmail = fromEmail;
         try {
             SimpleMailMessage mail = new SimpleMailMessage();
             mail.setTo(toEmail);

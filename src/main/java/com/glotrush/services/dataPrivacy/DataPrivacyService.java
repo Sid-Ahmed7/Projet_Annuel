@@ -1,18 +1,20 @@
 package com.glotrush.services.dataPrivacy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.context.MessageSource;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.glotrush.entities.AccountDeletionCode;
 import com.glotrush.entities.Accounts;
-import com.glotrush.exceptions.InvalidPasswordException;
+import com.glotrush.exceptions.MismatchCodeException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.mapping.ExportDataMapper;
+import com.glotrush.repositories.AccountDeletionCodeRepository;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.ChallengeParticipantsRepository;
 import com.glotrush.repositories.ChallengeRepository;
@@ -32,6 +34,7 @@ import com.glotrush.repositories.ai.AIGenerationLogRepository;
 import com.glotrush.services.EmailService;
 import com.glotrush.services.stripe.IStripService;
 import com.glotrush.storage.FileStorageService;
+import com.glotrush.utils.GenerateRandomCode;
 import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
@@ -64,19 +67,18 @@ public class DataPrivacyService implements IDataPrivacyService {
     private final TopicReviewRepository topicReviewRepository;
     private final FileStorageService fileStorageService;
     private final ObjectMapper objectMapper;
-    private final PasswordEncoder passwordEncoder;
     private final IStripService stripeService;
     private final EmailService emailService;
-
+    private final AccountDeletionCodeRepository accountDeletionCodeRepository;
 
     @Override
     public byte[] exportUserData(UUID accountId) throws Exception {
-        Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
+        Accounts account = accountsRepository.findById(accountId)
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
 
         Map<String, Object> data = new LinkedHashMap<>();
-
         data.put("account", exportDataMapper.mapAccount(account));
-        userProfileRepository.findByAccount_Id(accountId).ifPresent(userProfile -> data.put("profile", exportDataMapper.mapProfile(userProfile)));
+        userProfileRepository.findByAccount_Id(accountId).ifPresent(p -> data.put("profile", exportDataMapper.mapProfile(p)));
         data.put("languages", exportDataMapper.mapLanguages(userLanguageRepository.findByAccount_Id(accountId)));
         data.put("progress", exportDataMapper.mapProgress(userProgressRepository.findByAccount_Id(accountId)));
         data.put("lessonProgress", exportDataMapper.mapLessonProgress(userLessonProgressRepository.findByAccount_Id(accountId)));
@@ -85,23 +87,45 @@ public class DataPrivacyService implements IDataPrivacyService {
         data.put("friends", exportDataMapper.mapFriends(friendsRepository.findAcceptedRequests(accountId), accountId));
         data.put("challenges", exportDataMapper.mapChallenges(challengeRepository.findAllByAccountId(accountId)));
         data.put("reviews", exportDataMapper.mapTopicReviews(topicReviewRepository.findByAccount_Id(accountId)));
-        subscriptionRepository.findByAccount_Id(accountId).ifPresent(subscription -> data.put("subscription", exportDataMapper.mapSubscription(subscription)));
+        subscriptionRepository.findByAccount_Id(accountId).ifPresent(s -> data.put("subscription", exportDataMapper.mapSubscription(s)));
         data.put("payments", exportDataMapper.mapPayments(paymentHistoryRepository.findAllByAccount_IdOrderByCreatedAtDesc(accountId)));
 
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(data);
     }
 
     @Override
-    public void deleteAccount(UUID accountId, String confirmPassword) {
+    public void generateAccountDeletionCode(UUID accountId) {
         Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
 
-        if (!passwordEncoder.matches(confirmPassword, account.getPassword())) {
-            throw new InvalidPasswordException(messageSource.getMessage("error.password.mismatch", null, LocaleUtils.getCurrentLocale()));
-        }
+        accountDeletionCodeRepository.revokeAllByAccountId(accountId);
+
+        String code = GenerateRandomCode.generateRandomCode();
+
+        AccountDeletionCode deletionCode = AccountDeletionCode.builder()
+                .account(account)
+                .code(code)
+                .expiresAt(LocalDateTime.now().plusMinutes(15))
+                .build();
+        accountDeletionCodeRepository.save(deletionCode);
+
+        emailService.sendAccountDeletionEmail(account.getEmail(), account.getUsername(), code);
+    }
+
+    @Override
+    public void deleteAccount(UUID accountId, String code) {
+        Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
+
+        AccountDeletionCode deletionCode = accountDeletionCodeRepository.findValidCode(code, LocalDateTime.now()).filter(c -> c.getAccount().getId().equals(accountId)).orElseThrow(() -> new MismatchCodeException(messageSource.getMessage("error.deletion.code.invalid", null, LocaleUtils.getCurrentLocale())));
+
+        deletionCode.setIsUsed(true);
+        accountDeletionCodeRepository.save(deletionCode);
 
         subscriptionRepository.findByAccount_Id(accountId).ifPresent(subscription -> {
             if (subscription.getStripeSubscriptionId() == null || !subscription.getIsActive()) return;
-            long refundAmount = stripeService.cancelWithProrationRefund(subscription.getStripeSubscriptionId(),subscription.getCurrentPeriodStart(),subscription.getCurrentPeriodEnd());
+            long refundAmount = stripeService.cancelWithProrationRefund(
+                    subscription.getStripeSubscriptionId(),
+                    subscription.getCurrentPeriodStart(),
+                    subscription.getCurrentPeriodEnd());
             if (refundAmount > 0) {
                 emailService.sendRefundEmail(account.getEmail(), account.getUsername(), refundAmount);
             }
@@ -116,6 +140,7 @@ public class DataPrivacyService implements IDataPrivacyService {
         aiGenerationLogRepository.deleteByAccountId(accountId);
         pushNotificationSubscriptionRepository.deleteByAccount_Id(accountId);
         passwordResetTokenRepository.deleteByAccount_Id(accountId);
+        accountDeletionCodeRepository.deleteByAccount_Id(accountId);
         topicReviewRepository.deleteByAccount_Id(accountId);
         userMistakeRepository.deleteByAccount_Id(accountId);
         lessonSessionRepository.deleteByAccount_Id(accountId);
@@ -123,11 +148,9 @@ public class DataPrivacyService implements IDataPrivacyService {
         paymentHistoryRepository.deleteByAccount_Id(accountId);
         subscriptionRepository.deleteByAccount_Id(accountId);
         friendsRepository.deleteAllByAccountId(accountId);
-
         challengeRepository.nullifyChallenged(accountId);
         challengeParticipantsRepository.deleteByAccount_Id(accountId);
         challengeRepository.deleteByChallenger_Id(accountId);
-
         accountsRepository.deleteById(accountId);
     }
 }

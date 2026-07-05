@@ -7,5 +7,5 @@ import lombok.Data;
 public class DeleteAccountRequest {
 
     @NotBlank
-    private String password;
+    private String code;
 }
