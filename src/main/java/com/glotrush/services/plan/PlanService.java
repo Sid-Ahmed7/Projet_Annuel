@@ -88,8 +88,16 @@ public class PlanService implements IPlanService {
             plan.setAiQuota(request.getAiQuota());
         }
         if (request.getFeatures() != null) {
-            planFeatureRepository.deleteByPlan_Id(plan.getId());
-            saveFeatures(plan, request.getFeatures());
+            plan.getFeatures().clear();
+            int index = 0;
+            for (PlanFeatureRequest planFeature : request.getFeatures()) {
+                plan.getFeatures().add(PlanFeature.builder()
+                    .plan(plan)
+                    .label(planFeature.getLabel())
+                    .orderIndex(planFeature.getOrderIndex() != null ? planFeature.getOrderIndex() : index)
+                    .build());
+                index++;
+            }
         }
         return planBuilder.mapToResponse(planRepository.save(plan));
     }
