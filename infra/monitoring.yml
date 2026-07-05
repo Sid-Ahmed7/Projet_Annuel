@@ -6,7 +6,7 @@ services:
     volumes:
       - prometheus_data:/prometheus
     configs:
-      - source: prometheus_config_v3
+      - source: prometheus_config_v4
         target: /etc/prometheus/prometheus.yml
     networks:
       - monitoring_net
@@ -65,7 +65,7 @@ services:
         condition: on-failure
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    image: ghcr.io/google/cadvisor:0.54.0
     volumes:
       - /:/rootfs:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -75,6 +75,7 @@ services:
       - /dev/disk/:/dev/disk:ro
     command:
       - '-housekeeping_interval=10s'
+      - '-docker_only=true'
     networks:
       - monitoring_net
     deploy:
@@ -83,7 +84,7 @@ services:
         condition: on-failure
 
 configs:
-  prometheus_config_v3:
+  prometheus_config_v4:
     file: ./prometheus.yml
 
 secrets:
