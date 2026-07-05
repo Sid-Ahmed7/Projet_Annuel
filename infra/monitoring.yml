@@ -6,7 +6,7 @@ services:
     volumes:
       - prometheus_data:/prometheus
     configs:
-      - source: prometheus_config_v3
+      - source: prometheus_config_v5
         target: /etc/prometheus/prometheus.yml
     networks:
       - monitoring_net
@@ -49,6 +49,7 @@ services:
 
   node-exporter:
     image: prom/node-exporter:v1.8.1
+    hostname: "{{.Node.Hostname}}"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -65,10 +66,11 @@ services:
         condition: on-failure
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    image: ghcr.io/google/cadvisor:0.54.0
     volumes:
       - /:/rootfs:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
@@ -83,7 +85,7 @@ services:
         condition: on-failure
 
 configs:
-  prometheus_config_v3:
+  prometheus_config_v5:
     file: ./prometheus.yml
 
 secrets:
