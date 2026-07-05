@@ -6,7 +6,7 @@ services:
     volumes:
       - prometheus_data:/prometheus
     configs:
-      - source: prometheus_config_v4
+      - source: prometheus_config_v5
         target: /etc/prometheus/prometheus.yml
     networks:
       - monitoring_net
@@ -49,6 +49,7 @@ services:
 
   node-exporter:
     image: prom/node-exporter:v1.8.1
+    hostname: "{{.Node.Hostname}}"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -84,7 +85,7 @@ services:
         condition: on-failure
 
 configs:
-  prometheus_config_v4:
+  prometheus_config_v5:
     file: ./prometheus.yml
 
 secrets:

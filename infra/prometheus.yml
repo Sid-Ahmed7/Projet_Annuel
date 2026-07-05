@@ -10,6 +10,9 @@ scrape_configs:
           - 'tasks.skaldly_back'
         type: 'A'
         port: 8081
+    relabel_configs:
+      - target_label: instance
+        replacement: 'glotrush-backend'
 
   - job_name: 'node-exporter'
     dns_sd_configs:
