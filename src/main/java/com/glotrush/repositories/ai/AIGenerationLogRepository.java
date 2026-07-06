@@ -14,4 +14,5 @@ public interface AIGenerationLogRepository extends JpaRepository<AIGenerationLog
 
     @Query("SELECT COUNT(l) FROM AIGenerationLog l WHERE l.accountId = :accountId AND l.createdAt >= :startDate")
     long countByAccountIdAndCreatedAtAfter(@Param("accountId") UUID accountId, @Param("startDate") LocalDateTime startDate);
+    void deleteByAccountId(UUID accountId);
 }

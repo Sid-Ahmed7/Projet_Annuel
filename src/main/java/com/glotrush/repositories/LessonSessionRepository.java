@@ -28,4 +28,6 @@ public interface LessonSessionRepository extends JpaRepository<LessonSession, UU
 
     @Query("SELECT MAX(ls.completedAt) FROM LessonSession ls WHERE ls.account.id = :accountId AND ls.status = :status")
     LocalDateTime findLastActivityByAccountId(@Param("accountId") UUID accountId, @Param("status") LessonSessionStatus status);
+
+    void deleteByAccount_Id(UUID accountId);
 }

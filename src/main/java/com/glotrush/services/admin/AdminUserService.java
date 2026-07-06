@@ -18,11 +18,29 @@ import com.glotrush.enumerations.AccountStatus;
 import com.glotrush.enumerations.UserRole;
 import com.glotrush.exceptions.ResourceNotFoundException;
 import com.glotrush.repositories.AccountsRepository;
+import com.glotrush.repositories.ai.AIGenerationLogRepository;
+import com.glotrush.repositories.ChallengeParticipantsRepository;
+import com.glotrush.repositories.ChallengeRepository;
+import com.glotrush.repositories.FriendsRepository;
+import com.glotrush.repositories.LessonSessionRepository;
+import com.glotrush.repositories.PasswordResetTokenRepository;
+import com.glotrush.repositories.PaymentHistoryRepository;
+import com.glotrush.repositories.PushNotificationSubscriptionRepository;
+import com.glotrush.repositories.SubscriptionRepository;
+import com.glotrush.repositories.TopicReviewRepository;
+import com.glotrush.repositories.UserLessonProgressRepository;
+import com.glotrush.repositories.UserMistakeRepository;
+import com.glotrush.repositories.UserProfileRepository;
+import com.glotrush.services.EmailService;
+import com.glotrush.services.stripe.IStripService;
+import com.glotrush.storage.FileStorageService;
 import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -32,6 +50,22 @@ public class AdminUserService implements IAdminUserService {
     private final MessageSource messageSource;
     private final PasswordEncoder passwordEncoder;
     private final AdminUserBuilder adminUserBuilder;
+    private final SubscriptionRepository subscriptionRepository;
+    private final UserProfileRepository userProfileRepository;
+    private final FileStorageService fileStorageService;
+    private final AIGenerationLogRepository aiGenerationLogRepository;
+    private final PushNotificationSubscriptionRepository pushNotificationSubscriptionRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final TopicReviewRepository topicReviewRepository;
+    private final UserMistakeRepository userMistakeRepository;
+    private final LessonSessionRepository lessonSessionRepository;
+    private final UserLessonProgressRepository userLessonProgressRepository;
+    private final PaymentHistoryRepository paymentHistoryRepository;
+    private final FriendsRepository friendsRepository;
+    private final ChallengeRepository challengeRepository;
+    private final ChallengeParticipantsRepository challengeParticipantsRepository;
+    private final EmailService emailService;
+    private final IStripService stripeService;
 
     @Override
     public AdminUserListResponse getUsers(String search, Integer page, Integer size) {
@@ -65,8 +99,38 @@ public class AdminUserService implements IAdminUserService {
 
     @Override
     public void deleteUser(UUID accountId) {
-        Accounts account = findUser(accountId);
-        accountsRepository.delete(account);
+        findUser(accountId);
+
+        subscriptionRepository.findByAccount_Id(accountId).ifPresent(subscription -> {
+            if (subscription.getStripeSubscriptionId() == null || !subscription.getIsActive()) return;
+            long refundAmount = stripeService.cancelWithProrationRefund(subscription.getStripeSubscriptionId(),subscription.getCurrentPeriodStart(),subscription.getCurrentPeriodEnd());
+            if (refundAmount > 0) {
+                emailService.sendRefundEmail(subscription.getAccount().getEmail(),subscription.getAccount().getUsername(),refundAmount);
+            }
+        });
+
+        userProfileRepository.findByAccount_Id(accountId).ifPresent(profile -> {
+            if (profile.getPhotoUrl() != null) {
+                fileStorageService.delete("profiles/" + profile.getPhotoUrl());
+            }
+        });
+
+        aiGenerationLogRepository.deleteByAccountId(accountId);
+        pushNotificationSubscriptionRepository.deleteByAccount_Id(accountId);
+        passwordResetTokenRepository.deleteByAccount_Id(accountId);
+        topicReviewRepository.deleteByAccount_Id(accountId);
+        userMistakeRepository.deleteByAccount_Id(accountId);
+        lessonSessionRepository.deleteByAccount_Id(accountId);
+        userLessonProgressRepository.deleteByAccount_Id(accountId);
+        paymentHistoryRepository.deleteByAccount_Id(accountId);
+        subscriptionRepository.deleteByAccount_Id(accountId);
+        friendsRepository.deleteAllByAccountId(accountId);
+
+        challengeRepository.nullifyChallenged(accountId);
+        challengeParticipantsRepository.deleteByAccount_Id(accountId);
+        challengeRepository.deleteByChallenger_Id(accountId);
+
+        accountsRepository.deleteById(accountId);
     }
 
     @Override

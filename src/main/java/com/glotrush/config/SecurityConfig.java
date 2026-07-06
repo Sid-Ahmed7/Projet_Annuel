@@ -95,6 +95,7 @@ public class SecurityConfig {
             configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173", "https://skaldly.fr"));
             configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
             configuration.setAllowedHeaders(Arrays.asList("*"));
+            configuration.setExposedHeaders(List.of("Content-Disposition"));
             configuration.setAllowCredentials(true);
             configuration.setMaxAge(3600L);
             
