@@ -21,4 +21,7 @@ public interface UserMistakeRepository extends JpaRepository<UserMistake, UUID> 
     Optional<UserMistake> findByAccount_IdAndQuestionIdAndIsResolvedFalse(UUID accountId, UUID questionId);
     List<UserMistake> findByAccount_IdAndIsResolvedFalseOrderByCreatedAtAsc(UUID accountId);
     long countByAccount_IdAndIsResolvedFalse(UUID accountId);
+
+    void deleteByAccount_Id(UUID accountId);
 }
+
