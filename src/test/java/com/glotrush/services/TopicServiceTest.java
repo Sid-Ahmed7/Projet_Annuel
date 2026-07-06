@@ -454,15 +454,18 @@ class TopicServiceTest {
     @DisplayName("Should get active topics progress")
     void shouldGetActiveTopicsProgress() {
         Pageable pageable = PageRequest.of(0, 3);
-        UserProgress userProgress = UserProgress.builder()
+        LocalDateTime studiedAt = LocalDateTime.now();
+        UserProgress progress = UserProgress.builder()
                 .topic(topic)
                 .completionPercentage(45.0)
-                .lastStudiedAt(LocalDateTime.now())
+                .lastStudiedAt(studiedAt)
                 .build();
-        Page<UserProgress> page = new PageImpl<>(List.of(userProgress), pageable, 1);
+        Page<Topic> topicPage = new PageImpl<>(List.of(topic), pageable, 1);
 
-        when(userProgressRepository.findActiveProgressByAccountAndLanguage(eq(accountId), eq(languageId), eq(pageable)))
-                .thenReturn(page);
+        when(topicRepository.findActiveTopicsWithProgress(eq(languageId), eq(accountId), eq(pageable)))
+                .thenReturn(topicPage);
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(eq(accountId), eq(topicId)))
+                .thenReturn(Optional.of(progress));
 
         Page<TopicProgressResponse> result = topicService.getActiveTopicsProgress(accountId, languageId, pageable);
 
@@ -470,7 +473,9 @@ class TopicServiceTest {
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getName()).isEqualTo("Basics");
         assertThat(result.getContent().get(0).getProgressPercent()).isEqualTo(45.0);
-        verify(userProgressRepository).findActiveProgressByAccountAndLanguage(eq(accountId), eq(languageId), eq(pageable));
+        assertThat(result.getContent().get(0).getLastStudiedAt()).isEqualTo(studiedAt);
+        verify(topicRepository).findActiveTopicsWithProgress(eq(languageId), eq(accountId), eq(pageable));
+        verify(userProgressRepository).findByAccount_IdAndTopic_Id(eq(accountId), eq(topicId));
     }
 
     @Test
