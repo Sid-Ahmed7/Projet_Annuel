@@ -43,7 +43,6 @@ class TopicMapperTest {
         assertThat(entity.getDescription()).isEqualTo(request.getDescription());
         assertThat(entity.getDifficulty()).isEqualTo(request.getDifficulty());
         assertThat(entity.getIsActive()).isEqualTo(request.getIsActive());
-        // languageId n'est pas mappé directement car Topic a une entité Language
     }
 
     @Test
@@ -76,7 +75,6 @@ class TopicMapperTest {
         assertThat(response.getDifficulty()).isEqualTo(entity.getDifficulty());
         assertThat(response.getIsActive()).isEqualTo(entity.getIsActive());
 
-        // Vérification des clés étrangères / données liées
         assertThat(response.getTargetLanguageId()).isEqualTo(languageId);
         assertThat(response.getSourceLanguageId()).isEqualTo(languageId);
     }

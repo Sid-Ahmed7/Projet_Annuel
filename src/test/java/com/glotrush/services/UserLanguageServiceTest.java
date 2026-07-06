@@ -168,7 +168,7 @@ class UserLanguageServiceTest {
         
         assertThatThrownBy(() -> userLanguageService.addLanguage(accountId, request))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Language already added"); // Message en français depuis messages_fr.properties
+                .hasMessageContaining("Language already added");
 
         verify(userLanguageRepository, never()).save(any(UserLanguage.class));
     }

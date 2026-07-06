@@ -19,16 +19,16 @@ class LanguageMapperTest {
     @Test
     @DisplayName("Should map LanguageRequest to Language entity")
     void shouldMapLanguageRequestToLanguageEntity() {
-        // Given
+        
         LanguageRequest request = new LanguageRequest();
         request.setCode("en");
         request.setName("English");
         request.setIsActive(true);
 
-        // When
+        
         Language language = mapper.mapLanguageRequestToMapLanguageEntities(request);
 
-        // Then
+        
         assertThat(language).isNotNull();
         assertThat(language.getCode()).isEqualTo(request.getCode());
         assertThat(language.getName()).isEqualTo(request.getName());
@@ -39,7 +39,7 @@ class LanguageMapperTest {
     @Test
     @DisplayName("Should map Language entity to LanguageResponse")
     void shouldMapLanguageEntityToLanguageResponse() {
-        // Given
+        
         Language language = Language.builder()
                 .id(UUID.randomUUID())
                 .code("fr")
@@ -47,10 +47,10 @@ class LanguageMapperTest {
                 .isActive(true)
                 .build();
 
-        // When
+        
         LanguageResponse response = mapper.mapLanguageEntitiesToLanguageResponse(language);
 
-        // Then
+        
         assertThat(response).isNotNull();
         assertThat(response.getId()).isEqualTo(language.getId());
         assertThat(response.getCode()).isEqualTo(language.getCode());
