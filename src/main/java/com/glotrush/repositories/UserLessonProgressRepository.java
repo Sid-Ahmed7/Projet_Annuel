@@ -63,6 +63,12 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
 
     void deleteByAccount_Id(UUID accountId);
 
+    @Query("SELECT ulp FROM UserLessonProgress ulp WHERE ulp.account.id = :accountId AND ulp.lesson.topic.id = :topicId AND ulp.lastAttemptAt IS NOT NULL ORDER BY ulp.lastAttemptAt DESC")
+    List<UserLessonProgress> findLastAttemptsByTopic(@Param("accountId") UUID accountId, @Param("topicId") UUID topicId, Pageable pageable);
+
+    default Optional<UserLessonProgress> findLastAttemptByAccountIdAndTopicId(UUID accountId, UUID topicId) {
+        return findLastAttemptsByTopic(accountId, topicId, PageRequest.of(0, 1)).stream().findFirst();
+    }
 }
 
 

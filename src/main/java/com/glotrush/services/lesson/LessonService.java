@@ -145,6 +145,7 @@ public class LessonService implements ILessonService {
 
         progress.setLastAttemptAt(LocalDateTime.now());
         progress = userLessonProgressRepository.save(progress);
+        progressService.updateLastStudiedAt(accountId, lesson.getTopic().getId());
         return lessonBuilder.mapToUserLessonProgressSummary(progress);
     }
 

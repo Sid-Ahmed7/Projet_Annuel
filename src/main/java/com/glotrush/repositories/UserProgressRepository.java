@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -82,5 +83,17 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, UUID
     @Query(value = "SELECT CAST(COUNT(*) + 1 AS BIGINT) FROM (SELECT account_id, SUM(total_xp) AS xp FROM user_progress WHERE account_id IN (:friendIds) GROUP BY account_id) ranked " +
                    "WHERE xp > (SELECT COALESCE(SUM(total_xp), 0) FROM user_progress WHERE account_id = :accountId)", nativeQuery = true)
     Long findFriendsRankByAccountId(@Param("accountId") UUID accountId, @Param("friendIds") List<UUID> friendIds);
+
+    @Query("SELECT up FROM UserProgress up " +
+           "WHERE up.account.id = :accountId " +
+           "AND up.topic.targetLanguage.id = :languageId " +
+           "AND up.topic.isActive = true " +
+           "AND up.completionPercentage < 100.0 " +
+           "AND EXISTS (SELECT ulp FROM UserLessonProgress ulp WHERE ulp.account.id = :accountId AND ulp.lesson.topic.id = up.topic.id)")
+    Page<UserProgress> findActiveProgressByAccountAndLanguage(
+            @Param("accountId") UUID accountId,
+            @Param("languageId") UUID languageId,
+            Pageable pageable
+    );
 
 }
