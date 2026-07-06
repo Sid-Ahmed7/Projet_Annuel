@@ -84,16 +84,36 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, UUID
                    "WHERE xp > (SELECT COALESCE(SUM(total_xp), 0) FROM user_progress WHERE account_id = :accountId)", nativeQuery = true)
     Long findFriendsRankByAccountId(@Param("accountId") UUID accountId, @Param("friendIds") List<UUID> friendIds);
 
-    @Query("SELECT up FROM UserProgress up " +
-           "WHERE up.account.id = :accountId " +
-           "AND up.topic.targetLanguage.id = :languageId " +
-           "AND up.topic.isActive = true " +
-           "AND up.completionPercentage < 100.0 " +
-           "AND EXISTS (SELECT ulp FROM UserLessonProgress ulp WHERE ulp.account.id = :accountId AND ulp.lesson.topic.id = up.topic.id)")
+    @Query("""
+    SELECT up FROM UserProgress up
+    JOIN UserLanguage ul
+        ON ul.account.id = up.account.id
+        AND ul.language.id = up.topic.targetLanguage.id
+    WHERE up.account.id = :accountId
+      AND up.topic.targetLanguage.id = :languageId
+      AND ul.languageType = com.glotrush.enumerations.LanguageType.LEARNING
+      AND up.completionPercentage > 0
+      AND up.completionPercentage < 100
+      AND up.topic.isActive = true
+    ORDER BY up.lastStudiedAt DESC NULLS LAST
+    """)
     Page<UserProgress> findActiveProgressByAccountAndLanguage(
             @Param("accountId") UUID accountId,
             @Param("languageId") UUID languageId,
             Pageable pageable
     );
+
+    @Query("""
+    SELECT up FROM UserProgress up
+    JOIN UserLanguage ul
+        ON ul.account.id = up.account.id
+        AND ul.language.id = up.topic.targetLanguage.id
+    WHERE up.account.id = :accountId
+      AND ul.languageType = com.glotrush.enumerations.LanguageType.LEARNING
+      AND up.completionPercentage > 0
+      AND up.completionPercentage < 100
+    ORDER BY up.lastStudiedAt DESC NULLS LAST
+    """)
+    List<UserProgress> findTopicsInProgressByAccountId(@Param("accountId") UUID accountId);
 
 }
