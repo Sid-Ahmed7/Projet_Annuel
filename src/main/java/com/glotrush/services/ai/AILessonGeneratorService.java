@@ -294,7 +294,6 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
             return;
         }
 
-        // Limiter la taille des listes d'exercices au quota requis en cas de sur-génération par le modèle d'IA.
         if (lessonRequest instanceof QcmLessonRequest qcmLessonRequest) {
             if (qcmLessonRequest.getQuestions() != null && qcmLessonRequest.getQuestions().size() > itemCount) {
                 qcmLessonRequest.setQuestions(new ArrayList<>(qcmLessonRequest.getQuestions().subList(0, itemCount)));

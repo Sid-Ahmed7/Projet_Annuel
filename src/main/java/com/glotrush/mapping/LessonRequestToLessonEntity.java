@@ -80,7 +80,6 @@ public abstract class LessonRequestToLessonEntity {
         }
     }
 
-    // ALL MAPPING TYPE OF LESSON
     protected abstract FlashcardLesson mapFlashcardLessonRequestToFlashcardLessonEntity(FlashcardLessonRequest request);
 
     protected abstract MatchingPairLesson mapMatchingPairLessonRequestToMatchingPairLessonEntity(MatchingPairLessonRequest request);
@@ -91,7 +90,6 @@ public abstract class LessonRequestToLessonEntity {
 
     protected abstract InteractiveLesson mapInteractiveLessonRequestToInteractiveLessonEntity(InteractiveLessonRequest request);
 
-    // ALL UPDATE MAPPING TYPE OF LESSON
     protected abstract void updateFlashcardLessonFromRequest(FlashcardLessonRequest request, @MappingTarget FlashcardLesson lesson);
 
     protected abstract void updateMatchingPairLessonFromRequest(MatchingPairLessonRequest request, @MappingTarget MatchingPairLesson lesson);

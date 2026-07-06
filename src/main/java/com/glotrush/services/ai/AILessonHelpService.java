@@ -163,7 +163,6 @@ public class AILessonHelpService implements IAILessonHelpService {
         promptBuilder.append("Voici le contexte technique de l'exercice en cours :\n");
         promptBuilder.append(exerciseContext).append("\n\n");
 
-        // Regle de securite essentielle pour eviter de donner la solution brute a l'eleve
         promptBuilder.append("IMPORTANT - REGLE ABSOLUE DE SECURITE :\n");
         promptBuilder.append("- Tu ne dois ABSOLUMENT PAS donner directement la reponse ou la traduction correcte a l'utilisateur.\n");
         promptBuilder.append("- Tu dois eviter de donner un indice trop evident ou trop facile (ex: ne pas dire 'le mot commence par A' s'il n'y a qu'une option commencant par A).\n");

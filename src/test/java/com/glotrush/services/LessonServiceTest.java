@@ -134,7 +134,6 @@ class LessonServiceTest {
     @BeforeEach
     void setUp() {
         lessonRuleProperties = new LessonRuleProperties();
-        // Setup initial rules for testing
         lessonRuleProperties.setXpPerFlashcard(5);
         lessonRuleProperties.setSecondsPerFlashcard(30);
         lessonRuleProperties.setXpPerQcm(10);
@@ -452,7 +451,7 @@ class LessonServiceTest {
         CompleteLessonRequest request = new CompleteLessonRequest();
         request.setTimeSpentSeconds(600);
         request.setCorrectAnswers(5);
-        request.setTotalAnswers(10); // 50% score, below default 70%
+        request.setTotalAnswers(10); 
 
         userLessonProgress.setStatus(LessonStatus.IN_PROGRESS);
 
@@ -788,15 +787,13 @@ class LessonServiceTest {
         when(accountsRepository.findById(accountId)).thenReturn(Optional.of(account));
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
         
-        // Premier appel : rien en base
         when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
-                .thenReturn(Optional.empty()) // Pour l'appel initial
-                .thenReturn(Optional.of(userLessonProgress)); // Pour l'appel dans le catch
+                .thenReturn(Optional.empty()) 
+                .thenReturn(Optional.of(userLessonProgress)); 
 
         when(lessonBuilder.createNewLessonProgress(account, lesson))
                 .thenReturn(userLessonProgress);
 
-        // Simulation d'une violation de contrainte au moment du saveAndFlush
         when(userLessonProgressRepository.saveAndFlush(any(UserLessonProgress.class)))
                 .thenThrow(new DataIntegrityViolationException("Duplicate key error"));
 
