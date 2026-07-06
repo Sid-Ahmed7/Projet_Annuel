@@ -12,8 +12,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "lesson")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE) // Toutes les sous-classes dans une seule table
-@DiscriminatorColumn(name = "lesson_type", discriminatorType = DiscriminatorType.STRING) // Colonne pour distinguer les types
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE) 
+@DiscriminatorColumn(name = "lesson_type", discriminatorType = DiscriminatorType.STRING) 
 @Getter
 @Setter
 @SuperBuilder

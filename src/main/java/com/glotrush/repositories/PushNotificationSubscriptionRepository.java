@@ -23,4 +23,6 @@ public interface PushNotificationSubscriptionRepository extends JpaRepository<Pu
     @Modifying
     void deleteByEndpointAndAccount_Id(String endpoint, UUID accountId);
     
+    void deleteByAccount_Id(UUID accountId);
+
 }

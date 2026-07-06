@@ -24,5 +24,9 @@ public interface TopicReviewRepository extends JpaRepository<TopicReview, UUID> 
 
     List<TopicReview> findByStatusAndPendingSinceBefore(ReviewStatus status, LocalDateTime threshold);
 
+    List<TopicReview> findByAccount_Id(UUID accountId);
+    void deleteByAccount_Id(UUID accountId);
+
+
 }
     
