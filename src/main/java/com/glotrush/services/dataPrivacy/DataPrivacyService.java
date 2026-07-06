@@ -34,7 +34,7 @@ import com.glotrush.repositories.ai.AIGenerationLogRepository;
 import com.glotrush.services.EmailService;
 import com.glotrush.services.stripe.IStripService;
 import com.glotrush.storage.FileStorageService;
-import com.glotrush.utils.GenerateRandomCode;
+import com.glotrush.utils.GenerateRandomCodeUtils;
 import com.glotrush.utils.LocaleUtils;
 
 import jakarta.transaction.Transactional;
@@ -99,7 +99,7 @@ public class DataPrivacyService implements IDataPrivacyService {
 
         accountDeletionCodeRepository.revokeAllByAccountId(accountId);
 
-        String code = GenerateRandomCode.generateRandomCode();
+        String code = GenerateRandomCodeUtils.generateRandomCode();
 
         AccountDeletionCode deletionCode = AccountDeletionCode.builder()
                 .account(account)

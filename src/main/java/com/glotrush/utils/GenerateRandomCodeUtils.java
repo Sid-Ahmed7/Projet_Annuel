@@ -4,7 +4,7 @@ import java.security.SecureRandom;
 
 import com.glotrush.constants.SecurityConstants;
 
-public class GenerateRandomCode {
+public class GenerateRandomCodeUtils {
 
     private static final SecureRandom random = new SecureRandom();
 
