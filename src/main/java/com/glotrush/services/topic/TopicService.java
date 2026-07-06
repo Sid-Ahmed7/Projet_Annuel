@@ -19,6 +19,7 @@ import com.glotrush.repositories.UserLessonProgressRepository;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -230,16 +231,17 @@ public class TopicService implements ITopicService {
 
     @Override
     public Page<TopicProgressResponse> getActiveTopicsProgress(UUID accountId, UUID languageId, Pageable pageable) {
-        Page<UserProgress> progressPage = userProgressRepository.findActiveProgressByAccountAndLanguage(accountId, languageId, pageable);
-        return progressPage.map(up -> {
-            Topic topic = up.getTopic();
+        Pageable topicPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        Page<Topic> topicPage = topicRepository.findActiveTopicsWithProgress(languageId, accountId, topicPageable);
+        return topicPage.map(topic -> {
+            Optional<UserProgress> progress = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topic.getId());
             return TopicProgressResponse.builder()
                     .id(topic.getId())
                     .name(topic.getName())
                     .description(topic.getDescription())
                     .difficulty(topic.getDifficulty())
-                    .progressPercent(up.getCompletionPercentage())
-                    .lastStudiedAt(up.getLastStudiedAt() != null ? up.getLastStudiedAt() : topic.getCreatedAt())
+                    .progressPercent(progress.map(UserProgress::getCompletionPercentage).orElse(0.0))
+                    .lastStudiedAt(progress.map(UserProgress::getLastStudiedAt).orElse(null))
                     .build();
         });
     }

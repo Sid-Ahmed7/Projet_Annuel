@@ -20,4 +20,27 @@ public interface TopicRepository extends JpaRepository<Topic, UUID>, JpaSpecific
     List<Topic> findByIsActiveTrueOrderByDifficultyAscNameAsc();
     List<Topic> findByTargetLanguage_Id(UUID targetLanguageId);
 
+    @Query(
+        value = """
+            SELECT t FROM Topic t
+            LEFT JOIN UserProgress up ON up.topic.id = t.id AND up.account.id = :accountId
+            WHERE t.targetLanguage.id = :languageId
+              AND t.isActive = true
+              AND (up.completionPercentage IS NULL OR up.completionPercentage < 100)
+            ORDER BY t.difficulty ASC, t.name ASC
+            """,
+        countQuery = """
+            SELECT COUNT(t) FROM Topic t
+            LEFT JOIN UserProgress up ON up.topic.id = t.id AND up.account.id = :accountId
+            WHERE t.targetLanguage.id = :languageId
+              AND t.isActive = true
+              AND (up.completionPercentage IS NULL OR up.completionPercentage < 100)
+            """
+    )
+    Page<Topic> findActiveTopicsWithProgress(
+            @Param("languageId") UUID languageId,
+            @Param("accountId") UUID accountId,
+            Pageable pageable
+    );
+
 }
