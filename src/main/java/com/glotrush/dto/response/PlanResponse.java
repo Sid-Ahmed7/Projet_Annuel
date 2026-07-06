@@ -1,6 +1,7 @@
 package com.glotrush.dto.response;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 import com.glotrush.enumerations.PaymentInterval;
@@ -25,5 +26,6 @@ public class PlanResponse {
     private PaymentInterval paymentInterval;
     private SubscriptionType subscriptionType;
     private Boolean isActive;
-
+    private Integer aiQuota;
+    private List<PlanFeatureResponse> features;
 }

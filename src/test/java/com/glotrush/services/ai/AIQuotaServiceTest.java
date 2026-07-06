@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -64,8 +63,6 @@ class AIQuotaServiceTest {
         accountId = UUID.randomUUID();
         
         aiQuotaService = new AIQuotaService(accountsRepository, subscriptionRepository, aiGenerationLogRepository, messageSource);
-        ReflectionTestUtils.setField(aiQuotaService, "freeLimit", 5);
-        ReflectionTestUtils.setField(aiQuotaService, "premiumLimit", 100);
 
         lenient().when(messageSource.getMessage(any(), any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -83,10 +80,12 @@ class AIQuotaServiceTest {
 
         Plan freePlan = Plan.builder()
                 .subscriptionType(SubscriptionType.FREE)
+                .aiQuota(5)
                 .build();
 
         Plan premiumPlan = Plan.builder()
                 .subscriptionType(SubscriptionType.PREMIUM)
+                .aiQuota(100)
                 .build();
 
         freeSubscription = Subscription.builder()
