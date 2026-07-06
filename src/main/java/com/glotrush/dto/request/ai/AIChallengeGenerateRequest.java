@@ -1,9 +1,7 @@
 package com.glotrush.dto.request.ai;
 
 import com.glotrush.constants.AILessonConstants;
-import com.glotrush.dto.request.LessonRequest;
 import com.glotrush.enumerations.LessonType;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,19 +10,19 @@ import lombok.Data;
 import java.util.UUID;
 
 @Data
-public class AILessonModifyRequest {
+public class AIChallengeGenerateRequest {
+
     @NotNull
-    private UUID lessonId;
+    private LessonType lessonType;
+    
+    @NotNull
+    private UUID topicId;
     
     @NotBlank
-    private String prompt;
+    private String description;
 
     @NotNull(message = "{error.ai.lesson.itemcount.required}")
     private Integer itemCount;
-
-    @NotNull
-    @Valid
-    private LessonRequest lesson;
 
     @AssertTrue(message = "{error.ai.lesson.itemcount.invalid}")
     public boolean isValidItemCount() {
@@ -32,16 +30,15 @@ public class AILessonModifyRequest {
             return false;
         }
         
-        if (lesson == null || lesson.getLessonType() == null) {
+        if (lessonType == null) {
             return true;
         }
         
-        LessonType type = lesson.getLessonType();
-        if (type == LessonType.FLASHCARD || type == LessonType.QCM) {
+        if (lessonType == LessonType.FLASHCARD || lessonType == LessonType.QCM) {
             return itemCount >= AILessonConstants.MIN_ITEMS_FLASHCARD_QCM && itemCount <= AILessonConstants.MAX_ITEMS_FLASHCARD_QCM;
         }
         
-        if (type == LessonType.MATCHING_PAIR || type == LessonType.SORTING_EXERCISE) {
+        if (lessonType == LessonType.MATCHING_PAIR || lessonType == LessonType.SORTING_EXERCISE || lessonType == LessonType.INTERACTIVE) {
             return itemCount >= AILessonConstants.MIN_ITEMS_MATCHING_SORTING && itemCount <= AILessonConstants.MAX_ITEMS_MATCHING_SORTING;
         }
         

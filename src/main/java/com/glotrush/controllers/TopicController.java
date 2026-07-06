@@ -17,11 +17,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import com.glotrush.dto.response.TopicProgressResponse;
 import com.glotrush.dto.response.TopicResponse;
 import com.glotrush.services.topic.ITopicService;
 import com.glotrush.utils.LocaleUtils;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 
 
 @RestController
@@ -65,6 +70,28 @@ public class TopicController {
             @RequestParam(required = false) ProficiencyLevel difficulty) {
         List<TopicResponse> topics = topicService.searchActiveTopics(languageId, name, difficulty);
         return ResponseEntity.ok(topics);
+    }
+
+    @GetMapping("/search/active/paginated")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<Page<TopicResponse>> searchActiveTopicsPaged(
+            @RequestParam UUID languageId,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) ProficiencyLevel difficulty,
+            @PageableDefault(size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+        Page<TopicResponse> topics = topicService.searchActiveTopics(languageId, name, difficulty, pageable);
+        return ResponseEntity.ok(topics);
+    }
+
+    @GetMapping("/progress/active")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Page<TopicProgressResponse>> getActiveTopicsProgress(
+            Authentication authentication,
+            @RequestParam UUID languageId,
+            @PageableDefault(size = 3, sort = "lastStudiedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        UUID accountId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        Page<TopicProgressResponse> progress = topicService.getActiveTopicsProgress(accountId, languageId, pageable);
+        return ResponseEntity.ok(progress);
     }
 
     @GetMapping("/language/{languageId}")

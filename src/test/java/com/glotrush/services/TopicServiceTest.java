@@ -10,6 +10,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 import com.glotrush.config.TestMessageSourceConfig;
 import com.glotrush.dispatcher.notifications.NotificationDispatcher;
+import com.glotrush.entities.*;
 import com.glotrush.enumerations.ProficiencyLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,14 +27,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import com.glotrush.builder.LessonBuilder;
 import com.glotrush.builder.TopicBuilder;
+import com.glotrush.dto.response.TopicProgressResponse;
 import com.glotrush.dto.response.TopicResponse;
 import com.glotrush.dto.response.TopicWithProgressResponse;
-import com.glotrush.entities.Language;
-import com.glotrush.entities.Topic;
-import com.glotrush.entities.UserProgress;
 import com.glotrush.entities.exercice.FlashcardEntity;
 import com.glotrush.entities.exercice.InteractiveQuestionEntity;
 import com.glotrush.entities.exercice.QcmQuestionEntity;
@@ -58,7 +62,6 @@ import org.springframework.context.MessageSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import com.glotrush.entities.Accounts;
 import com.glotrush.repositories.exercice.FlashcardRepository;
 import com.glotrush.repositories.exercice.InteractiveQuestionRepository;
 import com.glotrush.repositories.exercice.MatchingPairRepository;
@@ -428,6 +431,46 @@ class TopicServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("Basics");
         verify(topicRepository).findAll(any(Specification.class));
+    }
+
+    @Test
+    @DisplayName("Should search active topics paginated")
+    void shouldSearchActiveTopicsPaged() {
+        TopicResponse response = TopicResponse.builder().id(topicId).name("Basics").build();
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Topic> page = new PageImpl<>(List.of(topic), pageable, 1);
+
+        when(topicRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+        when(topicMapper.mapTopicEntitiesToTopicResponse(topic)).thenReturn(response);
+
+        Page<TopicResponse> result = topicService.searchActiveTopics(languageId, "Basics", ProficiencyLevel.A1, pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getName()).isEqualTo("Basics");
+        verify(topicRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    @DisplayName("Should get active topics progress")
+    void shouldGetActiveTopicsProgress() {
+        Pageable pageable = PageRequest.of(0, 3);
+        UserProgress userProgress = UserProgress.builder()
+                .topic(topic)
+                .completionPercentage(45.0)
+                .lastStudiedAt(LocalDateTime.now())
+                .build();
+        Page<UserProgress> page = new PageImpl<>(List.of(userProgress), pageable, 1);
+
+        when(userProgressRepository.findActiveProgressByAccountAndLanguage(eq(accountId), eq(languageId), eq(pageable)))
+                .thenReturn(page);
+
+        Page<TopicProgressResponse> result = topicService.getActiveTopicsProgress(accountId, languageId, pageable);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getName()).isEqualTo("Basics");
+        assertThat(result.getContent().get(0).getProgressPercent()).isEqualTo(45.0);
+        verify(userProgressRepository).findActiveProgressByAccountAndLanguage(eq(accountId), eq(languageId), eq(pageable));
     }
 
     @Test
