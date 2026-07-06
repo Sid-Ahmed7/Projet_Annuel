@@ -214,7 +214,7 @@ class DataPrivacyServiceTest {
 
         verify(accountDeletionCodeRepository).revokeAllByAccountId(accountId);
         verify(accountDeletionCodeRepository).save(any(AccountDeletionCode.class));
-        verify(emailService).sendAccountDeletionEmail(eq("sukuna@gmail.com"), eq("Sukuna"), any());
+        verify(emailService).sendAccountDeletionEmail(eq("sukuna@gmail.com"), eq("sukuna"), any());
     }
 
     @Test
