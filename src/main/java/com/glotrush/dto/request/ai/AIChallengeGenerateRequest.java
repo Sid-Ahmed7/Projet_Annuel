@@ -16,7 +16,10 @@ public class AIChallengeGenerateRequest {
     private LessonType lessonType;
     
     @NotNull
-    private UUID topicId;
+    private UUID sourceLanguageId;
+
+    @NotNull
+    private UUID targetLanguageId;
     
     @NotBlank
     private String description;

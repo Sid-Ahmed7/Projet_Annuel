@@ -16,6 +16,7 @@ import com.glotrush.entities.Topic;
 import com.glotrush.entities.ai.AIGenerationLog;
 import com.glotrush.enumerations.LessonType;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
+import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.ai.AIGenerationLogRepository;
@@ -37,6 +38,7 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
     private final AIGenerationLogRepository logRepository;
     private final TopicRepository topicRepository;
     private final LessonRepository lessonRepository;
+    private final LanguageRepository languageRepository;
     private final LessonEntityToLessonResponse lessonEntityToLessonResponse;
     private final MessageSource messageSource;
     private final ObjectMapper objectMapper;
@@ -65,6 +67,43 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
         enforceEmptyMediaLists(generatedRequest);
         
         generatedRequest.setTopicId(topicId);
+        generatedRequest.setLessonType(lessonType);
+        
+        if (generatedRequest.getIsActive() == null) {
+            generatedRequest.setIsActive(true);
+        }
+
+        saveLog(accountId, lessonType, fullPrompt, generatedRequest);
+
+        return generatedRequest;
+    }
+
+    @Override
+    @Transactional
+    public LessonRequest generateChallengeContent(UUID accountId, UUID sourceLanguageId, UUID targetLanguageId, LessonType lessonType, String description, Integer itemCount) {
+        aiQuotaService.verifyAndConsumeAIQuota(accountId);
+
+        Language sourceLanguage = languageRepository.findById(sourceLanguageId)
+                .orElseThrow(() -> new RuntimeException("Source language not found: " + sourceLanguageId));
+        
+        Language targetLanguage = languageRepository.findById(targetLanguageId)
+                .orElseThrow(() -> new RuntimeException("Target language not found: " + targetLanguageId));
+
+        Class<? extends LessonRequest> targetClass = getTargetClass(lessonType);
+        
+        String systemPrompt = buildSystemPrompt(lessonType, targetClass, sourceLanguage, targetLanguage, itemCount);
+        String userPrompt = "Sujet de la leçon : " + description;
+        
+        String fullPrompt = systemPrompt + "\n\nDescription de l'utilisateur : " + userPrompt;
+
+        log.info("Génération d'un challenge de type {} pour l'utilisateur {}", lessonType, accountId);
+
+        LessonRequest generatedRequest = aiService.generateJsonContent(fullPrompt, targetClass);
+        
+        limitLessonRequestItemCountToRequestedSize(generatedRequest, itemCount);
+        enforceEmptyMediaLists(generatedRequest);
+        
+        generatedRequest.setTopicId(null);
         generatedRequest.setLessonType(lessonType);
         
         if (generatedRequest.getIsActive() == null) {

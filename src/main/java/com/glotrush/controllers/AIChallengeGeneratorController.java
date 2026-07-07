@@ -35,9 +35,10 @@ public class AIChallengeGeneratorController {
 
         UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
 
-        LessonRequest generatedLesson = aiLessonGeneratorService.generateLesson(
+        LessonRequest generatedLesson = aiLessonGeneratorService.generateChallengeContent(
                 accountId,
-                request.getTopicId(),
+                request.getSourceLanguageId(),
+                request.getTargetLanguageId(),
                 request.getLessonType(),
                 request.getDescription(),
                 request.getItemCount()

@@ -15,6 +15,7 @@ import com.glotrush.dto.request.lesson.InteractiveLessonRequest;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.Topic;
 import com.glotrush.enumerations.LessonType;
+import com.glotrush.repositories.LanguageRepository;
 import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.TopicRepository;
 import com.glotrush.repositories.ai.AIGenerationLogRepository;
@@ -54,6 +55,9 @@ class AILessonGeneratorServiceTest {
     private LessonRepository lessonRepository;
 
     @Mock
+    private LanguageRepository languageRepository;
+
+    @Mock
     private LessonEntityToLessonResponse lessonEntityToLessonResponse;
 
     @Mock
@@ -81,6 +85,7 @@ class AILessonGeneratorServiceTest {
                 logRepository,
                 topicRepository,
                 lessonRepository,
+                languageRepository,
                 lessonEntityToLessonResponse,
                 messageSource,
                 objectMapper,
@@ -347,5 +352,40 @@ class AILessonGeneratorServiceTest {
             assertThat(question.getImagePaths()).isEmpty();
             assertThat(question.getAudioPaths()).isEmpty();
         }
+    }
+
+    @Test
+    @DisplayName("Should generate challenge content when target and source languages exist")
+    void shouldGenerateChallengeContentWhenLanguagesExist() {
+        UUID sourceLanguageId = UUID.randomUUID();
+        UUID targetLanguageId = UUID.randomUUID();
+        Language sourceLanguage = Language.builder().id(sourceLanguageId).name("French").build();
+        Language targetLanguage = Language.builder().id(targetLanguageId).name("English").build();
+
+        when(languageRepository.findById(sourceLanguageId)).thenReturn(Optional.of(sourceLanguage));
+        when(languageRepository.findById(targetLanguageId)).thenReturn(Optional.of(targetLanguage));
+
+        QcmLessonRequest aiResponse = new QcmLessonRequest();
+        List<QcmQuestionRequest> questions = new ArrayList<>();
+        QcmQuestionRequest question = new QcmQuestionRequest();
+        question.setQuestion("Bonjour");
+        questions.add(question);
+        aiResponse.setQuestions(questions);
+
+        when(aiService.generateJsonContent(any(String.class), eq(QcmLessonRequest.class)))
+                .thenReturn(aiResponse);
+
+        LessonRequest result = aiLessonGeneratorService.generateChallengeContent(
+                accountId,
+                sourceLanguageId,
+                targetLanguageId,
+                LessonType.QCM,
+                "Test description",
+                1
+        );
+
+        assertThat(result).isInstanceOf(QcmLessonRequest.class);
+        assertThat(result.getTopicId()).isNull();
+        assertThat(result.getLessonType()).isEqualTo(LessonType.QCM);
     }
 }
