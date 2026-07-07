@@ -1,5 +1,6 @@
 package com.glotrush.services.topic;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +18,9 @@ import com.glotrush.repositories.LessonRepository;
 import com.glotrush.repositories.UserLessonProgressRepository;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.context.MessageSource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +40,7 @@ import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.dto.response.CompleteExamResponse;
 import com.glotrush.dto.response.ExamResponse;
 import com.glotrush.dto.response.LessonResponse;
+import com.glotrush.dto.response.TopicProgressResponse;
 import com.glotrush.dto.response.TopicResponse;
 import com.glotrush.dto.response.TopicWithProgressResponse;
 import com.glotrush.dto.response.exercice.FlashcardExamResponse;
@@ -215,6 +220,30 @@ public class TopicService implements ITopicService {
         return topicRepository.findAll(spec).stream()
                 .map(topicMapper::mapTopicEntitiesToTopicResponse)
                 .toList();
+    }
+
+    @Override
+    public Page<TopicResponse> searchActiveTopics(UUID languageId, String name, ProficiencyLevel difficulty, Pageable pageable) {
+        Specification<Topic> spec = createSearchSpecification(languageId, name, difficulty, true);
+        Page<Topic> topicPage = topicRepository.findAll(spec, pageable);
+        return topicPage.map(topicMapper::mapTopicEntitiesToTopicResponse);
+    }
+
+    @Override
+    public Page<TopicProgressResponse> getActiveTopicsProgress(UUID accountId, UUID languageId, Pageable pageable) {
+        Pageable topicPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        Page<Topic> topicPage = topicRepository.findActiveTopicsWithProgress(languageId, accountId, topicPageable);
+        return topicPage.map(topic -> {
+            Optional<UserProgress> progress = userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topic.getId());
+            return TopicProgressResponse.builder()
+                    .id(topic.getId())
+                    .name(topic.getName())
+                    .description(topic.getDescription())
+                    .difficulty(topic.getDifficulty())
+                    .progressPercent(progress.map(UserProgress::getCompletionPercentage).orElse(0.0))
+                    .lastStudiedAt(progress.map(UserProgress::getLastStudiedAt).orElse(null))
+                    .build();
+        });
     }
 
     private Specification<Topic> createSearchSpecification(UUID languageId, String name, ProficiencyLevel difficulty, Boolean isActive) {
