@@ -43,6 +43,17 @@ import com.glotrush.entities.lesson.SortingExerciseLesson;
 import com.glotrush.enumerations.ChallengeStatus;
 import com.glotrush.enumerations.ChallengeType;
 import com.glotrush.enumerations.LessonType;
+import com.glotrush.dto.request.LessonRequest;
+import com.glotrush.dto.request.lesson.QcmLessonRequest;
+import com.glotrush.dto.request.lesson.FlashcardLessonRequest;
+import com.glotrush.dto.request.lesson.MatchingPairLessonRequest;
+import com.glotrush.dto.request.lesson.SortingExerciseLessonRequest;
+import com.glotrush.dto.request.lesson.InteractiveLessonRequest;
+import com.glotrush.dto.response.ai.AIChallengeContentResponse;
+import com.glotrush.dto.request.challenge.ChallengeFlashCardRequest;
+import com.glotrush.dto.request.challenge.ChallengeMatchingPairRequest;
+import com.glotrush.dto.request.challenge.ChallengeSortingExerciseRequest;
+import com.glotrush.dto.request.challenge.ChallengeQcmRequest;
 
 import org.springframework.stereotype.Component;
 
@@ -342,5 +353,59 @@ public class ChallengeBuilder {
                 .timePassed(timePassed)
                 .totalQuestions(totalQuestions)
                 .build();
+    }
+
+    public AIChallengeContentResponse toAIChallengeContentResponse(LessonRequest lessonRequest) {
+        AIChallengeContentResponse response = new AIChallengeContentResponse();
+        response.setLessonType(lessonRequest.getLessonType());
+
+        if (lessonRequest instanceof QcmLessonRequest qcmLessonRequest) {
+            response.setQcm(qcmLessonRequest.getQuestions().stream().map(qcm -> {
+                ChallengeQcmRequest req = new ChallengeQcmRequest();
+                req.setQuestion(qcm.getQuestion());
+                req.setOptions(new ArrayList<>(qcm.getOptions()));
+                req.setCorrectOptionIndex(qcm.getCorrectOptionIndex());
+                req.setExplanation(qcm.getExplanation());
+                return req;
+            }).collect(Collectors.toList()));
+        } else if (lessonRequest instanceof FlashcardLessonRequest flashcardLessonRequest) {
+            response.setFlashcards(flashcardLessonRequest.getFlashcards().stream().map(fc -> {
+                ChallengeFlashCardRequest req = new ChallengeFlashCardRequest();
+                req.setFront(fc.getFront());
+                req.setBack(fc.getBack());
+                req.setFrontLanguage(fc.getFrontLanguage());
+                req.setBackLanguage(fc.getBackLanguage());
+                req.setTimeLimitSeconds(30);
+                return req;
+            }).collect(Collectors.toList()));
+        } else if (lessonRequest instanceof MatchingPairLessonRequest matchingPairLessonRequest) {
+            response.setMatchingPairs(matchingPairLessonRequest.getMatchingPairs().stream().map(mp -> {
+                ChallengeMatchingPairRequest req = new ChallengeMatchingPairRequest();
+                req.setItem1(mp.getItem1());
+                req.setItem2(mp.getItem2());
+                return req;
+            }).collect(Collectors.toList()));
+        } else if (lessonRequest instanceof SortingExerciseLessonRequest sortingExerciseLessonRequest) {
+            response.setSortingExercises(sortingExerciseLessonRequest.getSortingExercise().stream().map(se -> {
+                ChallengeSortingExerciseRequest req = new ChallengeSortingExerciseRequest();
+                req.setItems(new ArrayList<>(se.getItems()));
+                req.setCorrectOrder(new ArrayList<>(se.getCorrectOrder()));
+                return req;
+            }).collect(Collectors.toList()));
+        } else if (lessonRequest instanceof InteractiveLessonRequest interactiveLessonRequest) {
+            response.setInteractives(interactiveLessonRequest.getQuestions().stream().map(inter -> {
+                ChallengeInteractiveRequest req = new ChallengeInteractiveRequest();
+                req.setQuestionText(inter.getQuestionText());
+                req.setImagePaths(new ArrayList<>(inter.getImagePaths()));
+                req.setAudioPaths(new ArrayList<>(inter.getAudioPaths()));
+                req.setSystemType(inter.getSystemType());
+                req.setOptions(new ArrayList<>(inter.getOptions()));
+                req.setCorrectOptionIndex(inter.getCorrectOptionIndex());
+                req.setCorrectWord(inter.getCorrectWord());
+                return req;
+            }).collect(Collectors.toList()));
+        }
+
+        return response;
     }
 }

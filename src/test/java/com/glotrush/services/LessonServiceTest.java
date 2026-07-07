@@ -344,12 +344,14 @@ class LessonServiceTest {
         when(userLessonProgressRepository.save(any(UserLessonProgress.class)))
                 .thenAnswer(i -> i.getArgument(0));
         when(lessonBuilder.mapToUserLessonProgressSummary(any())).thenReturn(expectedSummary);
+        when(progressService.updateLastStudiedAt(accountId, topicId)).thenReturn(null);
 
         UserLessonProgressSummary result = lessonService.startLesson(accountId, lessonId);
 
         assertThat(result.getStatus()).isEqualTo(LessonStatus.IN_PROGRESS);
 
         verify(userLessonProgressRepository).save(any(UserLessonProgress.class));
+        verify(progressService).updateLastStudiedAt(accountId, topicId);
     }
 
     @Test
@@ -368,12 +370,14 @@ class LessonServiceTest {
         when(userLessonProgressRepository.save(any(UserLessonProgress.class)))
                 .thenAnswer(i -> i.getArgument(0));
         when(lessonBuilder.mapToUserLessonProgressSummary(any())).thenReturn(expectedSummary);
+        when(progressService.updateLastStudiedAt(accountId, topicId)).thenReturn(null);
 
         UserLessonProgressSummary result = lessonService.startLesson(accountId, lessonId);
 
         assertThat(result.getStatus()).isEqualTo(LessonStatus.IN_PROGRESS);
 
         verify(lessonBuilder, never()).createNewLessonProgress(any(), any());
+        verify(progressService).updateLastStudiedAt(accountId, topicId);
     }
 
     @Test
@@ -799,12 +803,14 @@ class LessonServiceTest {
 
         when(lessonBuilder.mapToUserLessonProgressSummary(any())).thenReturn(expectedSummary);
         when(userLessonProgressRepository.save(any(UserLessonProgress.class))).thenAnswer(i -> i.getArgument(0));
+        when(progressService.updateLastStudiedAt(accountId, topicId)).thenReturn(null);
 
         UserLessonProgressSummary result = lessonService.startLesson(accountId, lessonId);
 
         assertThat(result.getStatus()).isEqualTo(LessonStatus.IN_PROGRESS);
         verify(userLessonProgressRepository).saveAndFlush(any(UserLessonProgress.class));
         verify(userLessonProgressRepository, times(2)).findByAccount_IdAndLesson_Id(accountId, lessonId);
+        verify(progressService).updateLastStudiedAt(accountId, topicId);
     }
 
     @Test
