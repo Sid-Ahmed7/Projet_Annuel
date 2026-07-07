@@ -50,7 +50,6 @@ public abstract class LessonEntityToLessonResponse {
     @Mapping(source = "isAlreadyFinish", target = "isAlreadyFinish")
     public abstract LessonSummaryResponse lessonToLessonSummaryResponse(Lesson lesson, Boolean isAlreadyFinish);
 
-    // ALL MAPPING TYPE OF LESSON
     @Mapping(source = "topic.id", target = "topicId")
     @Mapping(source = "topic.name", target = "topicName")
     @Mapping(source = "flashcards", target = "flashcards")
@@ -76,7 +75,6 @@ public abstract class LessonEntityToLessonResponse {
     @Mapping(source = "questions", target = "questions")
     protected abstract InteractiveLessonResponse mapInteractiveLessonEntityToInteractiveLessonResponse(InteractiveLesson request);
 
-    // EXAM SPECIFIC MAPPINGS
     public abstract QcmQuestionExamResponse mapQcmQuestionEntityToQcmQuestionExamResponse(QcmQuestionEntity entity);
 
     public abstract FlashcardExamResponse mapFlashcardEntityToFlashcardExamResponse(FlashcardEntity entity);

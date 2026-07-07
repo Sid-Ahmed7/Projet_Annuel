@@ -31,4 +31,6 @@ public interface PaymentHistoryRepository extends JpaRepository<PaymentHistory, 
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM PaymentHistory p WHERE p.paymentStatus = 'SUCCEEDED'")
     BigDecimal calculateTotalRevenue();
+
+    void deleteByAccount_Id(UUID accountId);
 }

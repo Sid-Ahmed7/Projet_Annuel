@@ -134,7 +134,6 @@ class LessonServiceTest {
     @BeforeEach
     void setUp() {
         lessonRuleProperties = new LessonRuleProperties();
-        // Setup initial rules for testing
         lessonRuleProperties.setXpPerFlashcard(5);
         lessonRuleProperties.setSecondsPerFlashcard(30);
         lessonRuleProperties.setXpPerQcm(10);
@@ -345,12 +344,14 @@ class LessonServiceTest {
         when(userLessonProgressRepository.save(any(UserLessonProgress.class)))
                 .thenAnswer(i -> i.getArgument(0));
         when(lessonBuilder.mapToUserLessonProgressSummary(any())).thenReturn(expectedSummary);
+        when(progressService.updateLastStudiedAt(accountId, topicId)).thenReturn(null);
 
         UserLessonProgressSummary result = lessonService.startLesson(accountId, lessonId);
 
         assertThat(result.getStatus()).isEqualTo(LessonStatus.IN_PROGRESS);
 
         verify(userLessonProgressRepository).save(any(UserLessonProgress.class));
+        verify(progressService).updateLastStudiedAt(accountId, topicId);
     }
 
     @Test
@@ -369,12 +370,14 @@ class LessonServiceTest {
         when(userLessonProgressRepository.save(any(UserLessonProgress.class)))
                 .thenAnswer(i -> i.getArgument(0));
         when(lessonBuilder.mapToUserLessonProgressSummary(any())).thenReturn(expectedSummary);
+        when(progressService.updateLastStudiedAt(accountId, topicId)).thenReturn(null);
 
         UserLessonProgressSummary result = lessonService.startLesson(accountId, lessonId);
 
         assertThat(result.getStatus()).isEqualTo(LessonStatus.IN_PROGRESS);
 
         verify(lessonBuilder, never()).createNewLessonProgress(any(), any());
+        verify(progressService).updateLastStudiedAt(accountId, topicId);
     }
 
     @Test
@@ -452,7 +455,7 @@ class LessonServiceTest {
         CompleteLessonRequest request = new CompleteLessonRequest();
         request.setTimeSpentSeconds(600);
         request.setCorrectAnswers(5);
-        request.setTotalAnswers(10); // 50% score, below default 70%
+        request.setTotalAnswers(10); 
 
         userLessonProgress.setStatus(LessonStatus.IN_PROGRESS);
 
@@ -788,26 +791,26 @@ class LessonServiceTest {
         when(accountsRepository.findById(accountId)).thenReturn(Optional.of(account));
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
         
-        // Premier appel : rien en base
         when(userLessonProgressRepository.findByAccount_IdAndLesson_Id(accountId, lessonId))
-                .thenReturn(Optional.empty()) // Pour l'appel initial
-                .thenReturn(Optional.of(userLessonProgress)); // Pour l'appel dans le catch
+                .thenReturn(Optional.empty()) 
+                .thenReturn(Optional.of(userLessonProgress)); 
 
         when(lessonBuilder.createNewLessonProgress(account, lesson))
                 .thenReturn(userLessonProgress);
 
-        // Simulation d'une violation de contrainte au moment du saveAndFlush
         when(userLessonProgressRepository.saveAndFlush(any(UserLessonProgress.class)))
                 .thenThrow(new DataIntegrityViolationException("Duplicate key error"));
 
         when(lessonBuilder.mapToUserLessonProgressSummary(any())).thenReturn(expectedSummary);
         when(userLessonProgressRepository.save(any(UserLessonProgress.class))).thenAnswer(i -> i.getArgument(0));
+        when(progressService.updateLastStudiedAt(accountId, topicId)).thenReturn(null);
 
         UserLessonProgressSummary result = lessonService.startLesson(accountId, lessonId);
 
         assertThat(result.getStatus()).isEqualTo(LessonStatus.IN_PROGRESS);
         verify(userLessonProgressRepository).saveAndFlush(any(UserLessonProgress.class));
         verify(userLessonProgressRepository, times(2)).findByAccount_IdAndLesson_Id(accountId, lessonId);
+        verify(progressService).updateLastStudiedAt(accountId, topicId);
     }
 
     @Test

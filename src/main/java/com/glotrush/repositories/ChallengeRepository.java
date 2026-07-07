@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -24,4 +25,12 @@ public interface ChallengeRepository extends JpaRepository<Challenge, UUID> {
 
     @Query("SELECT c FROM Challenge c WHERE c.challengeStatus IN ('PENDING', 'ACTIVE') AND c.expiresAt <= :now")
     List<Challenge> findExpiredChallenges(@Param("now") LocalDateTime now);
+
+    @Modifying
+    @Query("UPDATE Challenge c SET c.challenged = null WHERE c.challenged.id = :accountId")
+    void nullifyChallenged(@Param("accountId") UUID accountId);
+
+    @Modifying
+    @Query("DELETE FROM Challenge c WHERE c.challenger.id = :accountId")
+    void deleteByChallenger_Id(@Param("accountId") UUID accountId);
 } 

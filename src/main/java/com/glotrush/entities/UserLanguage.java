@@ -54,7 +54,6 @@ public class UserLanguage {
     @Enumerated(EnumType.STRING)
     @Column(name = "proficiency_level")
     private ProficiencyLevel proficiencyLevel;
-    // PAR EXEMPLE, PASSAGE DU A1 A A2 CONDITIONNER APRES AVOIR REUSSI 10 TOPIC DIFFERENT NIVEAU A2
 
     @Column(name = "started_at")
     private LocalDateTime startedAt;

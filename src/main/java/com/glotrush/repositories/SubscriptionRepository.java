@@ -47,4 +47,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
 
     @Query("SELECT EXTRACT(YEAR FROM s.startDate) as year, COUNT(s) as count FROM Subscription s WHERE s.plan.subscriptionType = 'PREMIUM' GROUP BY EXTRACT(YEAR FROM s.startDate) ORDER BY year ASC")
     List<Object[]> countSubscriptionsByYear();
+
+    void deleteByAccount_Id(UUID accountId);
+
 }

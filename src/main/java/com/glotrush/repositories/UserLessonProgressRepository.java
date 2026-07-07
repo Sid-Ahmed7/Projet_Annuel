@@ -61,9 +61,14 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
     @Query("SELECT ulp.account, COUNT(ulp) FROM UserLessonProgress ulp WHERE ulp.completedAt >= :startOfWeek AND ulp.status = 'COMPLETED' AND ulp.account.notifWeeklyGoal = true GROUP BY ulp.account HAVING COUNT(ulp) >= :goal")
     List<Object[]> findAccountsWhoReachedWeeklyGoal(@Param("startOfWeek") LocalDateTime startOfWeek,@Param("goal") int goal);
 
+    void deleteByAccount_Id(UUID accountId);
 
+    @Query("SELECT ulp FROM UserLessonProgress ulp WHERE ulp.account.id = :accountId AND ulp.lesson.topic.id = :topicId AND ulp.lastAttemptAt IS NOT NULL ORDER BY ulp.lastAttemptAt DESC")
+    List<UserLessonProgress> findLastAttemptsByTopic(@Param("accountId") UUID accountId, @Param("topicId") UUID topicId, Pageable pageable);
 
-
+    default Optional<UserLessonProgress> findLastAttemptByAccountIdAndTopicId(UUID accountId, UUID topicId) {
+        return findLastAttemptsByTopic(accountId, topicId, PageRequest.of(0, 1)).stream().findFirst();
+    }
 }
 
 

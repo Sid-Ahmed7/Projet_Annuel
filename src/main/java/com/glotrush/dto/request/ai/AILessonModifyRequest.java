@@ -19,6 +19,7 @@ public class AILessonModifyRequest {
     @NotBlank
     private String prompt;
 
+    @NotNull(message = "{error.ai.lesson.itemcount.required}")
     private Integer itemCount;
 
     @NotNull
@@ -28,7 +29,7 @@ public class AILessonModifyRequest {
     @AssertTrue(message = "{error.ai.lesson.itemcount.invalid}")
     public boolean isValidItemCount() {
         if (itemCount == null) {
-            return true;
+            return false;
         }
         
         if (lesson == null || lesson.getLessonType() == null) {

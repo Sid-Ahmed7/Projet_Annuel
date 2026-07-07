@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -33,5 +34,8 @@ public interface FriendsRepository extends JpaRepository<Friends, UUID> {
     @Query("SELECT CASE WHEN f.sender.id = :userId THEN f.receiver.id ELSE f.sender.id END FROM Friends f WHERE (f.sender.id = :userId OR f.receiver.id = :userId) AND f.status = 'ACCEPTED'")
     List<UUID> findFriendIds(@Param("userId") UUID userId);
 
+    @Modifying
+    @Query("DELETE FROM Friends f WHERE f.sender.id = :accountId OR f.receiver.id = :accountId")
+    void deleteAllByAccountId(@Param("accountId") UUID accountId);
 }
 

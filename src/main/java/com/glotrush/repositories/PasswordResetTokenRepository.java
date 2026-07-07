@@ -18,10 +18,8 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
     @Query("UPDATE PasswordResetToken t SET t.isRevoked = true WHERE t.account.id = :accountId")
     void invalidateAllUserTokens(UUID accountId);
 
-      @Query("SELECT t FROM PasswordResetToken t " +
-           "WHERE t.token = :token " +
-           "AND t.expiresAt > :now " +
-           "AND t.isRevoked = false")
+      @Query("SELECT t FROM PasswordResetToken t WHERE t.token = :token AND t.expiresAt > :now AND t.isRevoked = false")
     Optional<PasswordResetToken> findValidToken(@Param("token") String token, @Param("now") LocalDateTime now);
+    void deleteByAccount_Id(UUID accountId);
 
 }

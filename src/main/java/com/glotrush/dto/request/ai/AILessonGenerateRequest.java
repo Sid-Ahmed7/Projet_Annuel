@@ -20,12 +20,13 @@ public class AILessonGenerateRequest {
     @NotBlank
     private String description;
 
+    @NotNull(message = "{error.ai.lesson.itemcount.required}")
     private Integer itemCount;
 
     @AssertTrue(message = "{error.ai.lesson.itemcount.invalid}")
     public boolean isValidItemCount() {
         if (itemCount == null) {
-            return true;
+            return false;
         }
         
         if (lessonType == null) {
