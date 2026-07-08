@@ -10,6 +10,9 @@ WORKDIR /app
 
 RUN addgroup -S spring && adduser -S spring -G spring
 
+RUN wget -q -O /app/sentry-agent.jar \
+    https://repo1.maven.org/maven2/io/sentry/sentry-opentelemetry-agent/8.47.0/sentry-opentelemetry-agent-8.47.0.jar
+
 COPY --from=build /app/target/*.jar app.jar
 
 USER root
