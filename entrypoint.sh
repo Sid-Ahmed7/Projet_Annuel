@@ -25,4 +25,7 @@ export B2_BUCKET=$(cat /run/secrets/b2_bucket)
 export B2_ACCESS_KEY=$(cat /run/secrets/b2_access_key)
 export B2_SECRET_KEY=$(cat /run/secrets/b2_secret_key)
 export SENTRY_DSN=$(cat /run/secrets/sentry_dsn)
+export OTEL_TRACES_EXPORTER=none
+export OTEL_METRICS_EXPORTER=none
+export OTEL_LOGS_EXPORTER=none
 exec java -jar /app/app.jar
