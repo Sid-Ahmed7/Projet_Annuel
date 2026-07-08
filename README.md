@@ -45,6 +45,8 @@ Télécharger depuis [postgresql.org](https://www.postgresql.org/download/) et s
 |---------|-------|------|
 | **Gmail** | Envoi d'emails (réinitialisation mot de passe, etc.) | Compte Google → Sécurité → Mots de passe des applications |
 | **Stripe** | Paiements en ligne | [dashboard.stripe.com](https://dashboard.stripe.com) → Developers → API keys |
+| **Hugging Face** | Modèles IA pour la traduction et la génération | [huggingface.co](https://huggingface.co/) → Settings → Access Tokens |
+| **Mistral AI** | Génération de contenu et leçons par IA | [console.mistral.ai](https://console.mistral.ai/) → API Keys |
 
 ---
 
@@ -96,6 +98,17 @@ spring.flyway.placeholders.first_name=
 spring.flyway.placeholders.last_name=
 spring.flyway.placeholders.password=
 spring.flyway.placeholders.secret_key=
+
+# Notifications Push (VAPID)
+vapid.public-key=
+vapid.private-key=
+vapid.subject=
+
+# Cle API Hugging Face
+huggingface.api-key=
+
+# Cle API Mistral AI
+ai.mistral.api-key=
 ```
 
 5. Lancer l'application avec le profil dev :
