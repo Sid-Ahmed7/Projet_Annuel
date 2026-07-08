@@ -25,5 +25,4 @@ export B2_BUCKET=$(cat /run/secrets/b2_bucket)
 export B2_ACCESS_KEY=$(cat /run/secrets/b2_access_key)
 export B2_SECRET_KEY=$(cat /run/secrets/b2_secret_key)
 export SENTRY_DSN=$(cat /run/secrets/sentry_dsn)
-export SENTRY_AUTO_INIT=false
-exec java -javaagent:/app/sentry-agent.jar -jar /app/app.jar
+exec java -jar /app/app.jar
