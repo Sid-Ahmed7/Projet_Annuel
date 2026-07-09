@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 
 import com.glotrush.entities.Lesson;
@@ -49,5 +50,9 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
     default Optional<Lesson> findFirstUncompletedLessonInTopic(UUID accountId, UUID topicId) {
         return findUncompletedLessonsInTopic(accountId, topicId, PageRequest.of(0, 1)).stream().findFirst();
     }
+
+    @Modifying
+    @Query(value = "UPDATE lesson SET lesson_type = :lessonType WHERE id = :lessonId", nativeQuery = true)
+    void updateLessonType(@Param("lessonId") UUID lessonId, @Param("lessonType") String lessonType);
 
 }

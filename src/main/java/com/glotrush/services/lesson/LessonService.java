@@ -61,6 +61,7 @@ import com.glotrush.repositories.UserLessonProgressRepository;
 
 import com.glotrush.utils.LevelUtils;
 import com.glotrush.utils.LocaleUtils;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -84,6 +85,7 @@ public class LessonService implements ILessonService {
     private final IStreakService streakService;
     private final ILessonSessionService lessonSessionService;
     private final IReviewMistakeService reviewMistakeService;
+    private final EntityManager entityManager;
 
     @Override
     public List<LessonSummaryResponse> getLessonsByTopic(UUID topicId, UUID accountId) {
@@ -269,12 +271,48 @@ public class LessonService implements ILessonService {
             lesson.setTopic(topic);
         }
 
+        if (lesson.getLessonType() != lessonRequest.getLessonType()) {
+            clearSpecificExercises(lesson);
+            lessonRepository.saveAndFlush(lesson);
+            lessonRepository.updateLessonType(lessonId, lessonRequest.getLessonType().name());
+            
+            // Detachement requis pour forcer Hibernate a charger la nouvelle classe concrete apres mise a jour du discriminateur
+            entityManager.detach(lesson);
+            
+            lesson = lessonRepository.findById(lessonId)
+                    .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
+        }
+
         lessonRequestToLessonEntity.updateLessonFromRequest(lessonRequest, lesson, messageSource);
         
         recalculateRewards(lesson);
 
         lessonRepository.save(lesson);
         return lessonEntityToLessonResponse.lessonEntityToLessonResponse(lesson, messageSource);
+    }
+
+    private void clearSpecificExercises(Lesson lesson) {
+        if (lesson instanceof FlashcardLesson flashcardLesson) {
+            if (flashcardLesson.getFlashcards() != null) {
+                flashcardLesson.getFlashcards().clear();
+            }
+        } else if (lesson instanceof QcmLesson qcmLesson) {
+            if (qcmLesson.getQuestions() != null) {
+                qcmLesson.getQuestions().clear();
+            }
+        } else if (lesson instanceof InteractiveLesson interactiveLesson) {
+            if (interactiveLesson.getQuestions() != null) {
+                interactiveLesson.getQuestions().clear();
+            }
+        } else if (lesson instanceof MatchingPairLesson matchingPairLesson) {
+            if (matchingPairLesson.getMatchingPairs() != null) {
+                matchingPairLesson.getMatchingPairs().clear();
+            }
+        } else if (lesson instanceof SortingExerciseLesson sortingExerciseLesson) {
+            if (sortingExerciseLesson.getSortingExercise() != null) {
+                sortingExerciseLesson.getSortingExercise().clear();
+            }
+        }
     }
 
     @Override

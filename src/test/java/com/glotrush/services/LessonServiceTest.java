@@ -24,6 +24,7 @@ import com.glotrush.entities.lesson.FlashcardLesson;
 import com.glotrush.mapping.LessonEntityToLessonResponse;
 import com.glotrush.mapping.LessonRequestToLessonEntity;
 import com.glotrush.repositories.TopicRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.junit.jupiter.api.DisplayName;
@@ -119,6 +120,8 @@ class LessonServiceTest {
 
     @Mock
     private IReviewMistakeService reviewMistakeService;
+    @Mock
+    private EntityManager entityManager;
 
     private LessonRuleProperties lessonRuleProperties;
 
@@ -143,7 +146,7 @@ class LessonServiceTest {
         lessonRuleProperties.setSortingFixedXp(60);
         lessonRuleProperties.setSortingFixedSeconds(360);
 
-        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, lessonSessionBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity, lessonRuleProperties, notificationDispatcher, streakService, lessonSessionService, reviewMistakeService);
+        lessonService = new LessonService(messageSource, lessonRepository, userLessonProgressRepository, accountsRepository, progressService, lessonBuilder, lessonSessionBuilder, topicRepository, lessonEntityToLessonResponse, lessonRequestToLessonEntity, lessonRuleProperties, notificationDispatcher, streakService, lessonSessionService, reviewMistakeService, entityManager);
         accountId = UUID.randomUUID();
         lessonId = UUID.randomUUID();
         topicId = UUID.randomUUID();
@@ -856,6 +859,45 @@ class LessonServiceTest {
 
         assertThat(matchingPairLesson.getXpReward()).isEqualTo(50);
         assertThat(matchingPairLesson.getDurationMinutes()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Should update lesson type from FLASHCARD to QCM and reload correct subclass")
+    void shouldUpdateLessonTypeAndReloadCorrectSubclass() {
+        Topic topic = Topic.builder().id(topicId).build();
+        
+        FlashcardLesson existingFlashcardLesson = new FlashcardLesson();
+        existingFlashcardLesson.setId(lessonId);
+        existingFlashcardLesson.setTopic(topic);
+        
+        QcmLesson reloadedQcmLesson = new QcmLesson();
+        reloadedQcmLesson.setId(lessonId);
+        reloadedQcmLesson.setTopic(topic);
+
+        QcmLessonRequest request = new QcmLessonRequest();
+        request.setTopicId(topicId);
+        request.setLessonType(com.glotrush.enumerations.LessonType.QCM);
+        request.setTitle("New QCM Title");
+        request.setDescription("New Description");
+        request.setIsActive(true);
+
+        QcmLessonResponse expectedResponse = QcmLessonResponse.builder().build();
+
+        when(lessonRepository.findById(lessonId))
+                .thenReturn(Optional.of(existingFlashcardLesson))
+                .thenReturn(Optional.of(reloadedQcmLesson));
+
+        doNothing().when(lessonRequestToLessonEntity).updateLessonFromRequest(eq(request), eq(reloadedQcmLesson), any());
+        when(lessonRepository.save(any())).thenReturn(reloadedQcmLesson);
+        when(lessonEntityToLessonResponse.lessonEntityToLessonResponse(eq(reloadedQcmLesson), any())).thenReturn(expectedResponse);
+
+        LessonResponse result = lessonService.updateLesson(lessonId, request);
+
+        assertThat(result).isEqualTo(expectedResponse);
+        verify(lessonRepository).saveAndFlush(existingFlashcardLesson);
+        verify(lessonRepository).updateLessonType(lessonId, "QCM");
+        verify(entityManager).detach(existingFlashcardLesson);
+        verify(lessonRequestToLessonEntity).updateLessonFromRequest(eq(request), eq(reloadedQcmLesson), any());
     }
 }
 
