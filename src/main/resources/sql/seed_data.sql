@@ -24,11 +24,6 @@ DECLARE
     qcm_q2_id UUID;
     sorting_entity_id UUID;
 BEGIN
-    IF EXISTS (SELECT 1 FROM languages LIMIT 1) THEN
-        RAISE NOTICE 'Seed data already exists, skipping.';
-        RETURN;
-    END IF;
-
     -- 1. LANGUES
     INSERT INTO languages (id, code, name, is_active, created_at) 
     VALUES (gen_random_uuid(), 'fr', 'Français', true, NOW())
