@@ -17,6 +17,25 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    volumes:
+      - ./infra/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+      - ./infra/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    ports:
+      - "${RABBITMQ_PORT}:${RABBITMQ_CONTAINER_PORT}"
+      - "${RABBITMQ_MANAGEMENT_PORT}:${RABBITMQ_MANAGEMENT_CONTAINER_PORT}"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   back:
     build:
       context: .
@@ -24,14 +43,32 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_PROFILES_ACTIVE: dev
+    networks:
+      - backend
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+
+  db-seed:
+    image: postgres:16-alpine
+    environment:
+      PGPASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./src/main/resources/sql/seed_data.sql:/seed_data.sql:ro
     networks:
       - backend
     depends_on:
       db:
         condition: service_healthy
-
+    command: >
+      sh -c "until psql -h db -U ${DB_USER} -d ${DB_NAME} -c 'SELECT 1 FROM languages LIMIT 1' > /dev/null 2>&1;
+      do echo 'Waiting for schema...' && sleep 3; done &&
+      psql -h db -U ${DB_USER} -d ${DB_NAME} -f /seed_data.sql"
 
 networks:
   backend:

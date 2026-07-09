@@ -68,6 +68,10 @@ jobs:
           MISTRAL_API_KEY: ${{ secrets.TEST_MISTRAL_API_KEY }}
           SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING: true
           SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+          RABBITMQ_HOST: localhost
+          RABBITMQ_USER: guest
+          RABBITMQ_PASS: guest
+          SPRING_RABBITMQ_LISTENER_SIMPLE_AUTO_STARTUP: 'false'
 
       - name: Upload rapports de tests
         uses: actions/upload-artifact@v4

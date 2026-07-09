@@ -29,7 +29,7 @@ public class ChallengeWsService implements IChallengeWsService {
 
     @Override
     public void sendNotificationToChallenged(UUID accountId, ChallengeNotificationRequest request) {
-        messagingTemplate.convertAndSend("/topic/user/" + accountId + "/notification/duel", request);
+        messagingTemplate.convertAndSend("/topic/duel." + accountId, request);
     }
 
     @Override
