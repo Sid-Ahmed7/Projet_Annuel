@@ -1,6 +1,5 @@
 package com.glotrush.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -10,27 +9,12 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 @Configuration
 @EnableWebSocketMessageBroker
-@Profile("!test")
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
-    @Value("${spring.rabbitmq.host}")
-    private String rabbitmqHost;
-
-    @Value("${spring.rabbitmq.username}")
-    private String rabbitmqUser;
-
-    @Value("${spring.rabbitmq.password}")
-    private String rabbitmqPass;
+@Profile("test")
+public class TestWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableStompBrokerRelay("/topic")
-                .setRelayHost(rabbitmqHost)
-                .setRelayPort(61613)
-                .setClientLogin(rabbitmqUser)
-                .setClientPasscode(rabbitmqPass)
-                .setSystemLogin(rabbitmqUser)
-                .setSystemPasscode(rabbitmqPass);
+        config.enableSimpleBroker("/topic");
         config.setApplicationDestinationPrefixes("/app");
     }
 
