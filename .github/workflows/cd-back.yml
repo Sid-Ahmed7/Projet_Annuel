@@ -48,7 +48,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
-          source: "infra/monitoring.yml,infra/prometheus.yml,infra/deploy.sh"
+          source: "infra/monitoring.yml,infra/prometheus.yml,infra/deploy.sh,infra/rabbitmq/enabled_plugins,infra/rabbitmq/rabbitmq.conf"
           target: "infra"
           strip_components: 1
 
