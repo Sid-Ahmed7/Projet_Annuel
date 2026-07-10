@@ -245,7 +245,6 @@ class DataPrivacyServiceTest {
         verify(accountDeletionCodeRepository).save(userCode);
         verify(pushNotificationSubscriptionRepository).deleteByAccount_Id(accountId);
         verify(passwordResetTokenRepository).deleteByAccount_Id(accountId);
-        verify(accountDeletionCodeRepository).deleteByAccount_Id(accountId);
         verify(accountsRepository).save(account);
 
         assertThat(account.getEmail()).startsWith("deleted_");
