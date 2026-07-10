@@ -233,6 +233,10 @@ public class ChallengeBuilder {
         List<ChallengeParticipantResponse> participants = challenge.getParticipants().stream().map(participant -> toParticipantResponse(participant, challenge, currentAccountId,participantProfiles.get(participant.getAccount().getId())))
                 .collect(Collectors.toList());
 
+        boolean hasCompleted = challenge.getParticipants().stream()
+                .filter(participant -> participant.getAccount().getId().equals(currentAccountId))
+                .anyMatch(participant -> participant.getCompletedAt() != null);
+
         return ChallengeResponse.builder()
                 .id(challenge.getId())
                 .title(challenge.getTitle())
@@ -245,11 +249,8 @@ public class ChallengeBuilder {
                 .sourceLanguageName(challenge.getSourceLanguage() != null ? challenge.getSourceLanguage().getName() : null)
                 .challenger(toUserResponse(challenge.getChallenger(), challengerProfile))
                 .challenged(challenge.getChallenged() != null ? toUserResponse(challenge.getChallenged(), challengedProfile) : null)
-                .qcm(challenge.getQcm().stream().map(this::toQcmResponse).collect(Collectors.toList()))
-                .flashcards(challenge.getFlashcards().stream().map(this::toFlashCardResponse).collect(Collectors.toList()))
-                .matchingPairs(challenge.getMatchingPairs().stream().map(this::toMatchingPairResponse).collect(Collectors.toList()))
-                .sortingExercises(challenge.getSortingExercises().stream().map(this::toSortingExerciseResponse).collect(Collectors.toList()))
-                .interactives(challenge.getInteractives().stream().map(this::toInteractiveResponse).collect(Collectors.toList()))
+                .qcm(challenge.getQcm().stream().map(qcm -> toQcmResponse(qcm, hasCompleted)).collect(Collectors.toList()))
+                .flashcards(challenge.getFlashcards().stream().map(flashCard -> toFlashCardResponse(flashCard, hasCompleted)).collect(Collectors.toList()))
                 .participants(participants)
                 .expiresAt(challenge.getExpiresAt())
                 .createdAt(challenge.getCreatedAt())
@@ -279,53 +280,24 @@ public class ChallengeBuilder {
                 .build();
     }
 
-    private ChallengeQcmResponse toQcmResponse(ChallengeQcm qcm) {
+    private ChallengeQcmResponse toQcmResponse(ChallengeQcm qcm, boolean hasCompleted) {
         return ChallengeQcmResponse.builder()
                 .id(qcm.getId())
                 .question(qcm.getQuestion())
                 .options(qcm.getOptions())
-                .correctOptionIndex(qcm.getCorrectOptionIndex())
-                .explanation(qcm.getExplanation())
+                .correctOptionIndex(hasCompleted ? qcm.getCorrectOptionIndex() : null)
+                .explanation(hasCompleted ? qcm.getExplanation() : null)
                 .build();
     }
 
-    private ChallengeFlashCardResponse toFlashCardResponse(ChallengeFlashCard flashCard) {
+    private ChallengeFlashCardResponse toFlashCardResponse(ChallengeFlashCard flashCard, boolean hasCompleted) {
         return ChallengeFlashCardResponse.builder()
                 .id(flashCard.getId())
                 .front(flashCard.getFront())
-                .back(flashCard.getBack())
+                .back(hasCompleted ? flashCard.getBack() : null)
                 .frontLanguage(flashCard.getFrontLanguage())
                 .backLanguage(flashCard.getBackLanguage())
                 .timeLimitSeconds(flashCard.getTimeLimitSeconds())
-                .build();
-    }
-
-    private ChallengeMatchingPairResponse toMatchingPairResponse(ChallengeMatchingPair matchingPair) {
-        return ChallengeMatchingPairResponse.builder()
-                .id(matchingPair.getId())
-                .item1(matchingPair.getItem1())
-                .item2(matchingPair.getItem2())
-                .build();
-    }
-
-    private ChallengeSortingExerciseResponse toSortingExerciseResponse(ChallengeSortingExercise sortingExercise) {
-        return ChallengeSortingExerciseResponse.builder()
-                .id(sortingExercise.getId())
-                .items(sortingExercise.getItems())
-                .correctOrder(sortingExercise.getCorrectOrder())
-                .build();
-    }
-
-    private ChallengeInteractiveResponse toInteractiveResponse(ChallengeInteractive interactive) {
-        return ChallengeInteractiveResponse.builder()
-                .id(interactive.getId())
-                .questionText(interactive.getQuestionText())
-                .imagePaths(interactive.getImagePaths())
-                .audioPaths(interactive.getAudioPaths())
-                .systemType(interactive.getSystemType())
-                .options(interactive.getOptions())
-                .correctOptionIndex(interactive.getCorrectOptionIndex())
-                .correctWord(interactive.getCorrectWord())
                 .build();
     }
 
