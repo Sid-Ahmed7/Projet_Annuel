@@ -356,7 +356,7 @@ class TopicServiceTest {
     @DisplayName("Should disable topic successfully")
     void shouldDisableTopicSuccessfully() {
         when(topicRepository.existsById(topicId)).thenReturn(true);
-
+        when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
         topicService.disableTopic(topicId);
 
         verify(topicRepository).save(any());

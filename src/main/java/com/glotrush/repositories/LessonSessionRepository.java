@@ -14,14 +14,14 @@ public interface LessonSessionRepository extends JpaRepository<LessonSession, UU
     
     List<LessonSession> findByAccount_IdOrderByCompletedAtDesc(UUID accountId);
     
-    @Query("SELECT COALESCE(SUM(ls.totalTime), 0) FROM LessonSession ls WHERE ls.status = :status")
-    Long sumTotalStudyTimeSeconds(@Param("status") LessonSessionStatus status);
+    @Query("SELECT COALESCE(SUM(ls.totalTime), 0) FROM LessonSession ls")
+    Long sumTotalStudyTimeSeconds();
 
-    @Query("SELECT COALESCE(SUM(ls.totalTime), 0) FROM LessonSession ls WHERE ls.account.id = :accountId AND ls.status = :status")
-    Long sumStudyTimeByAccountId(@Param("accountId") UUID accountId, @Param("status") LessonSessionStatus status);
+    @Query("SELECT COALESCE(SUM(ls.totalTime), 0) FROM LessonSession ls WHERE ls.account.id = :accountId")
+    Long sumStudyTimeByAccountId(@Param("accountId") UUID accountId);
 
-    @Query("SELECT COALESCE(SUM(ls.totalTime), 0) FROM LessonSession ls WHERE ls.account.id = :accountId AND ls.lesson.topic.id = :topicId AND ls.status = :status")
-    Long sumStudyTimeByAccountIdAndTopicId(@Param("accountId") UUID accountId, @Param("topicId") UUID topicId, @Param("status") LessonSessionStatus status);
+    @Query("SELECT COALESCE(SUM(ls.totalTime), 0) FROM LessonSession ls WHERE ls.account.id = :accountId AND ls.lesson.topic.id = :topicId")
+    Long sumStudyTimeByAccountIdAndTopicId(@Param("accountId") UUID accountId, @Param("topicId") UUID topicId);
 
     @Query("SELECT COUNT(DISTINCT ls.account.id) FROM LessonSession ls WHERE ls.completedAt >= :since")
     Long countActiveUsersSince(@Param("since") LocalDateTime since);

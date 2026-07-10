@@ -7,16 +7,17 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.context.MessageSource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.glotrush.entities.AccountDeletionCode;
 import com.glotrush.entities.Accounts;
+import com.glotrush.enumerations.AccountStatus;
 import com.glotrush.exceptions.MismatchCodeException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.mapping.ExportDataMapper;
 import com.glotrush.repositories.AccountDeletionCodeRepository;
 import com.glotrush.repositories.AccountsRepository;
-import com.glotrush.repositories.ChallengeParticipantsRepository;
 import com.glotrush.repositories.ChallengeRepository;
 import com.glotrush.repositories.FriendsRepository;
 import com.glotrush.repositories.LessonSessionRepository;
@@ -30,7 +31,6 @@ import com.glotrush.repositories.UserLessonProgressRepository;
 import com.glotrush.repositories.UserMistakeRepository;
 import com.glotrush.repositories.UserProfileRepository;
 import com.glotrush.repositories.UserProgressRepository;
-import com.glotrush.repositories.ai.AIGenerationLogRepository;
 import com.glotrush.services.EmailService;
 import com.glotrush.services.stripe.IStripService;
 import com.glotrush.storage.FileStorageService;
@@ -56,12 +56,11 @@ public class DataPrivacyService implements IDataPrivacyService {
     private final UserLessonProgressRepository userLessonProgressRepository;
     private final LessonSessionRepository lessonSessionRepository;
     private final UserMistakeRepository userMistakeRepository;
+    private final PasswordEncoder passwordEncoder;
     private final FriendsRepository friendsRepository;
     private final ChallengeRepository challengeRepository;
-    private final ChallengeParticipantsRepository challengeParticipantsRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
-    private final AIGenerationLogRepository aiGenerationLogRepository;
     private final PushNotificationSubscriptionRepository pushNotificationSubscriptionRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final TopicReviewRepository topicReviewRepository;
@@ -73,8 +72,7 @@ public class DataPrivacyService implements IDataPrivacyService {
 
     @Override
     public byte[] exportUserData(UUID accountId) throws Exception {
-        Accounts account = accountsRepository.findById(accountId)
-                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
+        Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.user.not_found", null, LocaleUtils.getCurrentLocale())));
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("account", exportDataMapper.mapAccount(account));
@@ -134,23 +132,21 @@ public class DataPrivacyService implements IDataPrivacyService {
         userProfileRepository.findByAccount_Id(accountId).ifPresent(profile -> {
             if (profile.getPhotoUrl() != null) {
                 fileStorageService.delete("profiles/" + profile.getPhotoUrl());
+                profile.setPhotoUrl(null);
+                userProfileRepository.save(profile);
             }
         });
 
-        aiGenerationLogRepository.deleteByAccountId(accountId);
         pushNotificationSubscriptionRepository.deleteByAccount_Id(accountId);
         passwordResetTokenRepository.deleteByAccount_Id(accountId);
-        accountDeletionCodeRepository.deleteByAccount_Id(accountId);
-        topicReviewRepository.deleteByAccount_Id(accountId);
-        userMistakeRepository.deleteByAccount_Id(accountId);
-        lessonSessionRepository.deleteByAccount_Id(accountId);
-        userLessonProgressRepository.deleteByAccount_Id(accountId);
-        paymentHistoryRepository.deleteByAccount_Id(accountId);
-        subscriptionRepository.deleteByAccount_Id(accountId);
-        friendsRepository.deleteAllByAccountId(accountId);
-        challengeRepository.nullifyChallenged(accountId);
-        challengeParticipantsRepository.deleteByAccount_Id(accountId);
-        challengeRepository.deleteByChallenger_Id(accountId);
-        accountsRepository.deleteById(accountId);
+
+        account.setEmail("deleted_" + accountId + "@deleted.com");
+        account.setFirstName("Deleted" + accountId);
+        account.setLastName("Deleted" + accountId);
+        account.setUsername("deleted_" + accountId.toString().substring(0, 8));
+        account.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+        account.setAuthKey(null);
+        account.setStatus(AccountStatus.DELETED);
+        accountsRepository.save(account);
     }
 }

@@ -66,7 +66,7 @@ public class AdminStatsService implements IAdminStatsService {
 
     @Override
     public LearningStatsResponse getLearningMetrics() {
-        Long totalStudyTimeSeconds = lessonSessionRepository.sumTotalStudyTimeSeconds(LessonSessionStatus.COMPLETED);
+        Long totalStudyTimeSeconds = lessonSessionRepository.sumTotalStudyTimeSeconds();
         List<String> popularLanguages = userProgressRepository.findMostStudiedLanguages(PageRequest.of(0, 1));
         Double avgAccuracy = userProgressRepository.avgAccuracyGlobal();
         Double avgCompletion = userProgressRepository.avgCompletionPercentageGlobal();
@@ -74,7 +74,7 @@ public class AdminStatsService implements IAdminStatsService {
         return LearningStatsResponse.builder()
             .avgAccuracy(avgAccuracy != null ? Math.round(avgAccuracy * 100 * 10.0) / 10.0 : 0.0)
             .avgCompletionPercentage(avgCompletion != null ? Math.round(avgCompletion * 10.0) / 10.0 : 0.0)
-            .totalStudyTimeMinutes(totalStudyTimeSeconds != null ? totalStudyTimeSeconds / 60 : 0L)
+            .totalStudyTimeMinutes(totalStudyTimeSeconds != null ? totalStudyTimeSeconds : 0L)
             .mostPopularLanguage(popularLanguages.isEmpty() ? null : popularLanguages.get(0))
             .build();
     }
@@ -89,7 +89,7 @@ public class AdminStatsService implements IAdminStatsService {
             Long totalXP = userProgressRepository.getXpByAccountId(id);
             Long totalLessons = userProgressRepository.sumCompletedLessonsByAccountId(id);
             Double avgAccuracy = userProgressRepository.avgAccuracyByAccountId(id);
-            Long studyTimeSeconds = lessonSessionRepository.sumStudyTimeByAccountId(id, LessonSessionStatus.COMPLETED);
+            Long studyTimeSeconds = lessonSessionRepository.sumStudyTimeByAccountId(id);
             Long topicsCompleted = userProgressRepository.countCompletedTopicsByAccountId(id);
             LocalDateTime lastActivity = lessonSessionRepository.findLastActivityByAccountId(id, LessonSessionStatus.COMPLETED);
             return adminStatsBuilder.buildUserStatsResponse(account, profile, totalXP, totalLessons, avgAccuracy, studyTimeSeconds, topicsCompleted, lastActivity);
@@ -111,12 +111,12 @@ public class AdminStatsService implements IAdminStatsService {
         Long totalXP = userProgressRepository.getXpByAccountId(accountId);
         Long totalLessons = userProgressRepository.sumCompletedLessonsByAccountId(accountId);
         Double avgAccuracy = userProgressRepository.avgAccuracyByAccountId(accountId);
-        Long studyTimeSeconds = lessonSessionRepository.sumStudyTimeByAccountId(accountId, LessonSessionStatus.COMPLETED);
+        Long studyTimeSeconds = lessonSessionRepository.sumStudyTimeByAccountId(accountId);
         Long topicsCompleted = userProgressRepository.countCompletedTopicsByAccountId(accountId);
 
         List<UserProgress> progresses = userProgressRepository.findByAccount_Id(accountId);
         List<TopicStatsResponse> topicStats = progresses.stream().map(userProgress -> {
-            Long studyTime = lessonSessionRepository.sumStudyTimeByAccountIdAndTopicId(accountId, userProgress.getTopic().getId(), LessonSessionStatus.COMPLETED);
+            Long studyTime = lessonSessionRepository.sumStudyTimeByAccountIdAndTopicId(accountId, userProgress.getTopic().getId());
             return adminStatsBuilder.buildTopicStatsResponse(userProgress, studyTime);
         }).toList();
 

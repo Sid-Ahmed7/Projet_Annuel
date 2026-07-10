@@ -99,7 +99,7 @@ public class AdminUserService implements IAdminUserService {
 
     @Override
     public void deleteUser(UUID accountId) {
-        findUser(accountId);
+        Accounts account = findUser(accountId);
 
         subscriptionRepository.findByAccount_Id(accountId).ifPresent(subscription -> {
             if (subscription.getStripeSubscriptionId() == null || !subscription.getIsActive()) return;
@@ -112,25 +112,22 @@ public class AdminUserService implements IAdminUserService {
         userProfileRepository.findByAccount_Id(accountId).ifPresent(profile -> {
             if (profile.getPhotoUrl() != null) {
                 fileStorageService.delete("profiles/" + profile.getPhotoUrl());
+                profile.setPhotoUrl(null);
+                userProfileRepository.save(profile);
             }
         });
 
-        aiGenerationLogRepository.deleteByAccountId(accountId);
         pushNotificationSubscriptionRepository.deleteByAccount_Id(accountId);
         passwordResetTokenRepository.deleteByAccount_Id(accountId);
-        topicReviewRepository.deleteByAccount_Id(accountId);
-        userMistakeRepository.deleteByAccount_Id(accountId);
-        lessonSessionRepository.deleteByAccount_Id(accountId);
-        userLessonProgressRepository.deleteByAccount_Id(accountId);
-        paymentHistoryRepository.deleteByAccount_Id(accountId);
-        subscriptionRepository.deleteByAccount_Id(accountId);
-        friendsRepository.deleteAllByAccountId(accountId);
 
-        challengeRepository.nullifyChallenged(accountId);
-        challengeParticipantsRepository.deleteByAccount_Id(accountId);
-        challengeRepository.deleteByChallenger_Id(accountId);
-
-        accountsRepository.deleteById(accountId);
+        account.setEmail("deleted_" + accountId + "@deleted.com");
+        account.setFirstName("Deleted" + accountId);
+        account.setLastName("Deleted" + accountId);
+        account.setUsername("deleted_" + accountId.toString().substring(0, 8));
+        account.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+        account.setAuthKey(null);
+        account.setStatus(AccountStatus.DELETED);
+        accountsRepository.save(account);
     }
 
     @Override
