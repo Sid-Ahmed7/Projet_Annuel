@@ -37,10 +37,12 @@ public interface TopicRepository extends JpaRepository<Topic, UUID>, JpaSpecific
               AND (up.completionPercentage IS NULL OR up.completionPercentage < 100)
             """
     )
-    Page<Topic> findActiveTopicsWithProgress(
-            @Param("languageId") UUID languageId,
-            @Param("accountId") UUID accountId,
-            Pageable pageable
-    );
+    Page<Topic> findActiveTopicsWithProgress(@Param("languageId") UUID languageId, @Param("accountId") UUID accountId, Pageable pageable);
+
+  @Query("SELECT COUNT(t) > 0 FROM Topic t WHERE t.name = :name AND t.targetLanguage.id = :langId")
+boolean existsByNameInLanguage(@Param("name") String name, @Param("langId") UUID langId);
+
+@Query("SELECT COUNT(t) > 0 FROM Topic t WHERE t.name = :name AND t.targetLanguage.id = :langId AND t.id <> :id")
+boolean existsByNameInLanguageExcluding(@Param("name") String name, @Param("langId") UUID langId, @Param("id") UUID id);
 
 }

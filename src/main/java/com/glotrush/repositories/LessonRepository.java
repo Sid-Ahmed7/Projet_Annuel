@@ -52,4 +52,10 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
     @Query(value = "UPDATE lesson SET lesson_type = :lessonType WHERE id = :lessonId", nativeQuery = true)
     void updateLessonType(@Param("lessonId") UUID lessonId, @Param("lessonType") String lessonType);
 
+    @Query("SELECT COUNT(l) > 0 FROM Lesson l WHERE l.title = :title AND l.topic.id = :topicId")
+    boolean existsByTitleInTopic(@Param("title") String title, @Param("topicId") UUID topicId);
+
+    @Query("SELECT COUNT(l) > 0 FROM Lesson l WHERE l.title = :title AND l.topic.id = :topicId AND l.id <> :id")
+    boolean existsByTitleInTopicExcluding(@Param("title") String title, @Param("topicId") UUID topicId, @Param("id") UUID id);
+
 }

@@ -1,6 +1,5 @@
 package com.glotrush.services.topic;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
+import com.glotrush.exceptions.TopicAlreadyExistsException;
 import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.builder.TopicBuilder;
 import com.glotrush.constants.TopicConstants;
@@ -123,9 +123,7 @@ public class TopicService implements ITopicService {
 
     @Override
     public List<TopicResponse> getAllTopics() {
-        return topicRepository.findAll().stream()
-                .map(topic -> topicMapper.mapTopicEntitiesToTopicResponse(topic))
-                .toList();
+        return topicRepository.findAll().stream().map(topic -> topicMapper.mapTopicEntitiesToTopicResponse(topic)).toList();
     }
 
     @Override
@@ -159,16 +157,17 @@ public class TopicService implements ITopicService {
 
     @Override
     public TopicResponse createTopic(TopicRequest topicRequest) {
-        Language targetLanguage = languageRepository.findById(topicRequest.getTargetLanguageId())
-                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
+        Language targetLanguage = languageRepository.findById(topicRequest.getTargetLanguageId()).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
 
-        Language sourceLanguage = languageRepository.findById(topicRequest.getSourceLanguageId())
-                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
+        Language sourceLanguage = languageRepository.findById(topicRequest.getSourceLanguageId()).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
         
         Topic topicEntity = topicMapper.mapTopicRequestToMapTopicEntities(topicRequest);
         topicEntity.setTargetLanguage(targetLanguage);
         topicEntity.setSourceLanguage(sourceLanguage);
-        
+
+        if (topicRepository.existsByNameInLanguage(topicRequest.getName(), targetLanguage.getId()))
+            throw new TopicAlreadyExistsException(messageSource.getMessage("error.topic.already_exists", null, LocaleUtils.getCurrentLocale()));
+
         topicRepository.save(topicEntity);
         notificationDispatcher.sendNotificationWhenNewTopic(topicEntity);
         return topicMapper.mapTopicEntitiesToTopicResponse(topicEntity);
@@ -199,8 +198,11 @@ public class TopicService implements ITopicService {
             topic.setSourceLanguage(sourceLanguage);
         }
 
+        if (topicRequest.getName() != null && topicRepository.existsByNameInLanguageExcluding(topicRequest.getName(), topic.getTargetLanguage().getId(), topicId))
+            throw new TopicAlreadyExistsException(messageSource.getMessage("error.topic.already_exists", null, LocaleUtils.getCurrentLocale()));
+
         topicMapper.updateTopicFromRequest(topicRequest, topic);
-        
+
         return topicMapper.mapTopicEntitiesToTopicResponse(topicRepository.save(topic));
     }
 
