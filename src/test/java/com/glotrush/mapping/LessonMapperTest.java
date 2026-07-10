@@ -1,15 +1,11 @@
 package com.glotrush.mapping;
 
-import com.glotrush.dto.request.exercice.FlashcardRequest;
 import com.glotrush.dto.request.exercice.QcmQuestionRequest;
-import com.glotrush.dto.request.lesson.FlashcardLessonRequest;
 import com.glotrush.dto.request.lesson.QcmLessonRequest;
 import com.glotrush.dto.request.lesson.InteractiveLessonRequest;
 import com.glotrush.dto.request.exercice.InteractiveQuestionRequest;
 import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.dto.response.lesson.FlashcardLessonResponse;
-import com.glotrush.dto.response.exercice.FlashcardResponse;
-import com.glotrush.dto.response.lesson.QcmLessonResponse;
 import com.glotrush.dto.response.lesson.InteractiveLessonResponse;
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.exercice.FlashcardEntity;
@@ -168,7 +164,7 @@ class LessonMapperTest {
         questionRequest.setSystemType(InteractiveSystemType.OPEN_TEXT);
         questionRequest.setCorrectWord("hello");
         questionRequest.setImagePaths(List.of("hello.png"));
-        request.setQuestions(List.of(questionRequest));
+        request.setInteractiveQuestions(List.of(questionRequest));
 
         InteractiveLesson entity = (InteractiveLesson) requestToEntityMapper.lessonRequestToLessonEntity(request, messageSource);
 

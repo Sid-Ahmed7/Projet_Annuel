@@ -9,7 +9,6 @@ import com.glotrush.dto.request.lesson.MatchingPairLessonRequest;
 import com.glotrush.dto.request.lesson.QcmLessonRequest;
 import com.glotrush.dto.request.lesson.SortingExerciseLessonRequest;
 import com.glotrush.dto.request.lesson.InteractiveLessonRequest;
-import com.glotrush.dto.response.LessonResponse;
 import com.glotrush.entities.Language;
 import com.glotrush.entities.Lesson;
 import com.glotrush.entities.Topic;
@@ -209,10 +208,18 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
 
         if (lessonType == LessonType.INTERACTIVE) {
             promptBuilder.append("Consignes de structure pour le type INTERACTIVE :\n");
+            promptBuilder.append("- Les questions interactives doivent être placées dans le tableau \"interactiveQuestions\".\n");
             promptBuilder.append("- Pour chaque question, le champ \"systemType\" doit valoir SOIT \"MULTIPLE_CHOICE\", SOIT \"OPEN_TEXT\". Ne jamais utiliser de valeur comme \"MATCHING\" ou tout autre nom.\n");
             promptBuilder.append("- Si \"systemType\" est \"MULTIPLE_CHOICE\" : tu dois fournir un tableau de 2 à 4 choix dans \"options\", et l'index de la bonne réponse dans \"correctOptionIndex\" (de 0 à 3). Le champ \"correctWord\" doit être null.\n");
             promptBuilder.append("- Si \"systemType\" est \"OPEN_TEXT\" : tu dois fournir le mot attendu dans \"correctWord\". Le champ \"options\" doit être vide ou null, et \"correctOptionIndex\" doit être null.\n");
             promptBuilder.append("- Les listes \"imagePaths\" et \"audioPaths\" DOIVENT impérativement être vides (c'est-à-dire []). Ne génère aucun nom de fichier image ou audio.\n\n");
+        }
+
+        if (lessonType == LessonType.SORTING_EXERCISE) {
+            promptBuilder.append("Consignes de structure pour le type SORTING_EXERCISE :\n");
+            promptBuilder.append("- Les phrases à ordonner doivent être découpées en blocs de mots dans le tableau \"items\".\n");
+            promptBuilder.append("- Chaque bloc (\"item\") doit contenir soit 1 mot unique, soit un groupe de 3 mots maximum. Ne mets jamais une phrase entière ou de longs groupes de mots dans un seul bloc.\n");
+            promptBuilder.append("- Découpe les phrases en plusieurs blocs (par exemple : [\"I\", \"love\", \"apples\"] ou [\"I love\", \"apples\"] ou [\"They are walking\", \"to the park\"]).\n\n");
         }
 
         promptBuilder.append("Voici un exemple du format JSON attendu pour ce type :\n");
@@ -298,7 +305,7 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
                   "title": "Titre de la leçon",
                   "description": "Description de la leçon",
                   "isActive": true,
-                  "questions": [
+                  "interactiveQuestions": [
                     {
                       "questionText": "Écoutez et choisissez le bon mot",
                       "imagePaths": [],
@@ -350,16 +357,16 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
                 sortingExerciseLessonRequest.setSortingExercise(new ArrayList<>(sortingExerciseLessonRequest.getSortingExercise().subList(0, itemCount)));
             }
         } else if (lessonRequest instanceof InteractiveLessonRequest interactiveLessonRequest) {
-            if (interactiveLessonRequest.getQuestions() != null && interactiveLessonRequest.getQuestions().size() > itemCount) {
-                interactiveLessonRequest.setQuestions(new ArrayList<>(interactiveLessonRequest.getQuestions().subList(0, itemCount)));
+            if (interactiveLessonRequest.getInteractiveQuestions() != null && interactiveLessonRequest.getInteractiveQuestions().size() > itemCount) {
+                interactiveLessonRequest.setInteractiveQuestions(new ArrayList<>(interactiveLessonRequest.getInteractiveQuestions().subList(0, itemCount)));
             }
         }
     }
 
     private void enforceEmptyMediaLists(LessonRequest lessonRequest) {
         if (lessonRequest instanceof InteractiveLessonRequest interactiveLessonRequest) {
-            if (interactiveLessonRequest.getQuestions() != null) {
-                for (InteractiveQuestionRequest question : interactiveLessonRequest.getQuestions()) {
+            if (interactiveLessonRequest.getInteractiveQuestions() != null) {
+                for (InteractiveQuestionRequest question : interactiveLessonRequest.getInteractiveQuestions()) {
                     question.setImagePaths(new ArrayList<>());
                     question.setAudioPaths(new ArrayList<>());
                 }

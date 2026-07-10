@@ -284,7 +284,29 @@ public class ReviewMistakeService implements IReviewMistakeService {
 
             case SORTING_EXERCISE -> {
                 SortingExerciseEntity sortingExercise = lessonType.sortingExercises().get(questionId);
-                yield sortingExercise != null && sortingExercise.getCorrectOrder().equals(answer.getUserOrderedResponseIndexes());
+                if (sortingExercise == null || sortingExercise.getCorrectOrder() == null || answer.getUserOrderedResponseIndexes() == null) {
+                    yield false;
+                }
+
+                if (sortingExercise.getCorrectOrder().size() != answer.getUserOrderedResponseIndexes().size()) {
+                    yield false;
+                }
+
+                List<Integer> userOrder = answer.getUserOrderedResponseIndexes();
+                boolean allInBounds = userOrder.stream().allMatch(index -> index != null && index >= 0 && index < sortingExercise.getItems().size());
+                if (!allInBounds) {
+                    yield false;
+                }
+
+                List<String> expectedWords = sortingExercise.getCorrectOrder().stream()
+                        .map(index -> sortingExercise.getItems().get(index))
+                        .toList();
+
+                List<String> actualWords = userOrder.stream()
+                        .map(index -> sortingExercise.getItems().get(index))
+                        .toList();
+
+                yield expectedWords.equals(actualWords);
             }
 
             case INTERACTIVE -> {

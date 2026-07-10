@@ -546,8 +546,29 @@ public class TopicService implements ITopicService {
 
     private boolean validateSortingExercise(SortingExerciseAnswerRequest request) {
         SortingExerciseEntity entity = sortingExerciseRepository.findById(request.getId()).orElse(null);
-        if (entity == null || request.getUserOrder() == null) return false;
-        return entity.getCorrectOrder() != null && entity.getCorrectOrder().equals(request.getUserOrder());
+        if (entity == null || request.getUserOrder() == null || entity.getCorrectOrder() == null) {
+            return false;
+        }
+
+        if (entity.getCorrectOrder().size() != request.getUserOrder().size()) {
+            return false;
+        }
+
+        List<Integer> userOrder = request.getUserOrder();
+        boolean allInBounds = userOrder.stream().allMatch(index -> index != null && index >= 0 && index < entity.getItems().size());
+        if (!allInBounds) {
+            return false;
+        }
+
+        List<String> expectedWords = entity.getCorrectOrder().stream()
+                .map(index -> entity.getItems().get(index))
+                .toList();
+
+        List<String> actualWords = userOrder.stream()
+                .map(index -> entity.getItems().get(index))
+                .toList();
+
+        return expectedWords.equals(actualWords);
     }
 
     private boolean validateInteractiveQuestion(InteractiveAnswerRequest request) {
