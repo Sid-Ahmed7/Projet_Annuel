@@ -15,5 +15,5 @@ public class InteractiveLessonRequest extends LessonRequest {
 
     @NotNull
     @Size(min = 3, max = 10)
-    private List<InteractiveQuestionRequest> questions;
+    private List<InteractiveQuestionRequest> interactiveQuestions;
 }

@@ -40,11 +40,13 @@ import com.glotrush.dto.response.TopicWithProgressResponse;
 import com.glotrush.entities.exercice.FlashcardEntity;
 import com.glotrush.entities.exercice.InteractiveQuestionEntity;
 import com.glotrush.entities.exercice.QcmQuestionEntity;
+import com.glotrush.entities.exercice.SortingExerciseEntity;
 import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.dto.request.ExamResultRequest;
 import com.glotrush.dto.request.FlashcardAnswerRequest;
 import com.glotrush.dto.request.InteractiveAnswerRequest;
 import com.glotrush.dto.request.QcmAnswerRequest;
+import com.glotrush.dto.request.SortingExerciseAnswerRequest;
 import com.glotrush.enumerations.InteractiveSystemType;
 import com.glotrush.dto.request.TopicRequest;
 import com.glotrush.mapping.TopicMapper;
@@ -353,21 +355,21 @@ class TopicServiceTest {
     }
 
     @Test
-    @DisplayName("Should remove topic successfully")
-    void shouldRemoveTopicSuccessfully() {
+    @DisplayName("Should disable topic successfully")
+    void shouldDisableTopicSuccessfully() {
         when(topicRepository.existsById(topicId)).thenReturn(true);
+        when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
+        topicService.disableTopic(topicId);
 
-        topicService.removeTopic(topicId);
-
-        verify(topicRepository).deleteById(topicId);
+        verify(topicRepository).save(any());
     }
 
     @Test
-    @DisplayName("Should throw exception when removing non-existent topic")
-    void shouldThrowExceptionWhenRemovingNonExistentTopic() {
+    @DisplayName("Should throw exception when disabling non-existent topic")
+    void shouldThrowExceptionWhenDisablingNonExistentTopic() {
         when(topicRepository.existsById(topicId)).thenReturn(false);
 
-        assertThatThrownBy(() -> topicService.removeTopic(topicId))
+        assertThatThrownBy(() -> topicService.disableTopic(topicId))
                 .isInstanceOf(TopicNotFoundException.class);
     }
 
@@ -664,5 +666,65 @@ class TopicServiceTest {
         assertThat(result.getSuccess()).isTrue();
         assertThat(result.getCorrectAnswers()).isEqualTo(2);
         assertThat(progress.getCorrectAnswers()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Should validate sorting exercise with duplicate words when indices are swapped")
+    void shouldValidateSortingExerciseWithDuplicateWordsWhenIndicesAreSwapped() {
+        UserProgress progress = new UserProgress();
+        progress.setCorrectAnswers(0);
+        progress.setTotalAnswers(0);
+        progress.setTotalXP(0L);
+
+        SortingExerciseEntity sortingExercise = new SortingExerciseEntity();
+        sortingExercise.setId(UUID.randomUUID());
+        sortingExercise.setItems(List.of("pomme", "poire", "pomme"));
+        sortingExercise.setCorrectOrder(List.of(0, 1, 2));
+
+        ExamResultRequest request = ExamResultRequest.builder()
+                .sortingExerciseAnswers(List.of(
+                        new SortingExerciseAnswerRequest(sortingExercise.getId(), List.of(2, 1, 0))
+                ))
+                .build();
+
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)).thenReturn(Optional.of(progress));
+        when(sortingExerciseRepository.findById(sortingExercise.getId())).thenReturn(Optional.of(sortingExercise));
+        when(userProgressRepository.save(any())).thenReturn(progress);
+
+        CompleteExamResponse result = topicService.completeTopicExam(accountId, topicId, request);
+
+        assertThat(result.getSuccess()).isTrue();
+        assertThat(result.getCorrectAnswers()).isEqualTo(1);
+        assertThat(progress.getCorrectAnswers()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Should fail validation for sorting exercise when words are in wrong order")
+    void shouldFailValidationSortingExerciseWhenWordsAreInWrongOrder() {
+        UserProgress progress = new UserProgress();
+        progress.setCorrectAnswers(0);
+        progress.setTotalAnswers(0);
+        progress.setTotalXP(0L);
+
+        SortingExerciseEntity sortingExercise = new SortingExerciseEntity();
+        sortingExercise.setId(UUID.randomUUID());
+        sortingExercise.setItems(List.of("pomme", "poire", "pomme"));
+        sortingExercise.setCorrectOrder(List.of(0, 1, 2));
+
+        ExamResultRequest request = ExamResultRequest.builder()
+                .sortingExerciseAnswers(List.of(
+                        new SortingExerciseAnswerRequest(sortingExercise.getId(), List.of(1, 0, 2))
+                ))
+                .build();
+
+        when(userProgressRepository.findByAccount_IdAndTopic_Id(accountId, topicId)).thenReturn(Optional.of(progress));
+        when(sortingExerciseRepository.findById(sortingExercise.getId())).thenReturn(Optional.of(sortingExercise));
+        when(userProgressRepository.save(any())).thenReturn(progress);
+
+        CompleteExamResponse result = topicService.completeTopicExam(accountId, topicId, request);
+
+        assertThat(result.getSuccess()).isFalse();
+        assertThat(result.getCorrectAnswers()).isEqualTo(0);
+        assertThat(progress.getCorrectAnswers()).isEqualTo(0);
     }
 }

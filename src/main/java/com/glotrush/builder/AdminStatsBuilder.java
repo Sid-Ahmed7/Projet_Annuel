@@ -25,7 +25,7 @@ public class AdminStatsBuilder {
             .totalXP(totalXP != null ? totalXP : 0L)
             .totalLessonsCompleted(totalLessons != null ? totalLessons : 0L)
             .avgAccuracy(avgAccuracy != null ? Math.round(avgAccuracy * 100 * 10.0) / 10.0 : 0.0)
-            .totalStudyTimeMinutes(studyTimeSeconds != null ? studyTimeSeconds / 60 : 0L)
+            .totalStudyTimeMinutes(studyTimeSeconds != null ? studyTimeSeconds : 0L)
             .currentStreak(account.getCurrentStreak())
             .longestStreak(account.getLongestStreak())
             .topicsCompleted(topicsCompleted != null ? topicsCompleted : 0L)
@@ -45,7 +45,7 @@ public class AdminStatsBuilder {
             .totalXP(totalXP != null ? totalXP : 0L)
             .totalLessonsCompleted(totalLessons != null ? totalLessons : 0L)
             .avgAccuracy(avgAccuracy != null ? Math.round(avgAccuracy * 100 * 10.0) / 10.0 : 0.0)
-            .totalStudyTimeMinutes(studyTimeSeconds != null ? studyTimeSeconds / 60 : 0L)
+            .totalStudyTimeMinutes(studyTimeSeconds != null ? studyTimeSeconds : 0L)
             .topicsCompleted(topicsCompleted != null ? topicsCompleted : 0L)
             .topicStats(topicStats)
             .build();

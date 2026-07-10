@@ -1,14 +1,22 @@
 package com.glotrush.services.challenge;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.glotrush.dto.request.FlashcardAnswerRequest;
+import com.glotrush.dto.request.QcmAnswerRequest;
+import com.glotrush.entities.challenge.ChallengeFlashCard;
+import com.glotrush.entities.challenge.ChallengeQcm;
 import com.glotrush.exceptions.UserNotFoundException;
+import com.glotrush.utils.LevenshteinUtils;
 
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
@@ -25,6 +33,7 @@ import com.glotrush.entities.Language;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.entities.challenge.Challenge;
 import com.glotrush.entities.challenge.ChallengeParticipant;
+import com.glotrush.enumerations.AccountStatus;
 import com.glotrush.enumerations.ChallengeStatus;
 import com.glotrush.enumerations.ChallengeType;
 import com.glotrush.enumerations.LessonType;
@@ -62,6 +71,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ChallengeService implements IChallengeService {
 
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
+
     private final ChallengeRepository challengeRepository;
     private final ChallengeParticipantsRepository challengeParticipantRepository;
     private final AccountsRepository accountsRepository;
@@ -89,13 +100,17 @@ public class ChallengeService implements IChallengeService {
                 throw new LessonNotFoundException(messageSource.getMessage("error.lesson.not_found", null, LocaleUtils.getCurrentLocale()));
             lesson = lessonRepository.findById(newChallenge.getLessonId()).orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.not_found", null, LocaleUtils.getCurrentLocale())));
 
-            if (lesson.getLessonType() != LessonType.QCM && lesson.getLessonType() != LessonType.FLASHCARD && lesson.getLessonType() != LessonType.INTERACTIVE)
+            if (lesson.getLessonType() != LessonType.QCM && lesson.getLessonType() != LessonType.FLASHCARD)
                 throw new InvalidDuelTypeException(messageSource.getMessage("error.invalid.duel.type", null, LocaleUtils.getCurrentLocale()));
 
             if (newChallenge.getChallengedId() == null)
                 throw new MissingChallengedIdException(messageSource.getMessage("error.missing.id", null, LocaleUtils.getCurrentLocale()));
 
             challenged = accountsRepository.findById(newChallenge.getChallengedId()).orElseThrow(() -> new ChallengedUserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
+
+            if (challenged.getStatus() == AccountStatus.DELETED) {
+                throw new UserNotFoundException(messageSource.getMessage("error.account_not_found", null, LocaleUtils.getCurrentLocale()));
+            }
 
         } else {
             language = languageRepository.findById(newChallenge.getLanguageId()).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
@@ -145,7 +160,7 @@ public class ChallengeService implements IChallengeService {
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElse(null);
         UUID activeLanguageId = (profile != null && profile.getActiveLanguage() != null) ? profile.getActiveLanguage().getId() : null;
         UUID nativeLanguageId = userLanguageRepository.findByAccount_IdAndLanguageType(accountId, LanguageType.NATIVE).stream().findFirst().map(ul -> ul.getLanguage().getId()).orElse(null);
-        return challengeRepository.findPublicChallengesWithFilters(activeLanguageId, nativeLanguageId).stream().map(challenge -> mapToChallengeResponse(challenge, null)).collect(Collectors.toList());
+        return challengeRepository.findPublicChallengesWithFilters(activeLanguageId, nativeLanguageId).stream().map(challenge -> mapToChallengeResponse(challenge, accountId)).collect(Collectors.toList());
     }
 
     @Override
@@ -191,7 +206,45 @@ public class ChallengeService implements IChallengeService {
             throw new ScoreAlreadySubmittedException(messageSource.getMessage("error.challenge.cannot_submit", null, LocaleUtils.getCurrentLocale()));
         }
     
-        participant.setScore(response.getScore());
+        boolean hasAnswers = (response.getQcmAnswers() != null && !response.getQcmAnswers().isEmpty())
+                || (response.getFlashcardAnswers() != null && !response.getFlashcardAnswers().isEmpty());
+
+        double score = 0.0;
+        if (hasAnswers) {
+            int calculatedCorrectAnswers = 0;
+            int totalQuestions = 0;
+
+            switch (challenge.getLessonType()) {
+                case QCM -> {
+                    if (response.getQcmAnswers() != null) {
+                        for (QcmAnswerRequest ans : response.getQcmAnswers()) {
+                            totalQuestions++;
+                            if (validateChallengeQcm(challenge, ans)) {
+                                calculatedCorrectAnswers++;
+                            }
+                        }
+                    }
+                }
+                case FLASHCARD -> {
+                    if (response.getFlashcardAnswers() != null) {
+                        for (FlashcardAnswerRequest ans : response.getFlashcardAnswers()) {
+                            totalQuestions++;
+                            if (validateChallengeFlashcard(challenge, ans)) {
+                                calculatedCorrectAnswers++;
+                            }
+                        }
+                    }
+                }
+                default -> {
+                }
+            }
+
+            score = totalQuestions > 0 ? (double) calculatedCorrectAnswers / totalQuestions * 100 : 0.0;
+        } else {
+            score = response.getScore() != null ? response.getScore() : 0.0;
+        }
+
+        participant.setScore(score);
         participant.setTimePassed(response.getTimePassed());
         participant.setCompletedAt(java.time.LocalDateTime.now());
         challengeParticipantRepository.save(participant);
@@ -202,9 +255,7 @@ public class ChallengeService implements IChallengeService {
         Integer totalQuestions = switch(challenge.getLessonType()) {
             case QCM -> challenge.getQcm().size();
             case FLASHCARD -> challenge.getFlashcards().size();
-            case MATCHING_PAIR -> challenge.getMatchingPairs().size();
-            case SORTING_EXERCISE -> challenge.getSortingExercises().size();
-            case INTERACTIVE -> challenge.getInteractives().size();
+            default -> 0;
         };
 
         UUID fChallengeId = challenge.getId();
@@ -212,7 +263,7 @@ public class ChallengeService implements IChallengeService {
             fChallengeId,
             account,
             userProfile,
-            challenge.getChallengeType() == ChallengeType.DUEL ? null : response.getScore(),
+            challenge.getChallengeType() == ChallengeType.DUEL ? null : score,
             totalQuestions,
             response.getTimePassed(),
             totalQuestions
@@ -220,7 +271,6 @@ public class ChallengeService implements IChallengeService {
         TransactionSynchronizationManager.registerSynchronization(
             new ChallengeSynchronization(() -> challengeWsService.sendChallengeProgress(fChallengeId, progressToSend))
         );
-
 
         List<ChallengeParticipant> allUsers = challengeParticipantRepository.findByChallengeIdOrderByScoreDescTimePassedAsc(challengeId);
         boolean allCompleted = allUsers.stream().allMatch(user -> user.getCompletedAt() != null);
@@ -233,7 +283,6 @@ public class ChallengeService implements IChallengeService {
             }
         }
         return mapToChallengeResponse(challengeRepository.save(challenge), accountId);
-    
     }
     @Override
     @Transactional
@@ -434,10 +483,50 @@ public class ChallengeService implements IChallengeService {
                 .xpGained(participant.getXpGained() != null ? participant.getXpGained().intValue() : null)
                 .build();
         }).collect(Collectors.toList());
-       TransactionSynchronizationManager.registerSynchronization(
-           new ChallengeSynchronization(() -> publicResults.forEach(result -> challengeWsService.sendChallengeResult(challengeId, result)))
-       );
+        TransactionSynchronizationManager.registerSynchronization(
+            new ChallengeSynchronization(() -> publicResults.forEach(result -> challengeWsService.sendChallengeResult(challengeId, result)))
+        );
+     }
+
+    private boolean validateChallengeQcm(Challenge challenge, QcmAnswerRequest request) {
+        ChallengeQcm question = challenge.getQcm().stream()
+                .filter(q -> q.getId().equals(request.getId()))
+                .findFirst()
+                .orElse(null);
+        return question != null && question.getCorrectOptionIndex().equals(request.getSelectedOptionIndex());
     }
 
+    private boolean validateChallengeFlashcard(Challenge challenge, FlashcardAnswerRequest request) {
+        ChallengeFlashCard question = challenge.getFlashcards().stream()
+                .filter(q -> q.getId().equals(request.getId()))
+                .findFirst()
+                .orElse(null);
+        if (question == null || request.getUserResponse() == null) {
+            return false;
+        }
+
+        String expected = question.getBack().trim();
+        String actual = request.getUserResponse().trim();
+        if (expected.equalsIgnoreCase(actual)) {
+            return true;
+        }
+
+        List<String> expectedNumbers = extractNumbers(expected);
+        List<String> actualNumbers = extractNumbers(actual);
+        if (!expectedNumbers.equals(actualNumbers)) {
+            return false;
+        }
+
+        return LevenshteinUtils.calculateLevenshteinDistance(expected.toLowerCase(), actual.toLowerCase()) <= 2;
+    }
+
+    private List<String> extractNumbers(String input) {
+        List<String> numbers = new ArrayList<>();
+        Matcher matcher = NUMBER_PATTERN.matcher(input);
+        while (matcher.find()) {
+            numbers.add(matcher.group());
+        }
+        return numbers;
+    }
 
 }

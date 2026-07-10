@@ -1,6 +1,5 @@
 package com.glotrush.services.topic;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import com.glotrush.entities.Topic;
 import com.glotrush.entities.UserProgress;
+import com.glotrush.exceptions.TopicAlreadyExistsException;
 import com.glotrush.exceptions.TopicNotFoundException;
 import com.glotrush.builder.TopicBuilder;
 import com.glotrush.constants.TopicConstants;
@@ -123,9 +123,7 @@ public class TopicService implements ITopicService {
 
     @Override
     public List<TopicResponse> getAllTopics() {
-        return topicRepository.findAll().stream()
-                .map(topic -> topicMapper.mapTopicEntitiesToTopicResponse(topic))
-                .toList();
+        return topicRepository.findAll().stream().map(topic -> topicMapper.mapTopicEntitiesToTopicResponse(topic)).toList();
     }
 
     @Override
@@ -159,27 +157,30 @@ public class TopicService implements ITopicService {
 
     @Override
     public TopicResponse createTopic(TopicRequest topicRequest) {
-        Language targetLanguage = languageRepository.findById(topicRequest.getTargetLanguageId())
-                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
+        Language targetLanguage = languageRepository.findById(topicRequest.getTargetLanguageId()).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
 
-        Language sourceLanguage = languageRepository.findById(topicRequest.getSourceLanguageId())
-                .orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
+        Language sourceLanguage = languageRepository.findById(topicRequest.getSourceLanguageId()).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.language_notfound", null, LocaleUtils.getCurrentLocale())));
         
         Topic topicEntity = topicMapper.mapTopicRequestToMapTopicEntities(topicRequest);
         topicEntity.setTargetLanguage(targetLanguage);
         topicEntity.setSourceLanguage(sourceLanguage);
-        
+
+        if (topicRepository.existsByNameInLanguage(topicRequest.getName(), targetLanguage.getId()))
+            throw new TopicAlreadyExistsException(messageSource.getMessage("error.topic.already_exists", null, LocaleUtils.getCurrentLocale()));
+
         topicRepository.save(topicEntity);
         notificationDispatcher.sendNotificationWhenNewTopic(topicEntity);
         return topicMapper.mapTopicEntitiesToTopicResponse(topicEntity);
     }
 
     @Override
-    public void removeTopic(UUID topicId) {
+    public void disableTopic(UUID topicId) {
         if(!topicRepository.existsById(topicId)) {
             throw new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale()));
         }
-        topicRepository.deleteById(topicId);
+        Topic topic = topicRepository.findById(topicId).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
+        topic.setIsActive(false);
+        topicRepository.save(topic);
     }
 
     @Override
@@ -199,8 +200,11 @@ public class TopicService implements ITopicService {
             topic.setSourceLanguage(sourceLanguage);
         }
 
+        if (topicRequest.getName() != null && topicRepository.existsByNameInLanguageExcluding(topicRequest.getName(), topic.getTargetLanguage().getId(), topicId))
+            throw new TopicAlreadyExistsException(messageSource.getMessage("error.topic.already_exists", null, LocaleUtils.getCurrentLocale()));
+
         topicMapper.updateTopicFromRequest(topicRequest, topic);
-        
+
         return topicMapper.mapTopicEntitiesToTopicResponse(topicRepository.save(topic));
     }
 
@@ -542,8 +546,29 @@ public class TopicService implements ITopicService {
 
     private boolean validateSortingExercise(SortingExerciseAnswerRequest request) {
         SortingExerciseEntity entity = sortingExerciseRepository.findById(request.getId()).orElse(null);
-        if (entity == null || request.getUserOrder() == null) return false;
-        return entity.getCorrectOrder() != null && entity.getCorrectOrder().equals(request.getUserOrder());
+        if (entity == null || request.getUserOrder() == null || entity.getCorrectOrder() == null) {
+            return false;
+        }
+
+        if (entity.getCorrectOrder().size() != request.getUserOrder().size()) {
+            return false;
+        }
+
+        List<Integer> userOrder = request.getUserOrder();
+        boolean allInBounds = userOrder.stream().allMatch(index -> index != null && index >= 0 && index < entity.getItems().size());
+        if (!allInBounds) {
+            return false;
+        }
+
+        List<String> expectedWords = entity.getCorrectOrder().stream()
+                .map(index -> entity.getItems().get(index))
+                .toList();
+
+        List<String> actualWords = userOrder.stream()
+                .map(index -> entity.getItems().get(index))
+                .toList();
+
+        return expectedWords.equals(actualWords);
     }
 
     private boolean validateInteractiveQuestion(InteractiveAnswerRequest request) {

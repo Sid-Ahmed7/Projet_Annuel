@@ -88,6 +88,7 @@ public abstract class LessonRequestToLessonEntity {
 
     protected abstract SortingExerciseLesson mapSortingExerciseLessonRequestToSortingExerciseLessonEntity(SortingExerciseLessonRequest request);
 
+    @Mapping(source = "interactiveQuestions", target = "questions")
     protected abstract InteractiveLesson mapInteractiveLessonRequestToInteractiveLessonEntity(InteractiveLessonRequest request);
 
     protected abstract void updateFlashcardLessonFromRequest(FlashcardLessonRequest request, @MappingTarget FlashcardLesson lesson);
@@ -98,5 +99,6 @@ public abstract class LessonRequestToLessonEntity {
 
     protected abstract void updateSortingExerciseLessonFromRequest(SortingExerciseLessonRequest request, @MappingTarget SortingExerciseLesson lesson);
 
+    @Mapping(source = "interactiveQuestions", target = "questions")
     protected abstract void updateInteractiveLessonFromRequest(InteractiveLessonRequest request, @MappingTarget InteractiveLesson lesson);
 }

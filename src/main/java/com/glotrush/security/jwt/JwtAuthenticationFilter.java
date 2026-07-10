@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.glotrush.entities.Accounts;
+import com.glotrush.enumerations.AccountStatus;
 import com.glotrush.repositories.AccountsRepository;
 
 import jakarta.servlet.http.Cookie;
@@ -47,7 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String userId = jwtService.extractUserId(jwt);
                 if (userId != null && !jwtService.isTokenExpired(jwt)) {
                    Accounts accounts = accountsRepository.findById(UUID.fromString(userId)).orElse(null);
-                   if(accounts != null && jwtService.isTokenValid(jwt, userId)) {
+                   if(accounts != null && accounts.getStatus() != AccountStatus.DELETED && jwtService.isTokenValid(jwt, userId)) {
                         String role = jwtService.extractRole(jwt);
                         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userId,null,Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role)));
                         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

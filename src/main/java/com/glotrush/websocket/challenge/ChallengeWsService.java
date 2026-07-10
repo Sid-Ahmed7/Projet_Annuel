@@ -19,12 +19,12 @@ public class ChallengeWsService implements IChallengeWsService {
 
     @Override
     public void sendChallengeProgress(UUID challengeId, ChallengeProgress progress) {
-        messagingTemplate.convertAndSend("/topic/challenge/" + challengeId + "/progress", progress); 
+        messagingTemplate.convertAndSend("/topic/challenge." + challengeId + ".progress", progress);
     }
 
     @Override
     public void sendChallengeResult(UUID challengeId, ChallengeProgress result) {
-        messagingTemplate.convertAndSend("/topic/challenge/" + challengeId + "/result", result);
+        messagingTemplate.convertAndSend("/topic/challenge." + challengeId + ".result", result);
     }
 
     @Override
@@ -34,6 +34,6 @@ public class ChallengeWsService implements IChallengeWsService {
 
     @Override
     public void sendNotificationToStartChallenge(UUID challengeId) {
-        messagingTemplate.convertAndSend("/topic/challenge/" + challengeId + "/start", Map.of("status", "STARTED"));
+        messagingTemplate.convertAndSend("/topic/challenge." + challengeId + ".start", Map.of("status", "STARTED"));
     }
 }
