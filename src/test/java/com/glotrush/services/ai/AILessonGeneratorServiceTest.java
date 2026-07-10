@@ -330,7 +330,7 @@ class AILessonGeneratorServiceTest {
             questions.add(question);
         }
         
-        aiResponse.setQuestions(questions);
+        aiResponse.setInteractiveQuestions(questions);
 
         when(aiService.generateJsonContent(any(String.class), eq(InteractiveLessonRequest.class)))
                 .thenReturn(aiResponse);
@@ -347,8 +347,8 @@ class AILessonGeneratorServiceTest {
         
         InteractiveLessonRequest interactiveResult = (InteractiveLessonRequest) result;
         
-        assertThat(interactiveResult.getQuestions()).hasSize(5);
-        for (InteractiveQuestionRequest question : interactiveResult.getQuestions()) {
+        assertThat(interactiveResult.getInteractiveQuestions()).hasSize(5);
+        for (InteractiveQuestionRequest question : interactiveResult.getInteractiveQuestions()) {
             assertThat(question.getImagePaths()).isEmpty();
             assertThat(question.getAudioPaths()).isEmpty();
         }

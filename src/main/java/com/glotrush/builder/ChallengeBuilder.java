@@ -393,7 +393,7 @@ public class ChallengeBuilder {
                 return req;
             }).collect(Collectors.toList()));
         } else if (lessonRequest instanceof InteractiveLessonRequest interactiveLessonRequest) {
-            response.setInteractives(interactiveLessonRequest.getQuestions().stream().map(inter -> {
+            response.setInteractives(interactiveLessonRequest.getInteractiveQuestions().stream().map(inter -> {
                 ChallengeInteractiveRequest req = new ChallengeInteractiveRequest();
                 req.setQuestionText(inter.getQuestionText());
                 req.setImagePaths(new ArrayList<>(inter.getImagePaths()));
