@@ -236,7 +236,6 @@ public class ChallengeService implements IChallengeService {
                     }
                 }
                 default -> {
-                    // Do nothing for unsupported types
                 }
             }
 
