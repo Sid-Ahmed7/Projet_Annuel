@@ -142,8 +142,8 @@ public class TopicController {
 
     @DeleteMapping("/{topicId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> deleteTopic(@PathVariable UUID topicId){
-        topicService.removeTopic(topicId);
-        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.topic.deleted_successfully", null, LocaleUtils.getCurrentLocale())));
+    public ResponseEntity<ApiResponse> disableTopic(@PathVariable UUID topicId){
+        topicService.disableTopic(topicId);
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.topic.disabled_successfully", null, LocaleUtils.getCurrentLocale())));
     }
 }

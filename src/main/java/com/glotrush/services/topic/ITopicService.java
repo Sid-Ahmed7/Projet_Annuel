@@ -22,7 +22,7 @@ public interface ITopicService {
     List<TopicWithProgressResponse> getTopicsByLanguage(UUID languageId, UUID accountId);
     TopicResponse getTopicById(UUID topicId, UUID accountId);
     TopicResponse createTopic(TopicRequest topic);
-    void removeTopic(UUID topicId);
+    void disableTopic(UUID topicId);
     TopicResponse updateTopic(UUID topicId, TopicRequest topic);
     List<TopicResponse> searchTopics(String name, ProficiencyLevel difficulty, Boolean isActive);
     List<TopicResponse> searchActiveTopics(UUID languageId, String name, ProficiencyLevel difficulty);

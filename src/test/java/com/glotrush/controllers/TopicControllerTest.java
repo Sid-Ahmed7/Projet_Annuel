@@ -138,10 +138,10 @@ class TopicControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    @DisplayName("Should delete topic successfully as ADMIN")
-    void shouldDeleteTopicSuccessfully() throws Exception {
-        doNothing().when(topicService).removeTopic(topicId);
-        when(messageSource.getMessage(eq("info.topic.deleted_successfully"), any(), any())).thenReturn("Topic deleted successfully");
+    @DisplayName("Should disable topic successfully as ADMIN")
+    void shouldDisableTopicSuccessfully() throws Exception {
+        doNothing().when(topicService).disableTopic(topicId);
+        when(messageSource.getMessage(eq("info.topic.disabled_successfully"), any(), any())).thenReturn("Topic deleted successfully");
 
         mockMvc.perform(delete("/api/v1/topics/{topicId}", topicId))
                 .andExpect(status().isOk())

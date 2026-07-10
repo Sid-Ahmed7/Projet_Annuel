@@ -26,7 +26,7 @@ public interface AccountsRepository extends JpaRepository<Accounts, UUID> {
     @Query("SELECT DISTINCT up.account FROM UserProgress up WHERE up.topic.targetLanguage.id = :languageId AND up.account.id != :accountId")
     List<Accounts> findAccountsByLanguageId (UUID languageId, UUID accountId);
 
-    @Query("SELECT a FROM Accounts a WHERE LOWER(a.username) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(a.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(a.lastName) LIKE LOWER(CONCAT('%', :query, '%'))")
+    @Query("SELECT a FROM Accounts a WHERE a.status != com.glotrush.enumerations.AccountStatus.DELETED AND (LOWER(a.username) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(a.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(a.lastName) LIKE LOWER(CONCAT('%', :query, '%')))")
     List<Accounts> searchUsers(@Param("query") String query, Pageable pageable);
 
     @Query("SELECT COUNT(a) FROM Accounts a WHERE a.role = :role")

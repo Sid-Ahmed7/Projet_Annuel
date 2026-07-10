@@ -33,6 +33,7 @@ import com.glotrush.entities.Language;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.entities.challenge.Challenge;
 import com.glotrush.entities.challenge.ChallengeParticipant;
+import com.glotrush.enumerations.AccountStatus;
 import com.glotrush.enumerations.ChallengeStatus;
 import com.glotrush.enumerations.ChallengeType;
 import com.glotrush.enumerations.LessonType;
@@ -106,6 +107,10 @@ public class ChallengeService implements IChallengeService {
                 throw new MissingChallengedIdException(messageSource.getMessage("error.missing.id", null, LocaleUtils.getCurrentLocale()));
 
             challenged = accountsRepository.findById(newChallenge.getChallengedId()).orElseThrow(() -> new ChallengedUserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
+
+            if (challenged.getStatus() == AccountStatus.DELETED) {
+                throw new UserNotFoundException(messageSource.getMessage("error.account_not_found", null, LocaleUtils.getCurrentLocale()));
+            }
 
         } else {
             language = languageRepository.findById(newChallenge.getLanguageId()).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
@@ -231,7 +236,6 @@ public class ChallengeService implements IChallengeService {
                     }
                 }
                 default -> {
-                    // Do nothing for unsupported types
                 }
             }
 

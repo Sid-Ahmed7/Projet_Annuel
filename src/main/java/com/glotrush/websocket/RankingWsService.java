@@ -16,12 +16,12 @@ public class RankingWsService implements IRankingWsService {
 
     @Override
     public void sendRankingGlobal() {
-        messagingTemplate.convertAndSend("/topic/ranking/global", "");
+        messagingTemplate.convertAndSend("/topic/ranking.global", "");
     }
 
     @Override
     public void sendRankingLanguage(UUID languageId) {
-        messagingTemplate.convertAndSend("/topic/ranking/language/" + languageId, "");
+        messagingTemplate.convertAndSend("/topic/ranking.language." + languageId, "");
     }
     
 }

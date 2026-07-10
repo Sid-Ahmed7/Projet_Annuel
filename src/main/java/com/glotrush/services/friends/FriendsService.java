@@ -13,6 +13,7 @@ import com.glotrush.dto.response.AccountSearchResponse;
 import com.glotrush.dto.response.FriendRequestResponse;
 import com.glotrush.dto.response.FriendResponse;
 import com.glotrush.entities.Accounts;
+import com.glotrush.enumerations.AccountStatus;
 import com.glotrush.entities.Friends;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.enumerations.FriendRequestStatus;
@@ -50,6 +51,9 @@ public class FriendsService implements IFriendsService {
         }
 
         Accounts receiver = accountsRepository.findById(receiverId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.account_not_found", null, LocaleUtils.getCurrentLocale())));
+        if (receiver.getStatus() == AccountStatus.DELETED) {
+            throw new UserNotFoundException(messageSource.getMessage("error.account_not_found", null, LocaleUtils.getCurrentLocale()));
+        }
         friendsRepository.findBetweenTwoUsers(senderId, receiverId).ifPresent(friend -> {
             throw new FriendsAlreadyExistsException(messageSource.getMessage("error.friend_request_exists", null, LocaleUtils.getCurrentLocale()));
         });

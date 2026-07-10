@@ -91,9 +91,9 @@ public class LessonController {
 
     @DeleteMapping("/{lessonId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> deleteLesson(@PathVariable UUID lessonId){
-        lessonService.removeLesson(lessonId);
-        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.lesson.deleted_successfully", null, LocaleUtils.getCurrentLocale())));
+    public ResponseEntity<ApiResponse> disableLesson(@PathVariable UUID lessonId){
+        lessonService.disableLesson(lessonId);
+        return ResponseEntity.ok(new ApiResponse(messageSource.getMessage("info.lesson.disabled_successfully", null, LocaleUtils.getCurrentLocale())));
     }
 
     @PatchMapping("/{lessonId}/toggle-status")

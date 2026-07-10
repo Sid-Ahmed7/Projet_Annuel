@@ -2,12 +2,12 @@ package com.glotrush.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glotrush.entities.*;
+import com.glotrush.enumerations.AccountStatus;
 import com.glotrush.enumerations.UserRole;
 import com.glotrush.exceptions.MismatchCodeException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.mapping.ExportDataMapper;
 import com.glotrush.repositories.*;
-import com.glotrush.repositories.ai.AIGenerationLogRepository;
 import com.glotrush.services.dataPrivacy.DataPrivacyService;
 import com.glotrush.services.dataPrivacy.IDataPrivacyService;
 import com.glotrush.services.stripe.IStripService;
@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -74,16 +75,11 @@ class DataPrivacyServiceTest {
     private ChallengeRepository challengeRepository;
     
     @Mock 
-    private ChallengeParticipantsRepository challengeParticipantsRepository;
-    
-    @Mock 
     private SubscriptionRepository subscriptionRepository;
     
     @Mock 
     private PaymentHistoryRepository paymentHistoryRepository;
     
-    @Mock 
-    private AIGenerationLogRepository aiGenerationLogRepository;
     
     @Mock 
     private PushNotificationSubscriptionRepository pushNotificationSubscriptionRepository;
@@ -106,6 +102,9 @@ class DataPrivacyServiceTest {
     @Mock 
     private AccountDeletionCodeRepository accountDeletionCodeRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @Autowired 
     private MessageSource messageSource;
 
@@ -117,10 +116,10 @@ class DataPrivacyServiceTest {
     
     @BeforeEach
     void setUp() {
-        service = new DataPrivacyService(accountsRepository, exportDataMapper, userProfileRepository, messageSource, userLanguageRepository, userProgressRepository,userLessonProgressRepository, lessonSessionRepository,
-                userMistakeRepository, friendsRepository, challengeRepository,challengeParticipantsRepository, subscriptionRepository,paymentHistoryRepository, aiGenerationLogRepository,
-                pushNotificationSubscriptionRepository, passwordResetTokenRepository,topicReviewRepository, fileStorageService, objectMapper,stripeService, emailService, accountDeletionCodeRepository
-        );
+    service = new DataPrivacyService(accountsRepository, exportDataMapper, userProfileRepository, messageSource, userLanguageRepository, userProgressRepository, userLessonProgressRepository, lessonSessionRepository,
+        userMistakeRepository, passwordEncoder, friendsRepository, challengeRepository, subscriptionRepository, paymentHistoryRepository,
+        pushNotificationSubscriptionRepository, passwordResetTokenRepository, topicReviewRepository, fileStorageService, objectMapper, stripeService, emailService, accountDeletionCodeRepository
+    );
 
         accountId = UUID.randomUUID();
        
@@ -227,7 +226,7 @@ class DataPrivacyServiceTest {
 
 
     @Test
-    @DisplayName("Should delete all account data")
+    @DisplayName("Should anonymize account data on deletion")
     void shouldDeleteAllAccountData() {
         AccountDeletionCode userCode = AccountDeletionCode.builder()
             .account(account)
@@ -239,28 +238,26 @@ class DataPrivacyServiceTest {
         when(accountDeletionCodeRepository.findValidCode(eq(code), any())).thenReturn(Optional.of(userCode));
         when(subscriptionRepository.findByAccount_Id(accountId)).thenReturn(Optional.empty());
         when(userProfileRepository.findByAccount_Id(accountId)).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(any())).thenReturn("hashed");
 
         service.deleteAccount(accountId, code);
 
         verify(accountDeletionCodeRepository).save(userCode);
-        verify(aiGenerationLogRepository).deleteByAccountId(accountId);
         verify(pushNotificationSubscriptionRepository).deleteByAccount_Id(accountId);
         verify(passwordResetTokenRepository).deleteByAccount_Id(accountId);
-        verify(userMistakeRepository).deleteByAccount_Id(accountId);
-        verify(lessonSessionRepository).deleteByAccount_Id(accountId);
-        verify(friendsRepository).deleteAllByAccountId(accountId);
-        verify(accountsRepository).deleteById(accountId);
+        verify(accountsRepository).save(account);
+
+        assertThat(account.getEmail()).startsWith("deleted_");
+        assertThat(account.getUsername()).startsWith("deleted_");
+        assertThat(account.getStatus()).isEqualTo(AccountStatus.DELETED);
+
+        verify(accountsRepository, never()).deleteById(any());
     }
 
     @Test
     @DisplayName("Should throw MismatchCodeException if code is invalid")
     void shouldThrowWhenCodeIsInvalid() {
         String invalidCode = "SATORU";
-        AccountDeletionCode userCode = AccountDeletionCode.builder()
-            .account(account)
-            .code(code)
-            .isUsed(false)
-            .build();
 
         when(accountsRepository.findById(accountId)).thenReturn(Optional.of(account));
         when(accountDeletionCodeRepository.findValidCode(eq(invalidCode), any())).thenReturn(Optional.empty());

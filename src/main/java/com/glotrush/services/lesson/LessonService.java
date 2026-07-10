@@ -43,6 +43,7 @@ import com.glotrush.entities.Lesson;
 import com.glotrush.entities.UserLessonProgress;
 import com.glotrush.entities.UserProgress;
 import com.glotrush.enumerations.LessonStatus;
+import com.glotrush.exceptions.LessonAlreadyExistsException;
 import com.glotrush.exceptions.LessonNotFoundException;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.config.LessonRuleProperties;
@@ -253,11 +254,10 @@ public class LessonService implements ILessonService {
     }
 
     @Override
-    public void removeLesson(UUID lessonId) {
-        if (!lessonRepository.existsById(lessonId)) {
-            throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale()));
-        }
-        lessonRepository.deleteById(lessonId);
+    public void disableLesson(UUID lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId).orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
+        lesson.setIsActive(false);
+        lessonRepository.save(lesson);
     }
 
     @Override
@@ -283,8 +283,11 @@ public class LessonService implements ILessonService {
                     .orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
         }
 
+        if (lessonRequest.getTitle() != null && lessonRepository.existsByTitleInTopicExcluding(lessonRequest.getTitle(), lesson.getTopic().getId(), lessonId))
+            throw new LessonAlreadyExistsException(messageSource.getMessage("error.lesson.already_exists", null, LocaleUtils.getCurrentLocale()));
+
         lessonRequestToLessonEntity.updateLessonFromRequest(lessonRequest, lesson, messageSource);
-        
+
         recalculateRewards(lesson);
 
         lessonRepository.save(lesson);
@@ -325,6 +328,9 @@ public class LessonService implements ILessonService {
         Lesson lesson = lessonRequestToLessonEntity.lessonRequestToLessonEntity(lessonRequest, messageSource);
         lesson.setTopic(topic);
         lesson.setOrderIndex(maxOrderIndex + 1);
+
+        if (lessonRepository.existsByTitleInTopic(lessonRequest.getTitle(), lessonRequest.getTopicId()))
+            throw new LessonAlreadyExistsException(messageSource.getMessage("error.lesson.already_exists", null, LocaleUtils.getCurrentLocale()));
 
         recalculateRewards(lesson);
 

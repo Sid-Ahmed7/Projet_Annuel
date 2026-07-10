@@ -355,21 +355,21 @@ class TopicServiceTest {
     }
 
     @Test
-    @DisplayName("Should remove topic successfully")
-    void shouldRemoveTopicSuccessfully() {
+    @DisplayName("Should disable topic successfully")
+    void shouldDisableTopicSuccessfully() {
         when(topicRepository.existsById(topicId)).thenReturn(true);
+        when(topicRepository.findById(topicId)).thenReturn(Optional.of(topic));
+        topicService.disableTopic(topicId);
 
-        topicService.removeTopic(topicId);
-
-        verify(topicRepository).deleteById(topicId);
+        verify(topicRepository).save(any());
     }
 
     @Test
-    @DisplayName("Should throw exception when removing non-existent topic")
-    void shouldThrowExceptionWhenRemovingNonExistentTopic() {
+    @DisplayName("Should throw exception when disabling non-existent topic")
+    void shouldThrowExceptionWhenDisablingNonExistentTopic() {
         when(topicRepository.existsById(topicId)).thenReturn(false);
 
-        assertThatThrownBy(() -> topicService.removeTopic(topicId))
+        assertThatThrownBy(() -> topicService.disableTopic(topicId))
                 .isInstanceOf(TopicNotFoundException.class);
     }
 

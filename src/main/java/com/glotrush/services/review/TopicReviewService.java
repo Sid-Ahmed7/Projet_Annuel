@@ -77,9 +77,10 @@ public class TopicReviewService implements ITopicReviewService {
             throw new ReviewNotAllowedException(messageSource.getMessage("error.review.not_allowed", null, LocaleUtils.getCurrentLocale()));
         }
 
-        Double scoreComment = moderationService.getToxicityScore(data.getComment());
-        boolean flagged = scoreComment != null && scoreComment > ApiConstants.MAX_SCORE;
-        
+        boolean blocklisted = moderationService.isBlocklisted(data.getComment());
+        Double scoreComment = blocklisted ? null : moderationService.getToxicityScore(data.getComment());
+        boolean flagged = blocklisted || scoreComment == null || scoreComment > ApiConstants.MAX_SCORE;
+
         ReviewStatus status = flagged ? ReviewStatus.PENDING : ReviewStatus.PUBLISHED;
         
         TopicReview review = TopicReview.builder()
@@ -112,9 +113,9 @@ public class TopicReviewService implements ITopicReviewService {
     public TopicReviewResponse updateReview(UUID accountId, UUID reviewId, TopicReviewRequest data) {
         TopicReview review = topicReviewRepository.findByIdAndAccount_Id(reviewId, accountId).orElseThrow(() -> new ReviewNotFoundException(messageSource.getMessage("error.review.not_found", null, LocaleUtils.getCurrentLocale())));
         
-        Double scoreComment = moderationService.getToxicityScore(data.getComment());
-
-        boolean flagged = scoreComment != null && scoreComment > ApiConstants.MAX_SCORE;
+        boolean blocklisted = moderationService.isBlocklisted(data.getComment());
+        Double scoreComment = blocklisted ? null : moderationService.getToxicityScore(data.getComment());
+        boolean flagged = blocklisted || scoreComment == null || scoreComment > ApiConstants.MAX_SCORE;
         ReviewStatus status = flagged ? ReviewStatus.PENDING : ReviewStatus.PUBLISHED;
 
         review.setRating(data.getRating());

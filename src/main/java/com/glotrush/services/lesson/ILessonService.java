@@ -19,7 +19,7 @@ public interface ILessonService {
     LessonResponse getLessonById(UUID lessonId, UUID accountId);
     UserLessonProgressSummary startLesson(UUID accountId, UUID lessonId);
     CompleteLessonResponse completeLesson(UUID accountId, UUID lessonId, CompleteLessonRequest lessonRequest);
-    void removeLesson(UUID lessonId);
+    void disableLesson(UUID lessonId);
     LessonResponse updateLesson(UUID lessonId, LessonRequest lesson);
     LessonResponse createLesson(LessonRequest lesson);
     LessonResponse toggleLessonStatus(UUID lessonId);
