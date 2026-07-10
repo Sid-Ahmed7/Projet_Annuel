@@ -174,11 +174,13 @@ public class TopicService implements ITopicService {
     }
 
     @Override
-    public void removeTopic(UUID topicId) {
+    public void disableTopic(UUID topicId) {
         if(!topicRepository.existsById(topicId)) {
             throw new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale()));
         }
-        topicRepository.deleteById(topicId);
+        Topic topic = topicRepository.findById(topicId).orElseThrow(() -> new TopicNotFoundException(messageSource.getMessage("error.topic.notfound", null, LocaleUtils.getCurrentLocale())));
+        topic.setIsActive(false);
+        topicRepository.save(topic);
     }
 
     @Override

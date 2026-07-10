@@ -254,11 +254,10 @@ public class LessonService implements ILessonService {
     }
 
     @Override
-    public void removeLesson(UUID lessonId) {
-        if (!lessonRepository.existsById(lessonId)) {
-            throw new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale()));
-        }
-        lessonRepository.deleteById(lessonId);
+    public void disableLesson(UUID lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId).orElseThrow(() -> new LessonNotFoundException(messageSource.getMessage("error.lesson.notfound", null, LocaleUtils.getCurrentLocale())));
+        lesson.setIsActive(false);
+        lessonRepository.save(lesson);
     }
 
     @Override
