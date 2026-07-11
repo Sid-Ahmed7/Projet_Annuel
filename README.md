@@ -17,7 +17,6 @@ Plateforme d'apprentissage des langues assistée par IA.
 - [À propos](#à-propos)
 - [Fonctionnalités](#fonctionnalités)
 - [Stack technique](#stack-technique)
-- [Architecture](#architecture)
 - [Installation](#installation)
 - [Variables d'environnement](#variables-denvironnement)
 - [Documentation API](#documentation-api)
@@ -245,35 +244,6 @@ Utilisé pour la génération de leçons et de défis par IA, ainsi que pour l'a
 
 </details>
 
-<details>
-<summary>📦 Backblaze B2</summary>
-<br>
-
-Utilisé pour le stockage des fichiers uploadés (images de profil, contenus de leçons). Compatible S3 via le SDK AWS v2. Peut être laissé vide en développement si vous n'avez pas besoin du stockage de fichiers.
-
-**Créer un bucket**
-
-1. Connectez-vous sur [backblaze.com](https://www.backblaze.com) et allez dans **B2 Cloud Storage** puis **Buckets**
-2. Cliquez sur **Create a Bucket**, choisissez un nom et définissez la visibilité (**Private** recommandé)
-3. Notez la région indiquée (ex : `eu-central-003`) — elle compose l'endpoint S3
-
-**Créer une clé d'application**
-
-1. Allez dans **App Keys** et cliquez sur **Add a New Application Key**
-2. Restreignez-la au bucket créé et copiez l'**Application Key ID** et l'**Application Key**
-
-| Propriété | Valeur |
-|-----------|--------|
-| `b2.endpoint` | `https://s3.<region>.backblazeb2.com` |
-| `b2.region` | ex : `eu-central-003` |
-| `b2.bucket` | Nom du bucket |
-| `b2.access-key` | Application Key ID |
-| `b2.secret-key` | Application Key |
-
-> 📖 [Guide officiel Backblaze — S3 Compatible API](https://www.backblaze.com/docs/cloud-storage-s3-compatible-api)
-
-</details>
-
 ### 2. Fichier `.env`
 
 Créer `.env` à la racine du projet :
@@ -422,13 +392,6 @@ ai.mistral.model=mistral-small-latest
 ai.quota.free-limit=5
 ai.quota.premium-limit=100
 
-# Backblaze B2 — voir section Services tiers › Backblaze B2 (optionnel en dev, laisser vide si upload non testé)
-b2.endpoint=
-b2.region=
-b2.bucket=
-b2.access-key=
-b2.secret-key=
-
 # RabbitMQ — doit correspondre à RABBITMQ_USER et RABBITMQ_PASS du .env
 spring.rabbitmq.host=rabbitmq
 spring.rabbitmq.port=5672
@@ -499,7 +462,7 @@ L'API utilise une authentification par cookie JWT (`access_token`) — le schém
 
 ## Tests d'intégration
 
-Les tests d'intégration nécessitent `application-test.yml` et se lancent via Docker. Toutes les clés et credentials (Flyway, Stripe, Gmail, VAPID, HuggingFace, Mistral, Backblaze) peuvent être réutilisés tels quels depuis `application-dev.properties`. `jwt.secret` et `totp.encryption` peuvent avoir des valeurs indépendantes — ce sont des valeurs propres au contexte de test,ne pas les aligner avec le dev.
+Les tests d'intégration nécessitent `application-test.yml` et se lancent via Docker. Toutes les clés et credentials (Flyway, Stripe, Gmail, VAPID, HuggingFace, Mistral) peuvent être réutilisés tels quels depuis `application-dev.properties`. `jwt.secret` et `totp.encryption` peuvent avoir des valeurs indépendantes — ce sont des valeurs propres au contexte de test il faut donc en générer de nouvelles en suivant les étapes ci-desssus.
 
 ### Fichier `application-test.yml`
 
@@ -635,7 +598,7 @@ Politique de sauvegarde :
 
 ## Équipe
 
-Projet développé par SID-AHMED MOUSSI avec Arthur Brouard et Sofianne Chadili.
+Projet développé par Sid-Ahmed Moussi avec Arthur Brouard et Sofiane Chadili.
 
 ---
 
