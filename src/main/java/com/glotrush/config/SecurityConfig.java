@@ -74,9 +74,7 @@ public class SecurityConfig {
                     .requestMatchers("/actuator/**").hasRole("ADMIN");
                 if (Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
                     auth.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll();
-                } else {
-                    auth.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").hasRole("ADMIN");
-                }
+                } 
                 auth.anyRequest().authenticated();
             }).authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
