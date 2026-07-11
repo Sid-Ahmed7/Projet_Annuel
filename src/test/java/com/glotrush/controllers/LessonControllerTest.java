@@ -208,8 +208,6 @@ class LessonControllerTest {
     void testDeleteLesson() throws Exception {
         UUID lessonId = UUID.randomUUID();
         ApiResponse apiResponse = new ApiResponse("Lesson deleted successfully");
-        // Not actually used by the controller as it constructs its own ApiResponse, 
-        // but we verify the service call.
 
         mockMvc.perform(delete("/api/v1/lessons/{lessonId}", lessonId))
                 .andExpect(status().isOk());

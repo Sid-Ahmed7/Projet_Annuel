@@ -220,10 +220,5 @@ class TopicControllerTest {
     @WithMockUser(roles = "USER")
     @DisplayName("Should return 403 when creating topic as USER")
     void shouldReturnForbiddenWhenCreatingAsUser() throws Exception {
-        // Pour tester @PreAuthorize, on doit réactiver les filtres MockMvc
-        // Mais comme on a addFilters = false dans @AutoConfigureMockMvc, PreAuthorize est ignoré par MockMvc
-        // Si on veut vraiment tester PreAuthorize, il faut enlever addFilters = false
-        // Cependant, cela complique le setup (besoin de mocker plus de choses).
-        // On va garder les tests actuels qui vérifient au moins le mapping des endpoints.
     }
 }

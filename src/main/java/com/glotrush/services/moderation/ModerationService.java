@@ -1,7 +1,10 @@
 package com.glotrush.services.moderation;
 
+import com.glotrush.utils.ModerationUtils;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -9,6 +12,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.glotrush.constants.ApiConstants;
 import com.glotrush.constants.ModerationConstants;
+import com.glotrush.utils.LevenshteinUtils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,13 +29,27 @@ public class ModerationService {
     private final RestTemplate restTemplate;
 
     public boolean isBlocklisted(String comment) {
-        if (comment == null || comment.isBlank()){
+        if (comment == null || comment.isBlank()) {
             return false;
         }
-        String lowerComment = comment.toLowerCase();
-        boolean blocked = ModerationConstants.FRENCH_INSULT_BLOCK.stream().anyMatch(lowerComment::contains);
-    
-        return blocked;
+        String normalized = ModerationUtils.normalize(comment);
+        String[] words = ModerationUtils.normalizeWords(comment).split(" ");
+        return Stream.concat(ModerationConstants.FRENCH_INSULT_BLOCK.stream(), ModerationConstants.GERMAN_INSULT_BLOCK.stream()).anyMatch(entry -> {
+                String wordNorm = ModerationUtils.normalize(entry);
+                return normalized.contains(wordNorm) || isSimilarMatch(words, wordNorm);
+            });
+    }
+
+    private boolean isSimilarMatch(String[] words, String listWords) {
+        int tolerance  = checkTolerance(listWords.length());
+        if (tolerance == 0) return false;
+        return Arrays.stream(words).filter(t -> Math.abs(t.length() - listWords.length()) <= tolerance).anyMatch(token -> LevenshteinUtils.calculateLevenshteinDistance(token, listWords) <= tolerance);
+    }
+
+    private static int checkTolerance(int length) {
+        if (length <= 4) return 0;
+        if (length <= 7) return 1;
+        return 2;
     }
 
     public Double getToxicityScore(String comment) {

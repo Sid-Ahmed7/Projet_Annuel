@@ -27,9 +27,8 @@ import java.util.Map;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    /* =========================
-       400 - BAD REQUEST
-       ========================= */
+    
+    // 400 - BAD REQUEST
     @ExceptionHandler({
             WeakPasswordException.class,
             TwoFactorNotEnabledException.class,
@@ -53,9 +52,7 @@ public class GlobalExceptionHandler {
         return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
-    /* =========================
-       401 - UNAUTHORIZED
-       ========================= */
+    // 401 - UNAUTHORIZED
     @ExceptionHandler({
             InvalidTokenException.class,
             InvalidTotpCodeException.class,
@@ -68,9 +65,7 @@ public class GlobalExceptionHandler {
         return buildError(resolveMessage(ex), HttpStatus.UNAUTHORIZED);
     }
 
-    /* =========================
-       403 - FORBIDDEN
-       ========================= */
+    // 403 - FORBIDDEN
     @ExceptionHandler({
             PasswordExpiredException.class,
             ProfilePrivateException.class,
@@ -85,9 +80,7 @@ public class GlobalExceptionHandler {
         return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
-    /* =========================
-       404 - NOT FOUND
-       ========================= */
+    // 404 - NOT FOUND
     @ExceptionHandler({
             UserNotFoundException.class,
             UsernameNotFoundException.class,
@@ -107,9 +100,7 @@ public class GlobalExceptionHandler {
         return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
-    /* =========================
-       409 - CONFLICT
-       ========================= */
+    // 409 - CONFLICT
     @ExceptionHandler({
             EmailAlreadyExistsException.class,
             UsernameAlreadyExistsException.class,
@@ -125,17 +116,13 @@ public class GlobalExceptionHandler {
         return buildError(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
-    /* =========================
-       423 - LOCKED
-       ========================= */
+    // 423 - LOCKED
     @ExceptionHandler(AccountLockedException.class)
     public ResponseEntity<ErrorResponse> handleLocked(AccountLockedException ex) {
         return buildError(ex.getMessage(), HttpStatus.LOCKED);
     }
 
-    /* =========================
-       500 - INTERNAL SERVER ERROR
-       ========================= */
+    // 500 - INTERNAL SERVER ERROR
     @ExceptionHandler({
             EmailSendException.class,
             DecryptException.class,
@@ -149,9 +136,7 @@ public class GlobalExceptionHandler {
         return buildError(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    /* =========================
-       502 - BAD GATEWAY (Stripe)
-       ========================= */
+    // 502 - BAD GATEWAY (Stripe)
     @ExceptionHandler({
             StripeMessageException.class,
             StripeException.class,
@@ -191,9 +176,7 @@ public class GlobalExceptionHandler {
         return buildError("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    /* =========================
-       429 - TOO MANY REQUESTS
-       ========================= */
+    // 429 - TOO MANY REQUESTS
     @ExceptionHandler(AILimitExceededException.class)
     public ResponseEntity<ErrorResponse> handleTooManyRequests(AILimitExceededException ex) {
         return buildError(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS);
