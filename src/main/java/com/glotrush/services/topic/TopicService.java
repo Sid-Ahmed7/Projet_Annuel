@@ -345,7 +345,6 @@ public class TopicService implements ITopicService {
         int calculatedCorrectAnswers = 0;
         int totalQuestions = 0;
 
-        // Validation des Flashcards
         if (examRequest.getFlashcardAnswers() != null) {
             for (FlashcardAnswerRequest ans : examRequest.getFlashcardAnswers()) {
                 totalQuestions++;
