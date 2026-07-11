@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,6 +43,7 @@ public class ChallengeQcm {
     @ElementCollection
     @CollectionTable(name = "challenge_qcm_options", joinColumns = @JoinColumn(name = "question_id"))
     @Column(name = "option_value")
+    @OrderColumn(name = "option_position")
     private List<String> options;
 
     @Column(name = "correct_option_index", nullable = false)

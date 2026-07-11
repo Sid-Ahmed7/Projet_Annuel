@@ -8,10 +8,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.glotrush.dto.request.challenge.ChallengeInteractiveRequest;
 import com.glotrush.dto.request.challenge.CreateChallengeRequest;
 import com.glotrush.dto.response.challenge.ChallengeFlashCardResponse;
-import com.glotrush.dto.response.challenge.ChallengeInteractiveResponse;
 import com.glotrush.dto.response.challenge.ChallengeMatchingPairResponse;
 import com.glotrush.dto.response.challenge.ChallengeParticipantResponse;
 import com.glotrush.dto.response.challenge.ChallengeQcmResponse;
@@ -25,18 +23,15 @@ import com.glotrush.entities.Lesson;
 import com.glotrush.entities.UserProfile;
 import com.glotrush.entities.challenge.Challenge;
 import com.glotrush.entities.challenge.ChallengeFlashCard;
-import com.glotrush.entities.challenge.ChallengeInteractive;
 import com.glotrush.entities.challenge.ChallengeMatchingPair;
 import com.glotrush.entities.challenge.ChallengeParticipant;
 import com.glotrush.entities.challenge.ChallengeQcm;
 import com.glotrush.entities.challenge.ChallengeSortingExercise;
 import com.glotrush.entities.exercice.FlashcardEntity;
-import com.glotrush.entities.exercice.InteractiveQuestionEntity;
 import com.glotrush.entities.exercice.MatchingPairEntity;
 import com.glotrush.entities.exercice.QcmQuestionEntity;
 import com.glotrush.entities.exercice.SortingExerciseEntity;
 import com.glotrush.entities.lesson.FlashcardLesson;
-import com.glotrush.entities.lesson.InteractiveLesson;
 import com.glotrush.entities.lesson.MatchingPairLesson;
 import com.glotrush.entities.lesson.QcmLesson;
 import com.glotrush.entities.lesson.SortingExerciseLesson;
@@ -48,7 +43,6 @@ import com.glotrush.dto.request.lesson.QcmLessonRequest;
 import com.glotrush.dto.request.lesson.FlashcardLessonRequest;
 import com.glotrush.dto.request.lesson.MatchingPairLessonRequest;
 import com.glotrush.dto.request.lesson.SortingExerciseLessonRequest;
-import com.glotrush.dto.request.lesson.InteractiveLessonRequest;
 import com.glotrush.dto.response.ai.AIChallengeContentResponse;
 import com.glotrush.dto.request.challenge.ChallengeFlashCardRequest;
 import com.glotrush.dto.request.challenge.ChallengeMatchingPairRequest;
@@ -143,23 +137,6 @@ public class ChallengeBuilder {
                         .build()
                 ).collect(Collectors.toList()));
             }
-            case INTERACTIVE -> {
-                List<InteractiveQuestionEntity> questions = new ArrayList<>(((InteractiveLesson) lesson).getQuestions());
-                Collections.shuffle(questions);
-                int nbQuestions = (questionCount != null && questionCount > 0) ? questionCount : questions.size();
-                challenge.setInteractives(questions.stream().limit(nbQuestions).map(question ->
-                    ChallengeInteractive.builder()
-                        .challenge(challenge)
-                        .questionText(question.getQuestionText())
-                        .imagePaths(new ArrayList<>(question.getImagePaths()))
-                        .audioPaths(new ArrayList<>(question.getAudioPaths()))
-                        .systemType(question.getSystemType())
-                        .options(new ArrayList<>(question.getOptions()))
-                        .correctOptionIndex(question.getCorrectOptionIndex())
-                        .correctWord(question.getCorrectWord())
-                        .build()
-                ).collect(Collectors.toList()));
-            }
         }
     }
 
@@ -205,20 +182,6 @@ public class ChallengeBuilder {
                     .build()
             ).collect(Collectors.toList()));
         }
-        if (request.getInteractives() != null) {
-            challenge.setInteractives(request.getInteractives().stream().map(interactive ->
-                ChallengeInteractive.builder()
-                    .challenge(challenge)
-                    .questionText(interactive.getQuestionText())
-                    .imagePaths(interactive.getImagePaths() != null ? new ArrayList<>(interactive.getImagePaths()) : new ArrayList<>())
-                    .audioPaths(interactive.getAudioPaths() != null ? new ArrayList<>(interactive.getAudioPaths()) : new ArrayList<>())
-                    .systemType(interactive.getSystemType())
-                    .options(interactive.getOptions() != null ? new ArrayList<>(interactive.getOptions()) : new ArrayList<>())
-                    .correctOptionIndex(interactive.getCorrectOptionIndex())
-                    .correctWord(interactive.getCorrectWord())
-                    .build()
-            ).collect(Collectors.toList()));
-        }
     }
 
     public ChallengeParticipant buildParticipant(Challenge challenge, Accounts account) {
@@ -251,6 +214,8 @@ public class ChallengeBuilder {
                 .challenged(challenge.getChallenged() != null ? toUserResponse(challenge.getChallenged(), challengedProfile) : null)
                 .qcm(challenge.getQcm().stream().map(qcm -> toQcmResponse(qcm, hasCompleted)).collect(Collectors.toList()))
                 .flashcards(challenge.getFlashcards().stream().map(flashCard -> toFlashCardResponse(flashCard, hasCompleted)).collect(Collectors.toList()))
+                .matchingPairs(challenge.getMatchingPairs().stream().map(this::toMatchingPairResponse).collect(Collectors.toList()))
+                .sortingExercises(challenge.getSortingExercises().stream().map(this::toSortingExerciseResponse).collect(Collectors.toList()))
                 .participants(participants)
                 .expiresAt(challenge.getExpiresAt())
                 .createdAt(challenge.getCreatedAt())
@@ -298,6 +263,22 @@ public class ChallengeBuilder {
                 .frontLanguage(flashCard.getFrontLanguage())
                 .backLanguage(flashCard.getBackLanguage())
                 .timeLimitSeconds(flashCard.getTimeLimitSeconds())
+                .build();
+    }
+
+    private ChallengeMatchingPairResponse toMatchingPairResponse(ChallengeMatchingPair pair) {
+        return ChallengeMatchingPairResponse.builder()
+                .id(pair.getId())
+                .item1(pair.getItem1())
+                .item2(pair.getItem2())
+                .build();
+    }
+
+    private ChallengeSortingExerciseResponse toSortingExerciseResponse(ChallengeSortingExercise exercise) {
+        return ChallengeSortingExerciseResponse.builder()
+                .id(exercise.getId())
+                .items(exercise.getItems())
+                .correctOrder(exercise.getCorrectOrder())
                 .build();
     }
 
@@ -362,18 +343,6 @@ public class ChallengeBuilder {
                 ChallengeSortingExerciseRequest req = new ChallengeSortingExerciseRequest();
                 req.setItems(new ArrayList<>(se.getItems()));
                 req.setCorrectOrder(new ArrayList<>(se.getCorrectOrder()));
-                return req;
-            }).collect(Collectors.toList()));
-        } else if (lessonRequest instanceof InteractiveLessonRequest interactiveLessonRequest) {
-            response.setInteractives(interactiveLessonRequest.getInteractiveQuestions().stream().map(inter -> {
-                ChallengeInteractiveRequest req = new ChallengeInteractiveRequest();
-                req.setQuestionText(inter.getQuestionText());
-                req.setImagePaths(new ArrayList<>(inter.getImagePaths()));
-                req.setAudioPaths(new ArrayList<>(inter.getAudioPaths()));
-                req.setSystemType(inter.getSystemType());
-                req.setOptions(new ArrayList<>(inter.getOptions()));
-                req.setCorrectOptionIndex(inter.getCorrectOptionIndex());
-                req.setCorrectWord(inter.getCorrectWord());
                 return req;
             }).collect(Collectors.toList()));
         }

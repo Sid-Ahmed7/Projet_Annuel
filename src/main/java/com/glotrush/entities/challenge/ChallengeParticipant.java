@@ -61,6 +61,8 @@ public class ChallengeParticipant {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+    @Column(name = "started_at")
+    private LocalDateTime startedAt;
 
     @CreationTimestamp
     @Column(name = "joined_at", nullable = false, updatable = false)

@@ -30,7 +30,6 @@ public class ChallengeResponse {
     private List<ChallengeFlashCardResponse> flashcards;
     private List<ChallengeMatchingPairResponse> matchingPairs;
     private List<ChallengeSortingExerciseResponse> sortingExercises;
-    private List<ChallengeInteractiveResponse> interactives;
     private List<ChallengeParticipantResponse> participants;
     private LocalDateTime expiresAt;
     private LocalDateTime createdAt;
