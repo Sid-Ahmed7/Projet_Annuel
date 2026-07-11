@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,10 +39,12 @@ public class ChallengeSortingExercise {
     @ElementCollection
     @CollectionTable(name = "challenge_sorting_items", joinColumns = @JoinColumn(name = "exercise_id"))
     @Column(name = "item_value")
+    @OrderColumn(name = "item_position")
     private List<String> items;
 
     @ElementCollection
     @CollectionTable(name = "challenge_sorting_order", joinColumns = @JoinColumn(name = "exercise_id"))
     @Column(name = "order_index")
+    @OrderColumn(name = "order_position")
     private List<Integer> correctOrder;
 }

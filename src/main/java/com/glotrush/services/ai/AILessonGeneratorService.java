@@ -175,8 +175,6 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
     }
 
     private String buildSystemPrompt(LessonType lessonType, Class<?> targetClass, Language sourceLang, Language targetLang, Integer itemCount) {
-        String exampleJson = getExampleJson(lessonType);
-        
         StringBuilder promptBuilder = new StringBuilder();
         promptBuilder.append("Tu es un expert en pédagogie et en apprentissage des langues.\n");
         promptBuilder.append("Ta tâche est de générer une leçon au format JSON strict.\n");
@@ -222,9 +220,11 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
             promptBuilder.append("- Découpe les phrases en plusieurs blocs (par exemple : [\"I\", \"love\", \"apples\"] ou [\"I love\", \"apples\"] ou [\"They are walking\", \"to the park\"]).\n\n");
         }
 
+        String exampleJson = getExampleJson(lessonType, sourceLang.getName(), targetLang.getName());
+
         promptBuilder.append("Voici un exemple du format JSON attendu pour ce type :\n");
         promptBuilder.append(exampleJson).append("\n\n");
-        
+
         promptBuilder.append("Instructions importantes :\n");
         promptBuilder.append("- Le champ \"lessonType\" est OBLIGATOIRE et doit valoir exactement : \"").append(lessonType).append("\".\n");
         promptBuilder.append("- Ne retourne QUE le JSON, aucun texte avant ou après.\n");
@@ -237,7 +237,7 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
         return promptBuilder.toString();
     }
 
-    private String getExampleJson(LessonType lessonType) {
+    private String getExampleJson(LessonType lessonType, String sourceLangName, String targetLangName) {
         return switch (lessonType) {
             case QCM -> """
                 {
@@ -255,7 +255,7 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
                   ]
                 }
                 """;
-            case FLASHCARD -> """
+            case FLASHCARD -> String.format("""
                 {
                   "lessonType": "FLASHCARD",
                   "title": "Titre de la leçon",
@@ -265,12 +265,12 @@ public class AILessonGeneratorService implements IAILessonGeneratorService {
                     {
                       "front": "Apple",
                       "back": "Pomme",
-                      "frontLanguage": "English",
-                      "backLanguage": "French"
+                      "frontLanguage": "%s",
+                      "backLanguage": "%s"
                     }
                   ]
                 }
-                """;
+                """, targetLangName, sourceLangName);
             case MATCHING_PAIR -> """
                 {
                   "lessonType": "MATCHING_PAIR",

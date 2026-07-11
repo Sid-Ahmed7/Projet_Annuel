@@ -3,7 +3,6 @@ package com.glotrush.dto.response.ai;
 import java.util.List;
 
 import com.glotrush.dto.request.challenge.ChallengeFlashCardRequest;
-import com.glotrush.dto.request.challenge.ChallengeInteractiveRequest;
 import com.glotrush.dto.request.challenge.ChallengeMatchingPairRequest;
 import com.glotrush.dto.request.challenge.ChallengeQcmRequest;
 import com.glotrush.dto.request.challenge.ChallengeSortingExerciseRequest;
@@ -29,6 +28,4 @@ public class AIChallengeContentResponse {
     private List<ChallengeMatchingPairRequest> matchingPairs;
     
     private List<ChallengeSortingExerciseRequest> sortingExercises;
-    
-    private List<ChallengeInteractiveRequest> interactives;
 }

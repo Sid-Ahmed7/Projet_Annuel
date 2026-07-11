@@ -12,9 +12,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.glotrush.dto.request.FlashcardAnswerRequest;
+import com.glotrush.dto.request.MatchingPairAnswerRequest;
 import com.glotrush.dto.request.QcmAnswerRequest;
+import com.glotrush.dto.request.SortingExerciseAnswerRequest;
 import com.glotrush.entities.challenge.ChallengeFlashCard;
+import com.glotrush.entities.challenge.ChallengeMatchingPair;
 import com.glotrush.entities.challenge.ChallengeQcm;
+import com.glotrush.entities.challenge.ChallengeSortingExercise;
 import com.glotrush.exceptions.UserNotFoundException;
 import com.glotrush.utils.LevenshteinUtils;
 
@@ -207,7 +211,9 @@ public class ChallengeService implements IChallengeService {
         }
     
         boolean hasAnswers = (response.getQcmAnswers() != null && !response.getQcmAnswers().isEmpty())
-                || (response.getFlashcardAnswers() != null && !response.getFlashcardAnswers().isEmpty());
+                || (response.getFlashcardAnswers() != null && !response.getFlashcardAnswers().isEmpty())
+                || (response.getMatchingPairAnswers() != null && !response.getMatchingPairAnswers().isEmpty())
+                || (response.getSortingExerciseAnswers() != null && !response.getSortingExerciseAnswers().isEmpty());
 
         double score = 0.0;
         if (hasAnswers) {
@@ -235,6 +241,26 @@ public class ChallengeService implements IChallengeService {
                         }
                     }
                 }
+                case MATCHING_PAIR -> {
+                    if (response.getMatchingPairAnswers() != null) {
+                        for (MatchingPairAnswerRequest ans : response.getMatchingPairAnswers()) {
+                            totalQuestions++;
+                            if (validateChallengeMatchingPair(challenge, ans)) {
+                                calculatedCorrectAnswers++;
+                            }
+                        }
+                    }
+                }
+                case SORTING_EXERCISE -> {
+                    if (response.getSortingExerciseAnswers() != null) {
+                        for (SortingExerciseAnswerRequest ans : response.getSortingExerciseAnswers()) {
+                            totalQuestions++;
+                            if (validateChallengeSortingExercise(challenge, ans)) {
+                                calculatedCorrectAnswers++;
+                            }
+                        }
+                    }
+                }
                 default -> {
                 }
             }
@@ -244,9 +270,11 @@ public class ChallengeService implements IChallengeService {
             score = response.getScore() != null ? response.getScore() : 0.0;
         }
 
+        LocalDateTime completedAt = LocalDateTime.now();
+        LocalDateTime ref = participant.getStartedAt() != null ? participant.getStartedAt() : participant.getJoinedAt();
         participant.setScore(score);
-        participant.setTimePassed(response.getTimePassed());
-        participant.setCompletedAt(java.time.LocalDateTime.now());
+        participant.setTimePassed(java.time.temporal.ChronoUnit.SECONDS.between(ref, completedAt));
+        participant.setCompletedAt(completedAt);
         challengeParticipantRepository.save(participant);
 
         Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
@@ -255,6 +283,8 @@ public class ChallengeService implements IChallengeService {
         Integer totalQuestions = switch(challenge.getLessonType()) {
             case QCM -> challenge.getQcm().size();
             case FLASHCARD -> challenge.getFlashcards().size();
+            case MATCHING_PAIR -> challenge.getMatchingPairs().size();
+            case SORTING_EXERCISE -> challenge.getSortingExercises().size();
             default -> 0;
         };
 
@@ -387,7 +417,11 @@ public class ChallengeService implements IChallengeService {
     @Override
     @Transactional
     public void startChallenge(UUID challengeId, UUID accountId) {
-        challengeParticipantRepository.findByChallengeIdAndAccountId(challengeId, accountId).orElseThrow(() -> new ChallengeAccessDeniedException(messageSource.getMessage("error.challenge.access_denied", null, LocaleUtils.getCurrentLocale())));
+        ChallengeParticipant participant = challengeParticipantRepository.findByChallengeIdAndAccountId(challengeId, accountId).orElseThrow(() -> new ChallengeAccessDeniedException(messageSource.getMessage("error.challenge.access_denied", null, LocaleUtils.getCurrentLocale())));
+        if (participant.getStartedAt() == null) {
+            participant.setStartedAt(LocalDateTime.now());
+            challengeParticipantRepository.save(participant);
+        }
         Accounts account = accountsRepository.findById(accountId).orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.auth.account_not_found", null, LocaleUtils.getCurrentLocale())));
         UserProfile profile = userProfileRepository.findByAccount_Id(accountId).orElse(null);
 
@@ -518,6 +552,32 @@ public class ChallengeService implements IChallengeService {
         }
 
         return LevenshteinUtils.calculateLevenshteinDistance(expected.toLowerCase(), actual.toLowerCase()) <= 2;
+    }
+
+    private boolean validateChallengeMatchingPair(Challenge challenge, MatchingPairAnswerRequest request) {
+        ChallengeMatchingPair pair = challenge.getMatchingPairs().stream()
+                .filter(p -> p.getId().equals(request.getId()))
+                .findFirst()
+                .orElse(null);
+        if (pair == null) {
+            return false;
+        }
+        boolean directMatch = pair.getItem1().trim().equalsIgnoreCase(request.getItem1().trim())
+                && pair.getItem2().trim().equalsIgnoreCase(request.getItem2().trim());
+        boolean swappedMatch = pair.getItem1().trim().equalsIgnoreCase(request.getItem2().trim())
+                && pair.getItem2().trim().equalsIgnoreCase(request.getItem1().trim());
+        return directMatch || swappedMatch;
+    }
+
+    private boolean validateChallengeSortingExercise(Challenge challenge, SortingExerciseAnswerRequest request) {
+        ChallengeSortingExercise exercise = challenge.getSortingExercises().stream()
+                .filter(e -> e.getId().equals(request.getId()))
+                .findFirst()
+                .orElse(null);
+        if (exercise == null || request.getUserOrder() == null) {
+            return false;
+        }
+        return exercise.getCorrectOrder().equals(request.getUserOrder());
     }
 
     private List<String> extractNumbers(String input) {
