@@ -276,7 +276,6 @@ public class LessonService implements ILessonService {
             lessonRepository.saveAndFlush(lesson);
             lessonRepository.updateLessonType(lessonId, lessonRequest.getLessonType().name());
             
-            // Detachement requis pour forcer Hibernate a charger la nouvelle classe concrete apres mise a jour du discriminateur
             entityManager.detach(lesson);
             
             lesson = lessonRepository.findById(lessonId)

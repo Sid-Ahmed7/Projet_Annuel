@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -38,6 +39,7 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final Environment environment;
 
 
     @Bean
@@ -51,26 +53,32 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/admin/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/forgot-password").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/verify-2fa").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/push-notifications/status").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/push-notifications/vapid-public-key").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/plans/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/stripe/webhook").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/profile/files/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/contact").permitAll()
-                .requestMatchers("/api/ws/**").permitAll()
-                .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/actuator/prometheus").permitAll()
-                .requestMatchers("/actuator/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            ).authenticationProvider(authenticationProvider())
+            .authorizeHttpRequests(auth -> {
+                auth
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/admin/login").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/forgot-password").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/verify-2fa").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/push-notifications/status").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/push-notifications/vapid-public-key").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/plans/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/stripe/webhook").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/profile/files/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/contact").permitAll()
+                    .requestMatchers("/api/ws/**").permitAll()
+                    .requestMatchers("/actuator/health").permitAll()
+                    .requestMatchers("/actuator/prometheus").permitAll()
+                    .requestMatchers("/actuator/**").hasRole("ADMIN");
+                if (Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
+                    auth.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll();
+                } else {
+                    auth.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").hasRole("ADMIN");
+                }
+                auth.anyRequest().authenticated();
+            }).authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
     
             return http.build();
