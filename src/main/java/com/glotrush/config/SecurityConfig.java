@@ -59,6 +59,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/forgot-password").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/verify-2fa").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/push-notifications/status").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/push-notifications/vapid-public-key").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/plans/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/stripe/webhook").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/profile/files/**").permitAll()

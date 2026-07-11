@@ -72,12 +72,8 @@ public class PushNotificationSubscriptionController {
 
 
     @GetMapping("/status")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Boolean> getStatus(@RequestParam String endpoint, Authentication authentication) {
-        UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
-        boolean subscribed = subscriptionRepository.findByEndpoint(endpoint)
-            .map(sub -> sub.getAccount().getId().equals(accountId))
-            .orElse(false);
+    public ResponseEntity<Boolean> getStatus(@RequestParam String endpoint) {
+        boolean subscribed = subscriptionRepository.findByEndpoint(endpoint).isPresent();
         return ResponseEntity.ok(subscribed);
     }
 
