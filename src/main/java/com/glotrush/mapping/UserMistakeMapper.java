@@ -99,12 +99,10 @@ public class UserMistakeMapper {
                     yield builder
                         .answeredQuestion(interactiveQuestion.getQuestionText())
                         .options(interactiveQuestion.getOptions())
-                        .correctAnswer(interactiveQuestion.getOptions().get(interactiveQuestion.getCorrectOptionIndex()))
                         .build();
                 } else {
                     yield builder
                         .answeredQuestion(interactiveQuestion.getQuestionText())
-                        .correctAnswer(interactiveQuestion.getCorrectWord())
                         .build();
                 }
             }
