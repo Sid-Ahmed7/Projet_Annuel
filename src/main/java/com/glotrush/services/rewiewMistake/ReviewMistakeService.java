@@ -278,7 +278,10 @@ public class ReviewMistakeService implements IReviewMistakeService {
 
             case MATCHING_PAIR -> {
                 MatchingPairEntity matchingPair = lessonType.matchingPairs().get(questionId);
-                yield matchingPair != null && answer.getItem2() != null && matchingPair.getItem2().equals(answer.getItem2());
+                if (matchingPair == null || answer.getItem2() == null) yield false;
+                String expected = matchingPair.getItem2().trim().toLowerCase();
+                String actual = answer.getItem2().trim().toLowerCase();
+                yield expected.equals(actual) || LevenshteinUtils.calculateLevenshteinDistance(expected, actual) <= 2;
             }
 
 
