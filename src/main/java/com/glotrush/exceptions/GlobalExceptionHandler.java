@@ -3,6 +3,7 @@ package com.glotrush.exceptions;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
+import io.sentry.Sentry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -132,6 +133,7 @@ public class GlobalExceptionHandler {
             DirectoryCreationException.class,
     })
     public ResponseEntity<ErrorResponse> handleInternalError(RuntimeException ex) {
+        Sentry.captureException(ex);
         log.error("Internal server error: {}", ex.getMessage(), ex);
         return buildError(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -142,6 +144,7 @@ public class GlobalExceptionHandler {
             StripeException.class,
     })
     public ResponseEntity<ErrorResponse> handleStripeException(Exception ex) {
+        Sentry.captureException(ex);
         log.error("Stripe error: {}", ex.getMessage(), ex);
         return buildError(ex.getMessage(), HttpStatus.BAD_GATEWAY);
     }
@@ -166,12 +169,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IOException.class)
     public ResponseEntity<ErrorResponse> handleIOException(IOException ex) {
+        Sentry.captureException(ex);
         log.error("File operation failed: {}", ex.getMessage());
         return buildError("File operation failed", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
+        Sentry.captureException(ex);
         log.error("Unexpected error occurred", ex);
         return buildError("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
     }
