@@ -20,6 +20,7 @@ import com.glotrush.enumerations.AccountStatus;
 import com.glotrush.enumerations.UserRole;
 import com.glotrush.repositories.AccountsRepository;
 import com.glotrush.repositories.LanguageRepository;
+import com.glotrush.security.jwt.JwtService;
 import com.glotrush.services.languages.ILanguageService;
 
 import jakarta.servlet.http.Cookie;
@@ -62,6 +63,9 @@ class LanguageControllerTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JwtService jwtService;
+
     @MockitoBean
     private ILanguageService languageService;
 
@@ -98,6 +102,12 @@ class LanguageControllerTest {
                 .lastPasswordChange(LocalDateTime.now())
                 .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
                 .build());
+    }
+
+    private Cookie getAdminCookie() {
+        Accounts admin = accountsRepository.findByEmail(ADMIN_EMAIL).orElseThrow();
+        String token = jwtService.generateAccessToken(admin.getId().toString(), "ADMIN");
+        return new Cookie("access_token", token);
     }
 
     private Cookie logAndGetCookie(String email, String password) throws Exception {
@@ -195,7 +205,7 @@ class LanguageControllerTest {
     @Test
     @DisplayName("Should create language when admin")
     void shouldCreateLanguage() throws Exception {
-        Cookie cookie = logAndGetCookie(ADMIN_EMAIL, ADMIN_PASSWORD);
+        Cookie cookie = getAdminCookie();
         LanguageRequest request = new LanguageRequest();
         request.setCode("it");
         request.setName("Italian");
@@ -220,7 +230,7 @@ class LanguageControllerTest {
     @Test
     @DisplayName("Should update language when admin")
     void shouldUpdateLanguage() throws Exception {
-        Cookie cookie = logAndGetCookie(ADMIN_EMAIL, ADMIN_PASSWORD);
+        Cookie cookie = getAdminCookie();
         UUID id = UUID.randomUUID();
         LanguageRequest request = new LanguageRequest();
         request.setCode("pt");
@@ -247,7 +257,7 @@ class LanguageControllerTest {
     @Test
     @DisplayName("Should delete language when admin")
     void shouldDeleteLanguage() throws Exception {
-        Cookie cookie = logAndGetCookie(ADMIN_EMAIL, ADMIN_PASSWORD);
+        Cookie cookie = getAdminCookie();
         UUID id = UUID.randomUUID();
 
         mockMvc.perform(delete("/api/v1/languages/{languageId}", id)
