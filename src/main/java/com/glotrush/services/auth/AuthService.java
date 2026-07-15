@@ -116,6 +116,10 @@ public class AuthService implements IAuthService {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
+            if (account.getRole() == UserRole.ADMIN) {
+                throw new AccessDeniedException(messageSource.getMessage("error.auth.admin_use_admin_login", null, LocaleUtils.getCurrentLocale()));
+            }
+
             loginAttemptService.resetFailedLoginAttempts(account);
             checkPasswordExpiry(account);
 
