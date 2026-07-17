@@ -93,7 +93,7 @@ public class TopicReviewController {
     }
 
     @DeleteMapping("/{reviewId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> deleteReview(Authentication authentication, @PathVariable UUID reviewId) {
         UUID accountId = SecurityUtils.extractUserIdFromAuth(authentication);
         topicReviewService.deleteReview(accountId, reviewId);
